@@ -242,14 +242,14 @@ static_assert(sizeof(block_tq2_0) == sizeof(ggml_half) + QK_K / 4, "wrong tq2_0 
 //
 // Super-block quantization structures
 //
-
+# define Q2K_K 64
 // 2-bit quantization
 // weight is represented as x = a * q + b
 // 16 blocks of 16 elements each
 // Effectively 2.625 bits per weight
 typedef struct {
-    uint8_t scales[QK_K/16]; // scales and mins, quantized with 4 bits
-    uint8_t qs[QK_K/4];      // quants
+    uint8_t scales[Q2K_K/16]; // scales and mins, quantized with 4 bits
+    uint8_t qs[Q2K_K/4];      // quants
     union {
         struct {
             ggml_half d;    // super-block scale for quantized scales
@@ -258,7 +258,7 @@ typedef struct {
         ggml_half2 dm;
     } GGML_COMMON_AGGR_U;
 } block_q2_K;
-static_assert(sizeof(block_q2_K) == 2*sizeof(ggml_half) + QK_K/16 + QK_K/4, "wrong q2_K block size/padding");
+static_assert(sizeof(block_q2_K) == 2*sizeof(ggml_half) + Q2K_K/16 + Q2K_K/4, "wrong q2_K block size/padding");
 
 // 3-bit quantization
 // weight is represented as x = a * q

@@ -10,6 +10,7 @@ static const std::map<std::string, enum ggml_ftype> GGML_FTYPE_MAP = {
     {"q5_1", GGML_FTYPE_MOSTLY_Q5_1},
     {"q8_0", GGML_FTYPE_MOSTLY_Q8_0},
     {"q2_k", GGML_FTYPE_MOSTLY_Q2_K},
+    {"tq1_0", GGML_FTYPE_MOSTLY_TQ1_0},
     {"q3_k", GGML_FTYPE_MOSTLY_Q3_K},
     {"q4_k", GGML_FTYPE_MOSTLY_Q4_K},
     {"q5_k", GGML_FTYPE_MOSTLY_Q5_K},
@@ -54,6 +55,7 @@ bool ggml_common_quantize_0(
         case GGML_FTYPE_MOSTLY_Q5_1: qtype = GGML_TYPE_Q5_1; break;
         case GGML_FTYPE_MOSTLY_Q8_0: qtype = GGML_TYPE_Q8_0; break;
         case GGML_FTYPE_MOSTLY_Q2_K: qtype = GGML_TYPE_Q2_K; break;
+        case GGML_FTYPE_MOSTLY_TQ1_0: qtype = GGML_TYPE_TQ1_0; break;
         case GGML_FTYPE_MOSTLY_Q3_K: qtype = GGML_TYPE_Q3_K; break;
         case GGML_FTYPE_MOSTLY_Q4_K: qtype = GGML_TYPE_Q4_K; break;
         case GGML_FTYPE_MOSTLY_Q5_K: qtype = GGML_TYPE_Q5_K; break;
@@ -187,6 +189,7 @@ bool ggml_common_quantize_0(
                 case GGML_TYPE_Q4_K:
                 case GGML_TYPE_Q5_K:
                 case GGML_TYPE_Q6_K:
+                case GGML_TYPE_TQ1_0:
                     {
                         cur_size = ggml_quantize_chunk((ggml_type) ttype, data_f32.data(), work.data(), 0, nelements/ne[0], ne[0], nullptr);
                     } break;
@@ -209,7 +212,6 @@ bool ggml_common_quantize_0(
                 case GGML_TYPE_IQ4_XS:
                 case GGML_TYPE_IQ1_M:
                 case GGML_TYPE_BF16:
-                case GGML_TYPE_TQ1_0:
                 case GGML_TYPE_TQ2_0:
                 case GGML_TYPE_COUNT:
                     {

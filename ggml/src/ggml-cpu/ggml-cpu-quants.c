@@ -4191,6 +4191,7 @@ void ggml_vec_dot_tq2_0_q8_K(int n, float * restrict s, size_t bs, const void * 
 #endif
 }
 
+#undef __ARM_NEON
 void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * restrict vx, size_t bx, const void * restrict vy, size_t by, int nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
@@ -4201,7 +4202,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
     const block_q2_K * restrict x = vx;
     const block_q8_K * restrict y = vy;
 
-    const int nb = n / QK_K;
+    const int nb = n / Q2K_K;
 
 #ifdef __ARM_NEON
     const uint8x16_t m3 = vdupq_n_u8(0x3);
@@ -4250,7 +4251,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
         q2bytes.val[1] = vreinterpretq_s8_u8(vandq_u8(vshrq_n_u8(q2bits.val[1], (shift)), m3));\
         MULTIPLY_ACCUM_WITH_SCALE((index));
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        for (int j = 0; j < Q2K_K/128; ++j) {
             const ggml_uint8x16x2_t q2bits = ggml_vld1q_u8_x2(q2); q2 += 32;
 
             ggml_int8x16x2_t q8bytes = ggml_vld1q_s8_x2(q8); q8 += 32;
@@ -4301,7 +4302,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
 
         __m256i sumi = _mm256_setzero_si256();
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        for (int j = 0; j < Q2K_K/128; ++j) {
 
             const __m256i q2bits = _mm256_loadu_si256((const __m256i*)q2); q2 += 32;
 
@@ -4353,7 +4354,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
         const uint8_t * restrict q2 = x[i].qs;
         const int8_t  * restrict q8 = y[i].qs;
 
-        // load mins and scales from block_q2_K.scales[QK_K/16]
+        // load mins and scales from block_q2_K.scales[Q2K_K/16]
         const __m128i mins_and_scales = _mm_loadu_si128((const __m128i*)x[i].scales);
         const __m128i scales16 = _mm_and_si128(mins_and_scales, m4);
         const __m128i mins16 = _mm_and_si128(_mm_srli_epi16(mins_and_scales, 4), m4);
@@ -4374,9 +4375,9 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
         __m128i sumi_0 = _mm_setzero_si128();
         __m128i sumi_1 = _mm_setzero_si128();
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        for (int j = 0; j < Q2K_K/128; ++j) {
 
-            // load Q8 quants int8*16*8 from block_q8_K.qs[QK_K]
+            // load Q8 quants int8*16*8 from block_q8_K.qs[Q2K_K]
             const __m128i q8_0 = _mm_loadu_si128((const __m128i*)q8); q8 += 16;
             const __m128i q8_1 = _mm_loadu_si128((const __m128i*)q8); q8 += 16;
             const __m128i q8_2 = _mm_loadu_si128((const __m128i*)q8); q8 += 16;
@@ -4386,7 +4387,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
             const __m128i q8_6 = _mm_loadu_si128((const __m128i*)q8); q8 += 16;
             const __m128i q8_7 = _mm_loadu_si128((const __m128i*)q8); q8 += 16;
 
-            // load 2bits*16*8 from block_q2_K.qs[QK_K/4]
+            // load 2bits*16*8 from block_q2_K.qs[Q2K_K/4]
             __m128i q2bits = _mm_loadu_si128((const __m128i*)q2); q2 += 16;
             const __m128i q2_0 = _mm_and_si128(q2bits, m3);
             const __m128i q2_2 = _mm_and_si128(_mm_srli_epi16(q2bits, 2), m3);
@@ -4481,7 +4482,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
         uint8_t is=0;
         int isum=0;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        for (int j = 0; j < Q2K_K/128; ++j) {
             // load Q2
             vuint8m1_t q2_x = __riscv_vle8_v_u8m1(q2, vl);
 
@@ -4580,7 +4581,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
         const uint8_t * restrict q2 = x[i].qs;
         const int8_t  * restrict q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        for (int j = 0; j < Q2K_K/128; ++j) {
             __builtin_prefetch(q2, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -4690,7 +4691,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        for (int j = 0; j < Q2K_K/128; ++j) {
 
             const __m256i q2bits = __lasx_xvld((const __m256i*)q2, 0); q2 += 32;
 
@@ -4747,7 +4748,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * restrict s, size_t bs, const void * r
         int isum = 0;
         int is = 0;
         int d;
-        for (int k = 0; k < QK_K/128; ++k) {
+        for (int k = 0; k < Q2K_K/128; ++k) {
             int shift = 0;
             for (int j = 0; j < 4; ++j) {
                 d = sc[is++] & 0xF;

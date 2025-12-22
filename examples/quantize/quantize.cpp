@@ -197,7 +197,7 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "  --tensor-type PATTERN=TYPE : specify quantization type for tensors matching PATTERN\n");
         fprintf(stderr, "      PATTERN is a regex pattern to match tensor names\n");
         fprintf(stderr, "      TYPE is a quantization type (e.g., q4_0, q8_0, f16)\n");
-        fprintf(stderr, "      Example: --tensor-type 'encoder.*.weight'=q8_0 --tensor-type 'decoder.*.weight'=q4_0\n");
+        fprintf(stderr, "      Example: --tensor-type 'encoder\\..*\\.weight'=q8_0 --tensor-type 'decoder\\..*\\.weight'=q4_0\n");
         fprintf(stderr, "\n");
         ggml_print_ftypes(stderr);
         return 1;

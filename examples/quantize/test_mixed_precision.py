@@ -10,10 +10,22 @@ import os
 
 def test_cli_arguments():
     """Test that the quantize binary accepts the new arguments"""
-    quantize_bin = "./build/bin/quantize"
+    # Try to find quantize binary in common locations
+    possible_paths = [
+        os.environ.get("WHISPER_QUANTIZE_BIN", ""),
+        "./build/bin/quantize",
+        "../../../build/bin/quantize",
+        "../../build/bin/quantize"
+    ]
     
-    if not os.path.exists(quantize_bin):
-        print("Error: quantize binary not found. Please build first.")
+    quantize_bin = None
+    for path in possible_paths:
+        if path and os.path.exists(path):
+            quantize_bin = path
+            break
+    
+    if not quantize_bin:
+        print("Error: quantize binary not found. Please build first or set WHISPER_QUANTIZE_BIN environment variable.")
         return False
     
     print("=== Testing CLI Argument Parsing ===\n")

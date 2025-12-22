@@ -306,7 +306,7 @@ bool ggml_common_quantize_0(
         case GGML_FTYPE_MOSTLY_BF16:
         case GGML_FTYPE_MOSTLY_MXFP4:
                 {
-                    fprintf(stderr, "%s: invalid model type %d\n", __func__, ftype);
+                    fprintf(stderr, "%s: unsupported model type %d (ftype=%d)\n", __func__, ftype, ftype);
                     return false;
                 }
     };
@@ -314,6 +314,23 @@ bool ggml_common_quantize_0(
     if (!ggml_is_quantized(default_qtype)) {
         fprintf(stderr, "%s: invalid quantization type %d (%s)\n", __func__, default_qtype, ggml_type_name(default_qtype));
         return false;
+    }
+
+    // Pre-compile regex patterns for efficiency
+    struct compiled_pattern {
+        std::regex regex;
+        ggml_type quant_type;
+    };
+    std::vector<compiled_pattern> compiled_patterns;
+    compiled_patterns.reserve(tensor_quant_specs.size());
+    
+    for (const auto & spec : tensor_quant_specs) {
+        try {
+            compiled_patterns.push_back({std::regex(spec.pattern), spec.quant_type});
+        } catch (const std::regex_error & e) {
+            fprintf(stderr, "%s: invalid regex pattern '%s': %s\n", __func__, spec.pattern.c_str(), e.what());
+            return false;
+        }
     }
 
     size_t total_size_org = 0;
@@ -373,10 +390,10 @@ bool ggml_common_quantize_0(
 
         // check for per-tensor quantization specification
         if (quantize) {
-            for (const auto & spec : tensor_quant_specs) {
-                if (std::regex_match(name, std::regex(spec.pattern))) {
-                    qtype = spec.quant_type;
-                    printf("matched pattern '%s' -> %s ", spec.pattern.c_str(), ggml_type_name(qtype));
+            for (const auto & cp : compiled_patterns) {
+                if (std::regex_match(name, cp.regex)) {
+                    qtype = cp.quant_type;
+                    printf("matched pattern -> %s ", ggml_type_name(qtype));
                     break;
                 }
             }

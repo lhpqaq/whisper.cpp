@@ -188,10 +188,13 @@ bool ggml_common_quantize_0(
 
             ttype = qtype;
         } else {
-            const int bpe = (ttype == 0) ? sizeof(float) : sizeof(uint16_t);
+            // For non-quantized tensors, we need to correctly calculate size based on type
+            // Use ggml_row_size to get the correct size for the tensor's row
+            const size_t row_size = ggml_row_size((ggml_type) ttype, ne[0]);
+            const size_t data_size = row_size * (nelements / ne[0]);
 
-            data_u8.resize(nelements*bpe);
-            finp.read(reinterpret_cast<char *>(data_u8.data()), nelements * bpe);
+            data_u8.resize(data_size);
+            finp.read(reinterpret_cast<char *>(data_u8.data()), data_size);
         }
 
         fout.write(reinterpret_cast<char *>(&n_dims), sizeof(n_dims));
@@ -423,10 +426,13 @@ bool ggml_common_quantize_0(
             ttype = qtype;
             quant_type_counts[ggml_type_name(qtype)]++;
         } else {
-            const int bpe = (ttype == 0) ? sizeof(float) : sizeof(uint16_t);
+            // For non-quantized tensors, we need to correctly calculate size based on type
+            // Use ggml_row_size to get the correct size for the tensor's row
+            const size_t row_size = ggml_row_size((ggml_type) ttype, ne[0]);
+            const size_t data_size = row_size * (nelements / ne[0]);
 
-            data_u8.resize(nelements*bpe);
-            finp.read(reinterpret_cast<char *>(data_u8.data()), nelements * bpe);
+            data_u8.resize(data_size);
+            finp.read(reinterpret_cast<char *>(data_u8.data()), data_size);
         }
 
         fout.write(reinterpret_cast<char *>(&n_dims), sizeof(n_dims));

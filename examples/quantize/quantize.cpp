@@ -167,6 +167,7 @@ static bool whisper_model_quantize(
         "encoder.conv2.bias",
         "encoder.positional_embedding",
         "decoder.positional_embedding",
+        "decoder.token_embedding.weight",  // Token embeddings should not be quantized
     };
 
     // Use the extended quantization function if we have per-tensor specs

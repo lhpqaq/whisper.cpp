@@ -161,7 +161,6 @@ bool ggml_common_quantize_0(
         for (const auto & s : to_skip) {
             if (std::regex_match(name, std::regex(s))) {
                 quantize = false;
-                printf("[skipped] ");
                 break;
             }
         }
@@ -388,7 +387,6 @@ bool ggml_common_quantize_0(
         for (const auto & s : to_skip) {
             if (std::regex_match(name, std::regex(s))) {
                 quantize = false;
-                printf("[skipped] ");
                 break;
             }
         }

@@ -87,7 +87,12 @@ static bool whisper_model_quantize(
         finp.read((char *) &hparams.ftype,         sizeof(hparams.ftype));
 
         const int32_t qntvr_src =    hparams.ftype / GGML_QNT_VERSION_FACTOR;
-        const int32_t ftype_dst = GGML_QNT_VERSION * GGML_QNT_VERSION_FACTOR + ftype;
+        
+        // For mixed precision quantization, use F16 as the base ftype to ensure
+        // all tensor buffers are large enough to hold any quantization type
+        const bool use_mixed_precision = !tensor_quant_specs.empty();
+        const int32_t ftype_for_allocation = use_mixed_precision ? GGML_FTYPE_MOSTLY_F16 : ftype;
+        const int32_t ftype_dst = GGML_QNT_VERSION * GGML_QNT_VERSION_FACTOR + ftype_for_allocation;
 
         fprintf(stderr, "%s: n_vocab       = %d\n", __func__, hparams.n_vocab);
         fprintf(stderr, "%s: n_audio_ctx   = %d\n", __func__, hparams.n_audio_ctx);
@@ -103,6 +108,9 @@ static bool whisper_model_quantize(
         fprintf(stderr, "%s: qntvr (src)   = %d\n", __func__, qntvr_src);
         fprintf(stderr, "%s: ftype (dst)   = %d\n", __func__, ftype_dst);
         fprintf(stderr, "%s: qntvr (dst)   = %d\n", __func__, GGML_QNT_VERSION);
+        if (use_mixed_precision) {
+            fprintf(stderr, "%s: using mixed precision quantization (ftype for allocation = F16)\n", __func__);
+        }
 
         fout.write((const char *) &hparams.n_vocab,       sizeof(hparams.n_vocab));
         fout.write((const char *) &hparams.n_audio_ctx,   sizeof(hparams.n_audio_ctx));

@@ -1911,28 +1911,61 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
                 return false;
             }
 
-            const size_t bpe = ggml_type_size(ggml_type(ttype));
-
-            if ((nelements*bpe)/ggml_blck_size(tensor->type) != ggml_nbytes(tensor)) {
-                WHISPER_LOG_ERROR("%s: tensor '%s' has wrong size in model file: got %zu, expected %zu\n",
-                        __func__, name.data(), ggml_nbytes(tensor), nelements*bpe);
-                return false;
+            // Calculate size based on file's tensor type
+            const size_t file_tensor_size = ggml_row_size(ggml_type(ttype), ne[0]) * (nelements / ne[0]);
+            const size_t expected_tensor_size = ggml_nbytes(tensor);
+            
+            // For mixed precision models, the tensor type in file may differ from the type
+            // the tensor was created with. We need to handle this carefully.
+            if (tensor->type != ggml_type(ttype)) {
+                // Mixed precision: tensor created with one type, file has another
+                // We need to update the tensor's type to match the file
+                WHISPER_LOG_DEBUG("%s: tensor '%s' type mismatch (expected %s, file has %s)\n",
+                        __func__, name.data(), ggml_type_name(tensor->type), ggml_type_name(ggml_type(ttype)));
+                
+                // Check if the allocated buffer is large enough for the file's data
+                if (file_tensor_size > expected_tensor_size) {
+                    WHISPER_LOG_ERROR("%s: tensor '%s' buffer too small: allocated %zu bytes for %s, but file needs %zu bytes for %s\n",
+                            __func__, name.data(), expected_tensor_size, ggml_type_name(tensor->type), 
+                            file_tensor_size, ggml_type_name(ggml_type(ttype)));
+                    return false;
+                }
+                
+                // Update tensor type to match the file
+                tensor->type = ggml_type(ttype);
+                
+                // Update tensor strides (nb) based on new type
+                tensor->nb[0] = ggml_type_size(tensor->type);
+                tensor->nb[1] = tensor->nb[0] * (tensor->ne[0] / ggml_blck_size(tensor->type));
+                for (int i = 2; i < GGML_MAX_DIMS; i++) {
+                    tensor->nb[i] = tensor->nb[i-1] * tensor->ne[i-1];
+                }
+            } else {
+                // Normal case: types match, verify size
+                if (file_tensor_size != expected_tensor_size) {
+                    WHISPER_LOG_ERROR("%s: tensor '%s' has wrong size in model file: got %zu, expected %zu\n",
+                            __func__, name.data(), expected_tensor_size, file_tensor_size);
+                    return false;
+                }
             }
+            
+            // Now read the data - use the file's size
+            const size_t bytes_to_read = file_tensor_size;
 
             if (ggml_backend_buffer_is_host(tensor->buffer)) {
                 // for the CPU and Metal backend, we can read directly into the tensor
-                loader->read(loader->context, tensor->data, ggml_nbytes(tensor));
+                loader->read(loader->context, tensor->data, bytes_to_read);
                 BYTESWAP_TENSOR(tensor);
             } else {
                 // read into a temporary buffer first, then copy to device memory
-                read_buf.resize(ggml_nbytes(tensor));
+                read_buf.resize(bytes_to_read);
 
                 loader->read(loader->context, read_buf.data(), read_buf.size());
 
-                ggml_backend_tensor_set(tensor, read_buf.data(), 0, ggml_nbytes(tensor));
+                ggml_backend_tensor_set(tensor, read_buf.data(), 0, bytes_to_read);
             }
 
-            total_size += ggml_nbytes(tensor);
+            total_size += bytes_to_read;
             model.n_loaded++;
         }
 

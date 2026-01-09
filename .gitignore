@@ -1,6 +1,7 @@
 *.o
 *.a
 *.d
+buildc/
 .cache/
 .coreml/
 .test/
@@ -64,3 +65,4 @@ cmake-build-debug/
 local.properties
 .log
 .exe
+test.flac

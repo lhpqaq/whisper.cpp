@@ -41,7 +41,7 @@ def main():
         hyp_clean.append(normalizer(hyp_orig[code]))
 
     wer = jiwer.wer(ref_clean, hyp_clean)
-    print(f"WER: {wer * 100:.2f}%")
+    print(f"WER: {wer * 100:.6f}%")
 
 if __name__ == '__main__':
     main()

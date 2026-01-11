@@ -2,3 +2,34 @@ Processing model: small-r1
 make -f eval.mk clean
 make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
 make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+Processing model: small-r2
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+cp: cannot stat 'small-r2.txt': No such file or directory
+Processing model: small-r3
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+cp: cannot stat 'small-r3.txt': No such file or directory
+Processing model: small-r4
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+cp: cannot stat 'small-r4.txt': No such file or directory
+Processing model: small-r5
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+cp: cannot stat 'small-r5.txt': No such file or directory
+Processing model: small-r6
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+cp: cannot stat 'small-r6.txt': No such file or directory
+Processing model: small-r7
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+cp: cannot stat 'small-r7.txt': No such file or directory
+All models processed. Results are in ../../result/b4t8.

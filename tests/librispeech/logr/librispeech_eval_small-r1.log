@@ -14589,3 +14589,17 @@ mv LibriSpeech/test-clean/908/31957/908-31957-0022.flac.tmp.txt LibriSpeech/test
 output_txt: saving output to 'LibriSpeech/test-clean/908/31957/908-31957-0023.flac.tmp.txt'
 mv LibriSpeech/test-clean/908/31957/908-31957-0023.flac.tmp.txt LibriSpeech/test-clean/908/31957/908-31957-0023.flac.txt
 ../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-small-r1.bin --file LibriSpeech/test-clean/908/31957/908-31957-0024.flac --output-file LibriSpeech/test-clean/908/31957/908-31957-0024.flac.tmp
+
+[00:00:00.000 --> 00:00:07.040]   I love thee with the passion put to use in my old griefs and with my childhoods faith.
+output_txt: saving output to 'LibriSpeech/test-clean/908/31957/908-31957-0024.flac.tmp.txt'
+mv LibriSpeech/test-clean/908/31957/908-31957-0024.flac.tmp.txt LibriSpeech/test-clean/908/31957/908-31957-0024.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-small-r1.bin --file LibriSpeech/test-clean/908/31957/908-31957-0025.flac --output-file LibriSpeech/test-clean/908/31957/908-31957-0025.flac.tmp
+
+[00:00:00.000 --> 00:00:06.100]   I love thee with the love I seemed to lose with my lost saints.
+[00:00:06.100 --> 00:00:17.660]   I love thee with the breath, smiles, tears of all my life; and if God choose, I shall but
+[00:00:17.660 --> 00:00:19.740]   love thee better after death.
+output_txt: saving output to 'LibriSpeech/test-clean/908/31957/908-31957-0025.flac.tmp.txt'
+mv LibriSpeech/test-clean/908/31957/908-31957-0025.flac.tmp.txt LibriSpeech/test-clean/908/31957/908-31957-0025.flac.txt
+python eval.py > small-r1.txt.tmp
+mv small-r1.txt.tmp small-r1.txt
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'

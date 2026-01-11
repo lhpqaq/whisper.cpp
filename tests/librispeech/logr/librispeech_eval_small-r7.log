@@ -1,0 +1,13 @@
+make -f eval.mk
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-small-r7.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac.tmp
+
+[00:00:00.000 --> 00:00:05.300]   He hoped there would be stew for dinner, turnips and carrots and bruised potatoes and
+[00:00:05.300 --> 00:00:10.140]   fat, mutton pieces to be ladled out in thick, peppered, flour-fatten sauce.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-small-r7.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0001.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0001.flac.tmp
+error: failed to initialize whisper context
+make[1]: *** [eval.mk:29: LibriSpeech/test-clean/1089/134686/1089-134686-0001.flac.txt] Error 3
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make: *** [Makefile:6: eval] Error 2

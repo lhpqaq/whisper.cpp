@@ -1,0 +1,4 @@
+Processing model: small-r1
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'

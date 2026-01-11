@@ -1,0 +1,489 @@
+Added tensor quantization spec: pattern='encoder\..*\.weight' type=q4_0
+whisper_model_quantize: loading model from './models/ggml-small.bin'
+                                    decoder.positional_embedding - [  768,   448,     1], type =    f32 size =    1.312 MB
+                                    encoder.positional_embedding - [  768,  1500,     1], type =    f32 size =    4.395 MB
+                                  decoder.token_embedding.weight - [  768, 51865,     1], type =    f16 size =   151.95 MB ->    40.36 MB
+                                  decoder.blocks.0.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.0.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.0.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.0.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.0.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.0.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.0.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.0.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.0.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.0.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.0.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.0.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.0.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.0.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.0.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.0.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.0.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.0.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.0.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.0.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.0.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.0.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.0.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.0.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.1.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.1.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.1.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.1.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.1.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.1.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.1.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.1.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.1.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.1.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.1.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.1.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.1.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.1.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.1.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.1.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.1.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.1.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.1.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.1.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.1.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.1.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.1.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.1.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.2.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.2.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.2.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.2.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.2.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.2.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.2.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.2.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.2.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.2.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.2.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.2.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.2.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.2.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.2.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.2.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.2.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.2.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.2.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.2.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.2.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.2.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.2.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.2.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.3.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.3.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.3.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.3.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.3.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.3.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.3.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.3.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.3.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.3.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.3.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.3.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.3.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.3.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.3.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.3.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.3.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.3.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.3.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.3.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.3.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.3.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.3.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.3.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.4.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.4.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.4.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.4.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.4.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.4.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.4.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.4.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.4.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.4.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.4.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.4.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.4.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.4.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.4.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.4.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.4.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.4.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.4.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.4.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.4.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.4.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.4.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.4.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.5.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.5.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.5.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.5.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.5.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.5.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.5.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.5.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.5.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.5.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.5.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.5.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.5.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.5.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.5.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.5.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.5.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.5.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.5.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.5.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.5.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.5.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.5.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.5.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.6.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.6.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.6.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.6.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.6.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.6.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.6.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.6.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.6.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.6.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.6.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.6.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.6.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.6.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.6.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.6.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.6.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.6.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.6.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.6.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.6.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.6.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.6.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.6.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.7.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.7.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.7.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.7.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.7.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.7.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.7.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.7.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.7.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.7.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.7.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.7.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.7.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.7.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.7.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.7.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.7.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.7.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.7.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.7.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.7.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.7.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.7.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.7.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.8.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.8.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.8.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.8.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.8.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.8.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.8.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.8.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.8.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.8.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.8.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.8.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.8.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.8.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.8.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.8.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.8.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.8.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.8.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.8.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.8.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.8.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.8.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.8.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.9.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                    decoder.blocks.9.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.9.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.9.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   decoder.blocks.9.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                     decoder.blocks.9.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.9.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.9.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              decoder.blocks.9.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.9.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.9.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                              decoder.blocks.9.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                decoder.blocks.9.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.9.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                  decoder.blocks.9.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                           decoder.blocks.9.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.9.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                        decoder.blocks.9.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.9.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.9.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                        decoder.blocks.9.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                          decoder.blocks.9.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.9.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                            decoder.blocks.9.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.10.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.10.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.10.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                    decoder.blocks.10.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                  decoder.blocks.10.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                    decoder.blocks.10.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.10.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.10.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.10.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                               decoder.blocks.10.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                               decoder.blocks.10.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                             decoder.blocks.10.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                               decoder.blocks.10.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                               decoder.blocks.10.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                 decoder.blocks.10.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.10.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                            decoder.blocks.10.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                       decoder.blocks.10.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                         decoder.blocks.10.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                         decoder.blocks.10.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                       decoder.blocks.10.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                         decoder.blocks.10.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                         decoder.blocks.10.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                           decoder.blocks.10.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 decoder.blocks.11.mlp_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   decoder.blocks.11.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.11.mlp.0.weight - [  768,  3072,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                    decoder.blocks.11.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                  decoder.blocks.11.mlp.2.weight - [ 3072,   768,     1], type =    f16 size =     9.00 MB ->     2.39 MB
+                                    decoder.blocks.11.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                decoder.blocks.11.attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  decoder.blocks.11.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             decoder.blocks.11.attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                               decoder.blocks.11.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                               decoder.blocks.11.attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                             decoder.blocks.11.attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                               decoder.blocks.11.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                               decoder.blocks.11.attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                                 decoder.blocks.11.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                          decoder.blocks.11.cross_attn_ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                            decoder.blocks.11.cross_attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                       decoder.blocks.11.cross_attn.query.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                         decoder.blocks.11.cross_attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                         decoder.blocks.11.cross_attn.key.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                       decoder.blocks.11.cross_attn.value.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                         decoder.blocks.11.cross_attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                         decoder.blocks.11.cross_attn.out.weight - [  768,   768,     1], type =    f16 size =     2.25 MB ->     0.60 MB
+                           decoder.blocks.11.cross_attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                               decoder.ln.weight - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                                 decoder.ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                            encoder.conv1.weight - [    3,    80,   768], type =    f16 matched pattern -> q4_0 size =    0.352 MB
+                                              encoder.conv1.bias - [    1,   768,     1], type =    f32 size =    0.003 MB
+                                            encoder.conv2.weight - [    3,   768,   768], type =    f16 matched pattern -> q4_0 size =    3.375 MB
+                                              encoder.conv2.bias - [    1,   768,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.0.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.0.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.0.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.0.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.0.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.0.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.0.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.0.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.0.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.0.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.0.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.0.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.0.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.0.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.0.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.1.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.1.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.1.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.1.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.1.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.1.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.1.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.1.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.1.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.1.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.1.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.1.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.1.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.1.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.1.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.2.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.2.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.2.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.2.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.2.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.2.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.2.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.2.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.2.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.2.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.2.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.2.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.2.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.2.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.2.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.3.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.3.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.3.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.3.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.3.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.3.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.3.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.3.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.3.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.3.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.3.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.3.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.3.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.3.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.3.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.4.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.4.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.4.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.4.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.4.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.4.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.4.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.4.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.4.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.4.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.4.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.4.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.4.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.4.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.4.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.5.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.5.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.5.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.5.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.5.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.5.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.5.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.5.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.5.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.5.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.5.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.5.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.5.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.5.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.5.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.6.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.6.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.6.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.6.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.6.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.6.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.6.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.6.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.6.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.6.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.6.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.6.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.6.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.6.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.6.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.7.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.7.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.7.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.7.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.7.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.7.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.7.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.7.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.7.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.7.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.7.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.7.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.7.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.7.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.7.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.8.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.8.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.8.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.8.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.8.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.8.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.8.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.8.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.8.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.8.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.8.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.8.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.8.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.8.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.8.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.9.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                    encoder.blocks.9.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                   encoder.blocks.9.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.9.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                   encoder.blocks.9.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                     encoder.blocks.9.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.9.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.9.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                              encoder.blocks.9.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.9.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.9.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                              encoder.blocks.9.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                encoder.blocks.9.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.9.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                  encoder.blocks.9.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.10.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.10.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.10.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                    encoder.blocks.10.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                  encoder.blocks.10.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                    encoder.blocks.10.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.10.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                  encoder.blocks.10.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             encoder.blocks.10.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                               encoder.blocks.10.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                               encoder.blocks.10.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                             encoder.blocks.10.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                               encoder.blocks.10.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                               encoder.blocks.10.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                 encoder.blocks.10.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                 encoder.blocks.11.mlp_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                   encoder.blocks.11.mlp_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                  encoder.blocks.11.mlp.0.weight - [  768,  3072,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                    encoder.blocks.11.mlp.0.bias - [ 3072,     1,     1], type =    f32 size =    0.012 MB
+                                  encoder.blocks.11.mlp.2.weight - [ 3072,   768,     1], type =    f16 matched pattern -> q4_0 size =     9.00 MB ->     1.27 MB
+                                    encoder.blocks.11.mlp.2.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                encoder.blocks.11.attn_ln.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                  encoder.blocks.11.attn_ln.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                             encoder.blocks.11.attn.query.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                               encoder.blocks.11.attn.query.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                               encoder.blocks.11.attn.key.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                             encoder.blocks.11.attn.value.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                               encoder.blocks.11.attn.value.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                               encoder.blocks.11.attn.out.weight - [  768,   768,     1], type =    f16 matched pattern -> q4_0 size =     2.25 MB ->     0.32 MB
+                                 encoder.blocks.11.attn.out.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+                                          encoder.ln_post.weight - [  768,     1,     1], type =    f32 matched pattern -> q4_0 size =    0.003 MB
+                                            encoder.ln_post.bias - [  768,     1,     1], type =    f32 size =    0.003 MB
+ggml_common_quantize_0: model size  =   922.15 MB
+ggml_common_quantize_0: quant size  =   211.14 MB | ftype = 7 (q8_0)
+ggml_common_quantize_0: quantization type summary:
+ggml_common_quantize_0:   q4_0: 72 tensors
+ggml_common_quantize_0:   q8_0: 121 tensors
+
+main: quantize time =  3352.79 ms
+main:    total time =  3352.79 ms

@@ -1,0 +1,29 @@
+Processing model: small-a
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+Processing model: small-b
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+Processing model: small-c
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+Processing model: small-d
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+Processing model: small-e
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+Processing model: small-q80
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+Processing model: small-q40
+make -f eval.mk clean
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+make[1]: Leaving directory '/home/aim/project/whisper.cpp/tests/librispeech'
+All models processed. Results are in ../../result/b8t4.

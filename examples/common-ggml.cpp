@@ -14,6 +14,7 @@ static const std::map<std::string, enum ggml_ftype> GGML_FTYPE_MAP = {
     {"q4_k", GGML_FTYPE_MOSTLY_Q4_K},
     {"q5_k", GGML_FTYPE_MOSTLY_Q5_K},
     {"q6_k", GGML_FTYPE_MOSTLY_Q6_K},
+    {"tq2_0", GGML_FTYPE_MOSTLY_TQ2_0},
 };
 
 void ggml_print_ftypes(FILE * fp) {
@@ -24,7 +25,7 @@ void ggml_print_ftypes(FILE * fp) {
 
 enum ggml_ftype ggml_parse_ftype(const char * str) {
     enum ggml_ftype ftype;
-    if (str[0] == 'q') {
+    if (str[0] == 'q' || str[0] == 't') {
         const auto it = GGML_FTYPE_MAP.find(str);
         if (it == GGML_FTYPE_MAP.end()) {
             fprintf(stderr, "%s: unknown ftype '%s'\n", __func__, str);
@@ -58,6 +59,7 @@ bool ggml_common_quantize_0(
         case GGML_FTYPE_MOSTLY_Q4_K: qtype = GGML_TYPE_Q4_K; break;
         case GGML_FTYPE_MOSTLY_Q5_K: qtype = GGML_TYPE_Q5_K; break;
         case GGML_FTYPE_MOSTLY_Q6_K: qtype = GGML_TYPE_Q6_K; break;
+        case GGML_FTYPE_MOSTLY_TQ2_0: qtype = GGML_TYPE_TQ2_0; break;
         case GGML_FTYPE_UNKNOWN:
         case GGML_FTYPE_ALL_F32:
         case GGML_FTYPE_MOSTLY_F16:
@@ -188,6 +190,7 @@ bool ggml_common_quantize_0(
                 case GGML_TYPE_Q4_K:
                 case GGML_TYPE_Q5_K:
                 case GGML_TYPE_Q6_K:
+                case GGML_TYPE_TQ2_0:
                     {
                         cur_size = ggml_quantize_chunk((ggml_type) ttype, data_f32.data(), work.data(), 0, nelements/ne[0], ne[0], nullptr);
                     } break;
@@ -211,7 +214,6 @@ bool ggml_common_quantize_0(
                 case GGML_TYPE_IQ1_M:
                 case GGML_TYPE_BF16:
                 case GGML_TYPE_TQ1_0:
-                case GGML_TYPE_TQ2_0:
                 case GGML_TYPE_MXFP4:
                 case GGML_TYPE_COUNT:
                     {

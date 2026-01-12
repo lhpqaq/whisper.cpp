@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # 模型列表
-MODELS=("small-1" "small-2" "small-3" "small-4" "small-5" "small-6" "small-7")
+MODELS=("small-q80" "small-q40" "small-best" "small-6" "small" "small-1" "small-2" "small-3" "small-4" "small-5" "small-7" "small-r1" "small-r2" "small-r3" "small-r4" "small-r5" "small-r6" "small-r7")
 
 # 结果存储目录
-RESULT_DIR="../../result/b8t2"
+RESULT_DIR="../../result/earnings/"
 
 # 确保结果目录存在
 mkdir -p "$RESULT_DIR"

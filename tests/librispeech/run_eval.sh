@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 模型列表
-MODELS=("small-1" "small-2" "small-3" "small-4" "small-5" "small-6" "small-7")
+MODELS=("small-q50" "small-q6k" "small-q2k-1" "small-q2k-2" "small-q2k-3" "small-q2k-4" "small-q2k-5" "small-q2k-6" "small-q2k-7" "small-q2k-r1" "small-q2k-r2" "small-q2k-r3" "small-q2k-r4" "small-q2k-r5" "small-q2k-r6" "small-q2k-r7")
 
 # 结果存储目录
 RESULT_DIR="../../result/b8t2"

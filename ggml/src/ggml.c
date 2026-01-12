@@ -1379,6 +1379,7 @@ enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {
         case GGML_FTYPE_MOSTLY_IQ2_S:         wtype = GGML_TYPE_IQ2_S;    break;
         case GGML_FTYPE_UNKNOWN:              wtype = GGML_TYPE_COUNT; break;
         case GGML_FTYPE_MOSTLY_Q4_1_SOME_F16: wtype = GGML_TYPE_COUNT; break;
+        case GGML_FTYPE_MOSTLY_TQ2_0: wtype = GGML_TYPE_TQ2_0; break;
     }
 
     GGML_ASSERT(wtype != GGML_TYPE_COUNT);

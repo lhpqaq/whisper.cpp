@@ -53,18 +53,9 @@ processors = args.processors
 
 # Define the models, threads, and processor counts to benchmark
 models = [
-    "ggml-tiny.en.bin",
-    "ggml-tiny.bin",
-    "ggml-base.en.bin",
-    "ggml-base.bin",
-    "ggml-small.en.bin",
-    "ggml-small.bin",
-    "ggml-medium.en.bin",
-    "ggml-medium.bin",
-    "ggml-large-v1.bin",
-    "ggml-large-v2.bin",
-    "ggml-large-v3.bin",
-    "ggml-large-v3-turbo.bin",
+    "ggml-small-q80.bin",
+    "ggml-small-q40.bin",
+    "ggml-small-best.bin",
 ]
 
 

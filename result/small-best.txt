@@ -1,0 +1,6 @@
+WER: 3.170083%
+./build/bin/quantize \
+--tensor-type 'decoder\.blocks\.\d+\.(attn_ln\..*|attn\.(query|key|value|out)\..*)'=q4_0 \
+--tensor-type 'decoder\.blocks\.\d+\.(mlp_ln\..*|mlp\.0\..*)'=q4_0 \
+--tensor-type 'decoder\.blocks\.\d+\.mlp\.2\..*'=q4_0 \
+./models/ggml-small.bin ./models/ggml-small-best.bin q8_0

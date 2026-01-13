@@ -998,7 +998,8 @@ static bool whisper_kv_cache_init(
     }
 
     // Select KV cache data type based on quantization configuration
-    // Q8_0 quantization reduces memory usage by ~50% compared to FP16
+    // Q8_0 uses ~8.5 bits per value (8-bit + shared FP16 scale per 32 values)
+    // This provides ~50% memory reduction compared to FP16, ~75% vs FP32
     ggml_type kv_type = use_q8_0 ? GGML_TYPE_Q8_0 : wtype;
 
     cache.k = ggml_new_tensor_1d(ctx, kv_type, n_elements);

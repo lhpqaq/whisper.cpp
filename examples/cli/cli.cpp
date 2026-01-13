@@ -80,6 +80,10 @@ struct whisper_params {
     bool suppress_nst    = false;
     bool carry_initial_prompt = false;
 
+    // KV cache precision options
+    std::string kv_type_k    = "f16";  // K cache type: f16, f32
+    std::string kv_type_v    = "f16";  // V cache type: f16, f32
+
     std::string language  = "en";
     std::string prompt;
     std::string font_path = "/System/Library/Fonts/Supplemental/Courier New Bold.ttf";
@@ -197,6 +201,8 @@ static bool whisper_params_parse(int argc, char ** argv, whisper_params & params
         else if (arg == "-ng"   || arg == "--no-gpu")               { params.use_gpu         = false; }
         else if (arg == "-fa"   || arg == "--flash-attn")           { params.flash_attn      = true; }
         else if (arg == "-nfa"  || arg == "--no-flash-attn")        { params.flash_attn      = false; }
+        else if (                  arg == "--kv-type-k")            { params.kv_type_k       = ARGV_NEXT; }
+        else if (                  arg == "--kv-type-v")            { params.kv_type_v       = ARGV_NEXT; }
         else if (arg == "-sns"  || arg == "--suppress-nst")         { params.suppress_nst    = true; }
         else if (                  arg == "--suppress-regex")       { params.suppress_regex  = ARGV_NEXT; }
         else if (                  arg == "--grammar")              { params.grammar         = ARGV_NEXT; }
@@ -278,6 +284,8 @@ static void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params
     fprintf(stderr, "  -ng,       --no-gpu               [%-7s] disable GPU\n",                                    params.use_gpu ? "false" : "true");
     fprintf(stderr, "  -fa,       --flash-attn           [%-7s] enable flash attention\n",                         params.flash_attn ? "true" : "false");
     fprintf(stderr, "  -nfa,      --no-flash-attn        [%-7s] disable flash attention\n",                        params.flash_attn ? "false" : "true");
+    fprintf(stderr, "             --kv-type-k TYPE       [%-7s] KV cache K type (f16, f32)\n",                     params.kv_type_k.c_str());
+    fprintf(stderr, "             --kv-type-v TYPE       [%-7s] KV cache V type (f16, f32)\n",                     params.kv_type_v.c_str());
     fprintf(stderr, "  -sns,      --suppress-nst         [%-7s] suppress non-speech tokens\n",                     params.suppress_nst ? "true" : "false");
     fprintf(stderr, "  --suppress-regex REGEX            [%-7s] regular expression matching tokens to suppress\n", params.suppress_regex.c_str());
     fprintf(stderr, "  --grammar GRAMMAR                 [%-7s] GBNF grammar to guide decoding\n",                 params.grammar.c_str());
@@ -1004,6 +1012,17 @@ int main(int argc, char ** argv) {
 
     cparams.use_gpu    = params.use_gpu;
     cparams.flash_attn = params.flash_attn;
+
+    // Parse KV cache types
+    auto parse_kv_type = [&](const std::string & type_str, const char * name) -> ggml_type {
+        if (type_str == "f32") return GGML_TYPE_F32;
+        if (type_str == "f16") return GGML_TYPE_F16;
+        fprintf(stderr, "warning: unknown %s type '%s', defaulting to f16\n", name, type_str.c_str());
+        return GGML_TYPE_F16; // default
+    };
+
+    cparams.type_k = parse_kv_type(params.kv_type_k, "kv-type-k");
+    cparams.type_v = parse_kv_type(params.kv_type_v, "kv-type-v");
 
     if (!params.dtw.empty()) {
         cparams.dtw_token_timestamps = true;

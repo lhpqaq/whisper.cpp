@@ -118,6 +118,12 @@ extern "C" {
         bool  flash_attn;
         int   gpu_device;  // CUDA device
 
+        // [EXPERIMENTAL] KV cache data types for encoder (cross) and decoder (self)
+        // Allows using different precision for encoder vs decoder KV caches
+        // Default: GGML_TYPE_F16 for all. Set to GGML_TYPE_F32 for higher precision.
+        enum ggml_type type_k;  // K cache type for both encoder and decoder (default: F16)
+        enum ggml_type type_v;  // V cache type for both encoder and decoder (default: F16)
+
         // [EXPERIMENTAL] Token-level timestamps with DTW
         bool dtw_token_timestamps;
         enum whisper_alignment_heads_preset dtw_aheads_preset;

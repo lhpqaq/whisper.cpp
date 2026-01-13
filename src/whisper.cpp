@@ -968,7 +968,8 @@ static void read_safe(whisper_model_loader * loader, T & dest) {
 static bool whisper_kv_cache_init(
              struct whisper_kv_cache & cache,
                       ggml_backend_t   backend,
-                           ggml_type   wtype,
+                           ggml_type   type_k,
+                           ggml_type   type_v,
                              int64_t   n_text_state,
                              int64_t   n_text_layer,
                                  int   n_ctx) {
@@ -996,8 +997,8 @@ static bool whisper_kv_cache_init(
         return false;
     }
 
-    cache.k = ggml_new_tensor_1d(ctx, wtype, n_elements);
-    cache.v = ggml_new_tensor_1d(ctx, wtype, n_elements);
+    cache.k = ggml_new_tensor_1d(ctx, type_k, n_elements);
+    cache.v = ggml_new_tensor_1d(ctx, type_v, n_elements);
 
     cache.buffer = ggml_backend_alloc_ctx_tensors(ctx, backend);
     if (!cache.buffer) {
@@ -3417,7 +3418,8 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
     // at this point, we don't know yet how many decoders will be used
     // later during decoding, if more decoders are used, we will recreate the KV cache respectively
     state->kv_self_n_dec = 1;
-    if (!whisper_kv_cache_init(state->kv_self, state->backends[0], ctx->itype,
+    if (!whisper_kv_cache_init(state->kv_self, state->backends[0], 
+                ctx->params.type_k, ctx->params.type_v,
                 ctx->model.hparams.n_text_state,
                 ctx->model.hparams.n_text_layer,
                 GGML_PAD(ctx->model.hparams.n_text_ctx, 256))) {
@@ -3428,10 +3430,12 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
 
     {
         const size_t memory_size = ggml_nbytes(state->kv_self.k) + ggml_nbytes(state->kv_self.v);
-        WHISPER_LOG_INFO("%s: kv self size  = %7.2f MB\n", __func__, memory_size / 1e6);
+        WHISPER_LOG_INFO("%s: kv self size  = %7.2f MB (K: %s, V: %s)\n", __func__, memory_size / 1e6, 
+            ggml_type_name(ctx->params.type_k), ggml_type_name(ctx->params.type_v));
     }
 
-    if (!whisper_kv_cache_init(state->kv_cross, state->backends[0], ctx->itype,
+    if (!whisper_kv_cache_init(state->kv_cross, state->backends[0], 
+                ctx->params.type_k, ctx->params.type_v,
                 ctx->model.hparams.n_text_state,
                 ctx->model.hparams.n_text_layer,
                 GGML_PAD(ctx->model.hparams.n_audio_ctx, 256))) {
@@ -3442,10 +3446,12 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
 
     {
         const size_t memory_size = ggml_nbytes(state->kv_cross.k) + ggml_nbytes(state->kv_cross.v);
-        WHISPER_LOG_INFO("%s: kv cross size = %7.2f MB\n", __func__, memory_size / 1e6);
+        WHISPER_LOG_INFO("%s: kv cross size = %7.2f MB (K: %s, V: %s)\n", __func__, memory_size / 1e6,
+            ggml_type_name(ctx->params.type_k), ggml_type_name(ctx->params.type_v));
     }
 
-    if (!whisper_kv_cache_init(state->kv_pad, state->backends[0], ctx->itype,
+    if (!whisper_kv_cache_init(state->kv_pad, state->backends[0], 
+                ctx->params.type_k, ctx->params.type_v,
                 ctx->model.hparams.n_audio_state,
                 1,
                 GGML_PAD(ctx->model.hparams.n_audio_ctx, 256))) {
@@ -3641,6 +3647,9 @@ struct whisper_context_params whisper_context_default_params() {
         /*.use_gpu              =*/ true,
         /*.flash_attn           =*/ true,
         /*.gpu_device           =*/ 0,
+
+        /*.type_k               =*/ GGML_TYPE_F16,
+        /*.type_v               =*/ GGML_TYPE_F16,
 
         /*.dtw_token_timestamps =*/ false,
         /*.dtw_aheads_preset    =*/ WHISPER_AHEADS_NONE,
@@ -7160,7 +7169,8 @@ int whisper_full_with_state(
                     // overallocate to workaround KV cache fragmentation issues
                     const int factor = n_decoders_cur > 1 ? n_decoders_cur + 2 : 1;
 
-                    if (!whisper_kv_cache_init(state->kv_self, state->backends[0], ctx->itype,
+                    if (!whisper_kv_cache_init(state->kv_self, state->backends[0], 
+                                ctx->params.type_k, ctx->params.type_v,
                                 ctx->model.hparams.n_text_state,
                                 ctx->model.hparams.n_text_layer,
                                 GGML_PAD(ctx->model.hparams.n_text_ctx, 256)*factor)) {

@@ -599,15 +599,29 @@ cache.v = ggml_new_tensor_2d(ctx, kv_type, n_state_aligned, n_mem);
    - 较新的 token：使用较高精度
    - 较旧的 token：使用较低精度（随时间逐步量化）
 
-这些策略可以在 `whisper_kv_cache` 结构中增加独立的 K 和 V 类型配置：
+**✅ 已实现**：K/V 分离精度功能已添加到 `whisper_context_params` 中：
 
 ```cpp
-struct whisper_kv_cache {
+struct whisper_context_params {
     // ...
-    ggml_type k_type;  // K cache 数据类型
-    ggml_type v_type;  // V cache 数据类型
+    enum ggml_type type_k;  // K cache type (default: F16)
+    enum ggml_type type_v;  // V cache type (default: F16)
     // ...
 };
+```
+
+**使用方法**：
+
+```cpp
+// API 使用
+whisper_context_params cparams = whisper_context_default_params();
+cparams.type_k = GGML_TYPE_F16;  // K cache 使用 FP16
+cparams.type_v = GGML_TYPE_F32;  // V cache 使用 FP32 (更高精度)
+```
+
+```bash
+# CLI 使用
+./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k f16 --kv-type-v f32
 ```
 
 ---

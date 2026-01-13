@@ -971,7 +971,8 @@ static bool whisper_kv_cache_init(
                            ggml_type   wtype,
                              int64_t   n_text_state,
                              int64_t   n_text_layer,
-                                 int   n_ctx) {
+                                 int   n_ctx,
+                                bool   use_q8_0 = false) {
     const int64_t n_mem      = n_text_layer*n_ctx;
     const int64_t n_elements = n_text_state*n_mem;
 
@@ -996,13 +997,24 @@ static bool whisper_kv_cache_init(
         return false;
     }
 
-    cache.k = ggml_new_tensor_1d(ctx, wtype, n_elements);
-    cache.v = ggml_new_tensor_1d(ctx, wtype, n_elements);
+    // Select KV cache data type based on quantization configuration
+    // Q8_0 quantization reduces memory usage by ~50% compared to FP16
+    ggml_type kv_type = use_q8_0 ? GGML_TYPE_Q8_0 : wtype;
+
+    cache.k = ggml_new_tensor_1d(ctx, kv_type, n_elements);
+    cache.v = ggml_new_tensor_1d(ctx, kv_type, n_elements);
 
     cache.buffer = ggml_backend_alloc_ctx_tensors(ctx, backend);
     if (!cache.buffer) {
         WHISPER_LOG_ERROR("%s: failed to allocate memory for the kv cache\n", __func__);
         return false;
+    }
+
+    // Log memory usage for debugging and performance analysis
+    if (use_q8_0) {
+        size_t kv_size = ggml_nbytes(cache.k) + ggml_nbytes(cache.v);
+        WHISPER_LOG_INFO("%s: KV cache using Q8_0 quantization, size: %.2f MB\n",
+            __func__, kv_size / 1024.0 / 1024.0);
     }
 
     ggml_backend_buffer_clear(cache.buffer, 0);
@@ -3420,7 +3432,8 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
     if (!whisper_kv_cache_init(state->kv_self, state->backends[0], ctx->itype,
                 ctx->model.hparams.n_text_state,
                 ctx->model.hparams.n_text_layer,
-                GGML_PAD(ctx->model.hparams.n_text_ctx, 256))) {
+                GGML_PAD(ctx->model.hparams.n_text_ctx, 256),
+                ctx->params.kv_cache_q8_0)) {
         WHISPER_LOG_ERROR("%s: whisper_kv_cache_init() failed for self-attention cache\n", __func__);
         whisper_free_state(state);
         return nullptr;
@@ -3431,10 +3444,12 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
         WHISPER_LOG_INFO("%s: kv self size  = %7.2f MB\n", __func__, memory_size / 1e6);
     }
 
+    // Cross-attention KV cache: do not quantize (computed once, used many times)
     if (!whisper_kv_cache_init(state->kv_cross, state->backends[0], ctx->itype,
                 ctx->model.hparams.n_text_state,
                 ctx->model.hparams.n_text_layer,
-                GGML_PAD(ctx->model.hparams.n_audio_ctx, 256))) {
+                GGML_PAD(ctx->model.hparams.n_audio_ctx, 256),
+                false)) {
         WHISPER_LOG_ERROR("%s: whisper_kv_cache_init() failed for cross-attention cache\n", __func__);
         whisper_free_state(state);
         return nullptr;
@@ -3445,10 +3460,12 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
         WHISPER_LOG_INFO("%s: kv cross size = %7.2f MB\n", __func__, memory_size / 1e6);
     }
 
+    // Padding cache for flash attention: do not quantize
     if (!whisper_kv_cache_init(state->kv_pad, state->backends[0], ctx->itype,
                 ctx->model.hparams.n_audio_state,
                 1,
-                GGML_PAD(ctx->model.hparams.n_audio_ctx, 256))) {
+                GGML_PAD(ctx->model.hparams.n_audio_ctx, 256),
+                false)) {
         WHISPER_LOG_ERROR("%s: whisper_kv_cache_init() failed for self-attention cache\n", __func__);
         whisper_free_state(state);
         return nullptr;
@@ -3641,6 +3658,8 @@ struct whisper_context_params whisper_context_default_params() {
         /*.use_gpu              =*/ true,
         /*.flash_attn           =*/ true,
         /*.gpu_device           =*/ 0,
+
+        /*.kv_cache_q8_0        =*/ false,
 
         /*.dtw_token_timestamps =*/ false,
         /*.dtw_aheads_preset    =*/ WHISPER_AHEADS_NONE,
@@ -7163,7 +7182,8 @@ int whisper_full_with_state(
                     if (!whisper_kv_cache_init(state->kv_self, state->backends[0], ctx->itype,
                                 ctx->model.hparams.n_text_state,
                                 ctx->model.hparams.n_text_layer,
-                                GGML_PAD(ctx->model.hparams.n_text_ctx, 256)*factor)) {
+                                GGML_PAD(ctx->model.hparams.n_text_ctx, 256)*factor,
+                                ctx->params.kv_cache_q8_0)) {
                         WHISPER_LOG_ERROR("%s: whisper_kv_cache_init() failed for self-attention cache\n", __func__);
                         whisper_free_state(state);
                         return -7;

@@ -118,11 +118,6 @@ extern "C" {
         bool  flash_attn;
         int   gpu_device;  // CUDA device
 
-        // [EXPERIMENTAL] KV Cache quantization
-        // When enabled, the KV cache will use Q8_0 quantization to reduce memory usage
-        // This can significantly reduce memory bandwidth requirements at a small accuracy cost
-        bool  kv_cache_q8_0;
-
         // [EXPERIMENTAL] Token-level timestamps with DTW
         bool dtw_token_timestamps;
         enum whisper_alignment_heads_preset dtw_aheads_preset;

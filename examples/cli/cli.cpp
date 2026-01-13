@@ -77,7 +77,6 @@ struct whisper_params {
     bool log_score       = false;
     bool use_gpu         = true;
     bool flash_attn      = true;
-    bool kv_cache_q8_0   = false;
     bool suppress_nst    = false;
     bool carry_initial_prompt = false;
 
@@ -198,7 +197,6 @@ static bool whisper_params_parse(int argc, char ** argv, whisper_params & params
         else if (arg == "-ng"   || arg == "--no-gpu")               { params.use_gpu         = false; }
         else if (arg == "-fa"   || arg == "--flash-attn")           { params.flash_attn      = true; }
         else if (arg == "-nfa"  || arg == "--no-flash-attn")        { params.flash_attn      = false; }
-        else if (                  arg == "--kv-cache-q8")          { params.kv_cache_q8_0   = true; }
         else if (arg == "-sns"  || arg == "--suppress-nst")         { params.suppress_nst    = true; }
         else if (                  arg == "--suppress-regex")       { params.suppress_regex  = ARGV_NEXT; }
         else if (                  arg == "--grammar")              { params.grammar         = ARGV_NEXT; }
@@ -280,7 +278,6 @@ static void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params
     fprintf(stderr, "  -ng,       --no-gpu               [%-7s] disable GPU\n",                                    params.use_gpu ? "false" : "true");
     fprintf(stderr, "  -fa,       --flash-attn           [%-7s] enable flash attention\n",                         params.flash_attn ? "true" : "false");
     fprintf(stderr, "  -nfa,      --no-flash-attn        [%-7s] disable flash attention\n",                        params.flash_attn ? "false" : "true");
-    fprintf(stderr, "             --kv-cache-q8          [%-7s] use Q8_0 for KV cache (~50%% less memory vs FP16)\n", params.kv_cache_q8_0 ? "true" : "false");
     fprintf(stderr, "  -sns,      --suppress-nst         [%-7s] suppress non-speech tokens\n",                     params.suppress_nst ? "true" : "false");
     fprintf(stderr, "  --suppress-regex REGEX            [%-7s] regular expression matching tokens to suppress\n", params.suppress_regex.c_str());
     fprintf(stderr, "  --grammar GRAMMAR                 [%-7s] GBNF grammar to guide decoding\n",                 params.grammar.c_str());
@@ -1005,9 +1002,8 @@ int main(int argc, char ** argv) {
     // whisper init
     struct whisper_context_params cparams = whisper_context_default_params();
 
-    cparams.use_gpu       = params.use_gpu;
-    cparams.flash_attn    = params.flash_attn;
-    cparams.kv_cache_q8_0 = params.kv_cache_q8_0;
+    cparams.use_gpu    = params.use_gpu;
+    cparams.flash_attn = params.flash_attn;
 
     if (!params.dtw.empty()) {
         cparams.dtw_token_timestamps = true;

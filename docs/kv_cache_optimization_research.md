@@ -521,20 +521,116 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
 | GPU 后端不支持 Q8_0 cpy | 验证 CUDA/Metal 后端的 cpy 实现，必要时添加 fallback |
 | 识别精度下降 | 可选择仅对 V Cache 量化，K Cache 保持 FP16 |
 
+### 3.6 实现挑战：量化类型的块对齐问题
+
+**重要发现：** 在实际实现过程中，发现了一个关键的技术障碍，需要特别注意。
+
+#### 3.6.1 问题描述
+
+ggml 的量化类型（如 Q8_0）采用块量化（Block Quantization）结构：
+
+```c
+// Q8_0 的数据布局 (block size = 32)
+typedef struct {
+    ggml_fp16_t d;       // 量化 scale (delta)，2 bytes
+    int8_t  qs[32];      // 32 个量化值，32 bytes
+} block_q8_0;            // 总计 34 bytes per block
+```
+
+这意味着：
+- 每 32 个元素共享一个 scale 因子
+- 不能在任意字节偏移处创建视图
+- `ggml_element_size()` 对量化类型返回的是逻辑元素大小，不是实际字节大小
+
+#### 3.6.2 whisper.cpp 中的兼容性问题
+
+当前 `whisper_build_graph_decoder` 中使用的视图创建方式与量化类型不兼容：
+
+```cpp
+// 问题代码：使用 ggml_element_size 计算偏移量
+k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
+        (ggml_element_size(kv_self.k)*n_state)*(il*n_ctx + kv_head));
+```
+
+对于 Q8_0 类型，`ggml_element_size()` 返回约 1.0625 bytes（34/32），但实际数据是以 34 字节的块为单位存储的。这导致计算的偏移量不对齐到块边界，引发断言失败：
+
+```
+GGML_ASSERT(view_src == NULL || data_size == 0 || data_size + view_offs <= ggml_nbytes(view_src)) failed
+```
+
+#### 3.6.3 正确的实现方案
+
+要正确实现 KV Cache 量化，需要进行以下修改：
+
+1. **使用 `ggml_row_size()` 计算字节偏移**：
+```cpp
+// 正确方式：使用 ggml_row_size 计算行的字节大小
+size_t row_bytes = ggml_row_size(kv_self.k->type, n_state);
+k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
+        row_bytes * (il*n_ctx + kv_head));
+```
+
+2. **确保维度对齐到块大小**：
+```cpp
+// 确保 n_state 是 32 的倍数（Q8_0 块大小）
+const int64_t n_state_aligned = GGML_PAD(n_state, 32);
+```
+
+3. **修改 KV Cache 张量的创建方式**：
+```cpp
+// 使用 2D 张量而非 1D，便于行对齐
+cache.k = ggml_new_tensor_2d(ctx, kv_type, n_state_aligned, n_mem);
+cache.v = ggml_new_tensor_2d(ctx, kv_type, n_state_aligned, n_mem);
+```
+
+#### 3.6.4 混合精度策略
+
+用户提出的混合精度策略是一个很好的研究方向：
+
+1. **K/V 分离精度**：
+   - K Cache 使用更高精度（FP16）：K 用于计算 attention score，对精度更敏感
+   - V Cache 使用较低精度（Q8_0 或 Q4_0）：V 用于加权求和，精度要求较低
+
+2. **层级差异化精度**：
+   - 底层（靠近输入）：使用较低精度
+   - 高层（靠近输出）：使用较高精度
+
+3. **时间衰减策略**：
+   - 较新的 token：使用较高精度
+   - 较旧的 token：使用较低精度（随时间逐步量化）
+
+这些策略可以在 `whisper_kv_cache` 结构中增加独立的 K 和 V 类型配置：
+
+```cpp
+struct whisper_kv_cache {
+    // ...
+    ggml_type k_type;  // K cache 数据类型
+    ggml_type v_type;  // V cache 数据类型
+    // ...
+};
+```
+
 ---
 
 ## 结论与展望
 
-本研究系统分析了 `whisper.cpp` 中 KV Cache 的实现机制和理论瓶颈，提出了基于 Q8_0 量化的优化方案。该方案具有以下优势：
+本研究系统分析了 `whisper.cpp` 中 KV Cache 的实现机制和理论瓶颈，提出了基于 Q8_0 量化的优化方案。
 
-1. **工程可行性高**：充分利用 ggml 已有的量化基础设施
-2. **改动范围小**：主要修改集中在 KV Cache 初始化和类型配置
-3. **预期收益显著**：内存占用和带宽需求降低约 50%
+**当前状态**：
+- 理论分析完成，确认 KV Cache 量化可带来 ~50% 的内存节省
+- 实现过程中发现 ggml 块量化类型与现有视图机制存在兼容性问题
+- 需要重构张量创建和视图计算逻辑以支持量化类型
+
+**实现路线图**：
+1. **短期**：修改 `whisper_build_graph_decoder` 中的视图偏移计算，使用 `ggml_row_size()` 
+2. **中期**：实现 K/V 分离精度配置，允许 K 使用 FP16、V 使用 Q8_0
+3. **长期**：实现自适应量化策略，根据层级和时序动态选择精度
 
 **后续研究方向**：
 - 探索更激进的 4-bit (Q4_0) 量化方案
 - 结合滑动窗口注意力进一步优化长序列性能
 - 开发自适应量化策略（根据数值分布动态选择精度）
+- 实现混合精度策略：K/V 分离、层级差异化、时间衰减
 
 ---
 

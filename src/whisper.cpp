@@ -3456,12 +3456,23 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
     // Quantized KV cache types require flash attention due to ggml tensor layout constraints
     // Non-flash attention path uses transposed V views which are incompatible with quantized types
     if (!ctx->params.flash_attn) {
-        const bool k_is_quantized = ggml_is_quantized(ctx->params.type_k);
-        const bool v_is_quantized = ggml_is_quantized(ctx->params.type_v);
-        if (k_is_quantized || v_is_quantized) {
-            WHISPER_LOG_ERROR("%s: quantized KV cache types (K: %s, V: %s) require flash attention to be enabled\n",
-                __func__, ggml_type_name(ctx->params.type_k), ggml_type_name(ctx->params.type_v));
-            WHISPER_LOG_ERROR("%s: please use --flash-attn or -fa flag, or use f16/f32 for KV cache types\n", __func__);
+        const bool self_k_quantized = ggml_is_quantized(ctx->params.type_k);
+        const bool self_v_quantized = ggml_is_quantized(ctx->params.type_v);
+        const bool cross_k_quantized = ggml_is_quantized(ctx->params.type_k_cross);
+        const bool cross_v_quantized = ggml_is_quantized(ctx->params.type_v_cross);
+        const bool pad_k_quantized = ggml_is_quantized(ctx->params.type_k_pad);
+        const bool pad_v_quantized = ggml_is_quantized(ctx->params.type_v_pad);
+        
+        if (self_k_quantized || self_v_quantized || 
+            cross_k_quantized || cross_v_quantized ||
+            pad_k_quantized || pad_v_quantized) {
+            WHISPER_LOG_ERROR("%s: quantized KV cache types require flash attention to be enabled\n", __func__);
+            WHISPER_LOG_ERROR("%s: kv_self: K=%s, V=%s; kv_cross: K=%s, V=%s; kv_pad: K=%s, V=%s\n",
+                __func__, 
+                ggml_type_name(ctx->params.type_k), ggml_type_name(ctx->params.type_v),
+                ggml_type_name(ctx->params.type_k_cross), ggml_type_name(ctx->params.type_v_cross),
+                ggml_type_name(ctx->params.type_k_pad), ggml_type_name(ctx->params.type_v_pad));
+            WHISPER_LOG_ERROR("%s: please use --flash-attn or -fa flag, or use f16/f32 for all KV cache types\n", __func__);
             whisper_free_state(state);
             return nullptr;
         }
@@ -3487,7 +3498,7 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
     }
 
     if (!whisper_kv_cache_init(state->kv_cross, state->backends[0], 
-                ctx->params.type_k, ctx->params.type_v,
+                ctx->params.type_k_cross, ctx->params.type_v_cross,
                 ctx->model.hparams.n_text_state,
                 ctx->model.hparams.n_text_layer,
                 GGML_PAD(ctx->model.hparams.n_audio_ctx, 256))) {
@@ -3499,22 +3510,23 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
     {
         const size_t memory_size = ggml_nbytes(state->kv_cross.k) + ggml_nbytes(state->kv_cross.v);
         WHISPER_LOG_INFO("%s: kv cross size = %7.2f MB (K: %s, V: %s)\n", __func__, memory_size / 1e6,
-            ggml_type_name(ctx->params.type_k), ggml_type_name(ctx->params.type_v));
+            ggml_type_name(ctx->params.type_k_cross), ggml_type_name(ctx->params.type_v_cross));
     }
 
     if (!whisper_kv_cache_init(state->kv_pad, state->backends[0], 
-                ctx->params.type_k, ctx->params.type_v,
+                ctx->params.type_k_pad, ctx->params.type_v_pad,
                 ctx->model.hparams.n_audio_state,
                 1,
                 GGML_PAD(ctx->model.hparams.n_audio_ctx, 256))) {
-        WHISPER_LOG_ERROR("%s: whisper_kv_cache_init() failed for self-attention cache\n", __func__);
+        WHISPER_LOG_ERROR("%s: whisper_kv_cache_init() failed for pad buffer\n", __func__);
         whisper_free_state(state);
         return nullptr;
     }
 
     {
         const size_t memory_size = ggml_nbytes(state->kv_pad.k) + ggml_nbytes(state->kv_pad.v);
-        WHISPER_LOG_INFO("%s: kv pad  size  = %7.2f MB\n", __func__, memory_size / 1e6);
+        WHISPER_LOG_INFO("%s: kv pad  size  = %7.2f MB (K: %s, V: %s)\n", __func__, memory_size / 1e6,
+            ggml_type_name(ctx->params.type_k_pad), ggml_type_name(ctx->params.type_v_pad));
     }
 
     // [EXPERIMENTAL] Token-level timestamps with DTW
@@ -3702,6 +3714,10 @@ struct whisper_context_params whisper_context_default_params() {
 
         /*.type_k               =*/ GGML_TYPE_F16,
         /*.type_v               =*/ GGML_TYPE_F16,
+        /*.type_k_cross         =*/ GGML_TYPE_F16,
+        /*.type_v_cross         =*/ GGML_TYPE_F16,
+        /*.type_k_pad           =*/ GGML_TYPE_F16,
+        /*.type_v_pad           =*/ GGML_TYPE_F16,
 
         /*.dtw_token_timestamps =*/ false,
         /*.dtw_aheads_preset    =*/ WHISPER_AHEADS_NONE,

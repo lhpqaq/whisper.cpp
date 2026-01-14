@@ -2380,14 +2380,16 @@ static struct ggml_cgraph * whisper_build_graph_cross(
             v = ggml_view_1d(ctx0, wstate.kv_cross.v, n_state*n_ctx,
                     kv_v_row_size*(il*n_ctx_pad));
         } else {
+            // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
+            // So strides are based on n_ctx, not n_state (original element-based calculation)
             Vcross = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcross, n_state, n_ctx));
 
             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
                     kv_k_row_size*(il*n_ctx));
 
             v = ggml_view_2d(ctx0, wstate.kv_cross.v, n_ctx, n_state,
-                    kv_v_row_size,
-                    kv_v_row_size*(il*n_ctx));
+                    (   n_ctx)*ggml_element_size(wstate.kv_cross.v),
+                    (il*n_ctx)*ggml_element_size(wstate.kv_cross.v)*n_state);
         }
 
         ggml_build_forward_expand(gf, ggml_cpy(ctx0, Kcross, k));
@@ -2636,14 +2638,16 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                     v = ggml_view_1d(ctx0, kv_self.v, n_tokens*n_state,
                             kv_v_row_size*(il*n_ctx + kv_head));
                 } else {
+                    // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
+                    // So strides are based on n_ctx, not n_state (original element-based calculation)
                     Vcur = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcur, n_state, n_tokens));
 
                     k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
                             kv_k_row_size*(il*n_ctx + kv_head));
 
                     v = ggml_view_2d(ctx0, kv_self.v, n_tokens, n_state,
-                            kv_v_row_size,
-                            kv_v_row_size*(il*n_ctx) + ggml_row_size(kv_self.v->type, kv_head));
+                            (   n_ctx)*ggml_element_size(kv_self.v),
+                            (il*n_ctx)*ggml_element_size(kv_self.v)*n_state + kv_head*ggml_element_size(kv_self.v));
                 }
 
                 ggml_build_forward_expand(gf, ggml_cpy(ctx0, Kcur, k));
@@ -2687,12 +2691,14 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
 
                 struct ggml_tensor * KQ_soft_max = ggml_soft_max_ext(ctx0, KQ, KQ_mask, 1.0f, 0.0f);
 
+                // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
+                // So strides are based on n_ctx, not n_state (original element-based calculation)
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_self.v,
                             n_kv, n_state_head, n_head,
-                            kv_v_row_size,
-                            kv_v_row_size*n_state_head,
-                            kv_v_row_size*n_state*il);
+                            n_ctx*ggml_element_size(kv_self.v),
+                            n_ctx*ggml_element_size(kv_self.v)*n_state_head,
+                            n_ctx*ggml_element_size(kv_self.v)*n_state*il);
 
                 struct ggml_tensor * KQV = ggml_mul_mat(ctx0, V, KQ_soft_max);
 
@@ -2775,12 +2781,14 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                             cross_k_head_size,
                             cross_k_row_size*n_audio_ctx*il);
 
+                // For non-flash attention, V is stored transposed with layout [n_audio_ctx, n_state, n_layer]
+                // So strides are based on n_audio_ctx, not n_state (original element-based calculation)
                 struct ggml_tensor * Vcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.v,
                             n_audio_ctx, n_state_head, n_head,
-                            cross_v_row_size,
-                            cross_v_row_size*n_state_head,
-                            cross_v_row_size*n_state*il);
+                            n_audio_ctx*ggml_element_size(wstate.kv_cross.v),
+                            n_audio_ctx*ggml_element_size(wstate.kv_cross.v)*n_state_head,
+                            n_audio_ctx*ggml_element_size(wstate.kv_cross.v)*n_state*il);
 
                 // ------
 

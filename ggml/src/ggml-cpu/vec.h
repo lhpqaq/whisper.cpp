@@ -1724,7 +1724,6 @@ inline static void ggml_vec_mad_q4_0(const int n, float * GGML_RESTRICT y, const
     const uint8_t * x = (const uint8_t *)vx;
     
 #if defined(__ARM_NEON) && defined(__aarch64__)
-    const float32x4_t vf = vdupq_n_f32(v);
     const int8x16_t s8x16_0x8 = vdupq_n_s8(0x8);
     
     for (int i = 0; i < nb; ++i) {

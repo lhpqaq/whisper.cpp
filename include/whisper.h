@@ -118,11 +118,20 @@ extern "C" {
         bool  flash_attn;
         int   gpu_device;  // CUDA device
 
-        // [EXPERIMENTAL] KV cache data types for encoder (cross) and decoder (self)
-        // Allows using different precision for encoder vs decoder KV caches
-        // Default: GGML_TYPE_F16 for all. Set to GGML_TYPE_F32 for higher precision.
-        enum ggml_type type_k;  // K cache type for both encoder and decoder (default: F16)
-        enum ggml_type type_v;  // V cache type for both encoder and decoder (default: F16)
+        // [EXPERIMENTAL] KV cache data types for different caches
+        // Allows using different precision for kv_self (decoder), kv_cross (encoder), and kv_pad
+        // Default: GGML_TYPE_F16 for all. Quantized types (q8_0, q4_0, etc.) require flash_attn=true.
+        //
+        // kv_self:  Decoder self-attention KV cache - caches K/V from previous decoder tokens
+        //           Size = n_text_layer * n_text_ctx * n_text_state
+        //
+        // kv_cross: Cross-attention KV cache - caches encoder output for decoder cross-attention
+        //           Size = n_text_layer * n_audio_ctx * n_text_state (largest, computed once per audio)
+        //
+        // kv_pad:   Encoder padding buffer for flash-attention - temporary cache for encoder
+        //           Size = 1 * n_audio_ctx * n_audio_state (smallest)
+        enum ggml_type type_k;  // K cache type for kv_self and kv_cross (default: F16)
+        enum ggml_type type_v;  // V cache type for kv_self and kv_cross (default: F16)
 
         // [EXPERIMENTAL] Token-level timestamps with DTW
         bool dtw_token_timestamps;

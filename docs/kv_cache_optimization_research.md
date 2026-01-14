@@ -55,6 +55,19 @@ struct whisper_state {
 };
 ```
 
+**三种 KV Cache 的详细说明：**
+
+| Cache | 用途 | 大小计算 | 访问模式 | 推荐精度 |
+|-------|------|----------|----------|----------|
+| **kv_self** | Decoder 自注意力缓存，存储历史 token 的 K/V | `n_text_layer × n_text_ctx × n_text_state` | 解码时每步读写，增量更新 | K: Q8_0, V: F16 |
+| **kv_cross** | 交叉注意力缓存，存储 Encoder 输出供 Decoder 使用 | `n_text_layer × n_audio_ctx × n_text_state` | **最大**，编码后只读多次 | F16（精度敏感）|
+| **kv_pad** | Encoder Flash Attention 填充缓冲区 | `1 × n_audio_ctx × n_audio_state` | **最小**，临时使用 | F16（与 Encoder 一致）|
+
+**内存占用对比（以 Whisper Large-v2 为例）**：
+- kv_self: ~45 MB (32层 × 448 tokens × 1280维 × 2)
+- kv_cross: ~134 MB (32层 × 1500 tokens × 1280维 × 2) ← **最大**
+- kv_pad: ~4 MB (1层 × 1500 tokens × 1280维 × 2) ← **最小**
+
 #### 1.1.2 KV Cache 内存分配
 
 KV Cache 的初始化通过 `whisper_kv_cache_init` 函数完成：

@@ -968,12 +968,23 @@ static void read_safe(whisper_model_loader * loader, T & dest) {
 static bool whisper_kv_cache_init(
              struct whisper_kv_cache & cache,
                       ggml_backend_t   backend,
-                           ggml_type   wtype,
+                           ggml_type   type_k,
+                           ggml_type   type_v,
                              int64_t   n_text_state,
                              int64_t   n_text_layer,
                                  int   n_ctx) {
-    const int64_t n_mem      = n_text_layer*n_ctx;
-    const int64_t n_elements = n_text_state*n_mem;
+    const int64_t n_mem = n_text_layer*n_ctx;
+
+    // For quantized types, we need to ensure n_text_state is aligned to block size
+    // Block size is determined dynamically using ggml_blck_size()
+    const int64_t blck_size_k = ggml_blck_size(type_k);
+    const int64_t blck_size_v = ggml_blck_size(type_v);
+    
+    if (n_text_state % blck_size_k != 0 || n_text_state % blck_size_v != 0) {
+        WHISPER_LOG_ERROR("%s: n_text_state (%lld) must be a multiple of block size (K: %lld, V: %lld) for quantized types\n", 
+            __func__, (long long)n_text_state, (long long)blck_size_k, (long long)blck_size_v);
+        return false;
+    }
 
     cache.ctx_buf.resize(2*ggml_tensor_overhead());
 
@@ -996,8 +1007,10 @@ static bool whisper_kv_cache_init(
         return false;
     }
 
-    cache.k = ggml_new_tensor_1d(ctx, wtype, n_elements);
-    cache.v = ggml_new_tensor_1d(ctx, wtype, n_elements);
+    // Use 2D tensor layout: [n_text_state, n_mem]
+    // This ensures each row is properly aligned for quantized types
+    cache.k = ggml_new_tensor_2d(ctx, type_k, n_text_state, n_mem);
+    cache.v = ggml_new_tensor_2d(ctx, type_v, n_text_state, n_mem);
 
     cache.buffer = ggml_backend_alloc_ctx_tensors(ctx, backend);
     if (!cache.buffer) {
@@ -2175,18 +2188,24 @@ static struct ggml_cgraph * whisper_build_graph_encoder(
                 ggml_build_forward_expand(gf, ggml_cpy(ctx0, Kcur, ggml_view_1d(ctx0, kv_pad.k, n_ctx*n_state, 0)));
                 ggml_build_forward_expand(gf, ggml_cpy(ctx0, Vcur, ggml_view_1d(ctx0, kv_pad.v, n_ctx*n_state, 0)));
 
+                // Use ggml_row_size for proper quantized type support
+                const size_t kv_k_row_size = ggml_row_size(kv_pad.k->type, n_state);
+                const size_t kv_v_row_size = ggml_row_size(kv_pad.v->type, n_state);
+                const size_t kv_k_head_size = ggml_row_size(kv_pad.k->type, n_state_head);
+                const size_t kv_v_head_size = ggml_row_size(kv_pad.v->type, n_state_head);
+
                 struct ggml_tensor * K =
                     ggml_view_3d(ctx0, kv_pad.k,
                             n_state_head, n_ctx_pad, n_head,
-                            ggml_element_size(kv_pad.k)*n_state,
-                            ggml_element_size(kv_pad.k)*n_state_head,
+                            kv_k_row_size,
+                            kv_k_head_size,
                             0);
 
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_pad.v,
                             n_state_head, n_ctx_pad, n_head,
-                            ggml_element_size(kv_pad.v)*n_state,
-                            ggml_element_size(kv_pad.v)*n_state_head,
+                            kv_v_row_size,
+                            kv_v_head_size,
                             0);
 
                 cur = ggml_flash_attn_ext(ctx0, Q, K, V, nullptr, KQscale, 0.0f, 0.0f);
@@ -2350,17 +2369,23 @@ static struct ggml_cgraph * whisper_build_graph_cross(
         struct ggml_tensor * k;
         struct ggml_tensor * v;
 
+        // Use ggml_row_size for proper quantized type support
+        const size_t kv_k_row_size = ggml_row_size(wstate.kv_cross.k->type, n_state);
+        const size_t kv_v_row_size = ggml_row_size(wstate.kv_cross.v->type, n_state);
+
         if (wctx.params.flash_attn) {
             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
-                    (ggml_element_size(wstate.kv_cross.k)*n_state)*(il*n_ctx_pad));
+                    kv_k_row_size*(il*n_ctx_pad));
 
             v = ggml_view_1d(ctx0, wstate.kv_cross.v, n_state*n_ctx,
-                    (ggml_element_size(wstate.kv_cross.v)*n_state)*(il*n_ctx_pad));
+                    kv_v_row_size*(il*n_ctx_pad));
         } else {
+            // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
+            // Quantized V types are blocked at initialization; only f16/f32 work in this path
             Vcross = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcross, n_state, n_ctx));
 
             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
-                    (ggml_element_size(wstate.kv_cross.k)*n_state)*(il*n_ctx));
+                    kv_k_row_size*(il*n_ctx));
 
             v = ggml_view_2d(ctx0, wstate.kv_cross.v, n_ctx, n_state,
                     (   n_ctx)*ggml_element_size(wstate.kv_cross.v),
@@ -2602,17 +2627,25 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                 struct ggml_tensor * k;
                 struct ggml_tensor * v;
 
+                // Use ggml_row_size for proper quantized type support
+                const size_t kv_k_row_size = ggml_row_size(kv_self.k->type, n_state);
+                const size_t kv_v_row_size = ggml_row_size(kv_self.v->type, n_state);
+
                 if (wctx.params.flash_attn) {
                     k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
-                            (ggml_element_size(kv_self.k)*n_state)*(il*n_ctx + kv_head));
+                            kv_k_row_size*(il*n_ctx + kv_head));
 
                     v = ggml_view_1d(ctx0, kv_self.v, n_tokens*n_state,
-                            (ggml_element_size(kv_self.v)*n_state)*(il*n_ctx + kv_head));
+                            kv_v_row_size*(il*n_ctx + kv_head));
                 } else {
+                    // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
+                    // The offset uses kv_head * element_size which is not block-aligned for quantized types
+                    // (kv_head is not guaranteed to be a multiple of block_size=32)
+                    // Therefore, quantized V types are blocked at initialization and only f16/f32 work here
                     Vcur = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcur, n_state, n_tokens));
 
                     k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
-                            (ggml_element_size(kv_self.k)*n_state)*(il*n_ctx + kv_head));
+                            kv_k_row_size*(il*n_ctx + kv_head));
 
                     v = ggml_view_2d(ctx0, kv_self.v, n_tokens, n_state,
                             (   n_ctx)*ggml_element_size(kv_self.v),
@@ -2630,20 +2663,26 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                         ggml_reshape_3d(ctx0, Qcur, n_state_head, n_head, n_tokens),
                         0, 2, 1, 3);
 
+            // Use ggml_row_size for proper quantized type support
+            const size_t kv_k_row_size = ggml_row_size(kv_self.k->type, n_state);
+            const size_t kv_v_row_size = ggml_row_size(kv_self.v->type, n_state);
+            const size_t kv_k_head_size = ggml_row_size(kv_self.k->type, n_state_head);
+            const size_t kv_v_head_size = ggml_row_size(kv_self.v->type, n_state_head);
+
             struct ggml_tensor * K =
                 ggml_view_3d(ctx0, kv_self.k,
                         n_state_head, n_kv, n_head,
-                        ggml_element_size(kv_self.k)*n_state,
-                        ggml_element_size(kv_self.k)*n_state_head,
-                        ggml_element_size(kv_self.k)*n_state*n_ctx*il);
+                        kv_k_row_size,
+                        kv_k_head_size,
+                        kv_k_row_size*n_ctx*il);
 
             if (wctx.params.flash_attn) {
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_self.v,
                             n_state_head, n_kv, n_head,
-                            ggml_element_size(kv_self.v)*n_state,
-                            ggml_element_size(kv_self.v)*n_state_head,
-                            ggml_element_size(kv_self.v)*n_state*n_ctx*il);
+                            kv_v_row_size,
+                            kv_v_head_size,
+                            kv_v_row_size*n_ctx*il);
 
                 cur = ggml_flash_attn_ext(ctx0, Q, K, V, KQ_mask_f16, 1.0f, 0.0f, 0.0f);
 
@@ -2654,6 +2693,8 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
 
                 struct ggml_tensor * KQ_soft_max = ggml_soft_max_ext(ctx0, KQ, KQ_mask, 1.0f, 0.0f);
 
+                // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
+                // Quantized V types are blocked at initialization; only f16/f32 work in this path
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_self.v,
                             n_kv, n_state_head, n_head,
@@ -2710,20 +2751,26 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                         ggml_reshape_3d(ctx0, Qcur, n_state_head, n_head, n_tokens),
                         0, 2, 1, 3);
 
+            // Use ggml_row_size for proper quantized type support
+            const size_t cross_k_row_size = ggml_row_size(wstate.kv_cross.k->type, n_state);
+            const size_t cross_v_row_size = ggml_row_size(wstate.kv_cross.v->type, n_state);
+            const size_t cross_k_head_size = ggml_row_size(wstate.kv_cross.k->type, n_state_head);
+            const size_t cross_v_head_size = ggml_row_size(wstate.kv_cross.v->type, n_state_head);
+
             if (wctx.params.flash_attn) {
                 struct ggml_tensor * Kcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.k,
                             n_state_head, n_audio_ctx_pad, n_head,
-                            ggml_element_size(wstate.kv_cross.k)*n_state,
-                            ggml_element_size(wstate.kv_cross.k)*n_state_head,
-                            ggml_element_size(wstate.kv_cross.k)*n_state*n_audio_ctx_pad*il);
+                            cross_k_row_size,
+                            cross_k_head_size,
+                            cross_k_row_size*n_audio_ctx_pad*il);
 
                 struct ggml_tensor * Vcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.v,
                             n_state_head, n_audio_ctx_pad, n_head,
-                            ggml_element_size(wstate.kv_cross.v)*n_state,
-                            ggml_element_size(wstate.kv_cross.v)*n_state_head,
-                            ggml_element_size(wstate.kv_cross.v)*n_state*n_audio_ctx_pad*il);
+                            cross_v_row_size,
+                            cross_v_head_size,
+                            cross_v_row_size*n_audio_ctx_pad*il);
 
                 cur = ggml_flash_attn_ext(ctx0, Q, Kcross, Vcross, nullptr, KQscale, 0.0f, 0.0f);
 
@@ -2732,10 +2779,12 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                 struct ggml_tensor * Kcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.k,
                             n_state_head, n_audio_ctx, n_head,
-                            ggml_element_size(wstate.kv_cross.k)*n_state,
-                            ggml_element_size(wstate.kv_cross.k)*n_state_head,
-                            ggml_element_size(wstate.kv_cross.k)*n_state*n_audio_ctx*il);
+                            cross_k_row_size,
+                            cross_k_head_size,
+                            cross_k_row_size*n_audio_ctx*il);
 
+                // For non-flash attention, V is stored transposed with layout [n_audio_ctx, n_state, n_layer]
+                // Quantized V types are blocked at initialization; only f16/f32 work in this path
                 struct ggml_tensor * Vcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.v,
                             n_audio_ctx, n_state_head, n_head,
@@ -3414,10 +3463,32 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
         return nullptr;
     }
 
+    // Quantized V cache types require flash attention due to non-block-aligned access patterns
+    // K cache quantization works with both flash and non-flash attention
+    if (!ctx->params.flash_attn) {
+        const bool self_v_quantized = ggml_is_quantized(ctx->params.type_v);
+        const bool cross_v_quantized = ggml_is_quantized(ctx->params.type_v_cross);
+        const bool pad_v_quantized = ggml_is_quantized(ctx->params.type_v_pad);
+        
+        if (self_v_quantized || cross_v_quantized || pad_v_quantized) {
+            WHISPER_LOG_ERROR("%s: quantized V cache types require flash attention to be enabled\n", __func__);
+            WHISPER_LOG_ERROR("%s: V types: kv_self=%s, kv_cross=%s, kv_pad=%s\n",
+                __func__, 
+                ggml_type_name(ctx->params.type_v),
+                ggml_type_name(ctx->params.type_v_cross),
+                ggml_type_name(ctx->params.type_v_pad));
+            WHISPER_LOG_ERROR("%s: use --flash-attn/-fa flag, or use f16/f32 for V cache types\n", __func__);
+            WHISPER_LOG_ERROR("%s: note: K cache quantization works with non-flash attention\n", __func__);
+            whisper_free_state(state);
+            return nullptr;
+        }
+    }
+
     // at this point, we don't know yet how many decoders will be used
     // later during decoding, if more decoders are used, we will recreate the KV cache respectively
     state->kv_self_n_dec = 1;
-    if (!whisper_kv_cache_init(state->kv_self, state->backends[0], ctx->itype,
+    if (!whisper_kv_cache_init(state->kv_self, state->backends[0], 
+                ctx->params.type_k, ctx->params.type_v,
                 ctx->model.hparams.n_text_state,
                 ctx->model.hparams.n_text_layer,
                 GGML_PAD(ctx->model.hparams.n_text_ctx, 256))) {
@@ -3428,10 +3499,12 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
 
     {
         const size_t memory_size = ggml_nbytes(state->kv_self.k) + ggml_nbytes(state->kv_self.v);
-        WHISPER_LOG_INFO("%s: kv self size  = %7.2f MB\n", __func__, memory_size / 1e6);
+        WHISPER_LOG_INFO("%s: kv self size  = %7.2f MB (K: %s, V: %s)\n", __func__, memory_size / 1e6, 
+            ggml_type_name(ctx->params.type_k), ggml_type_name(ctx->params.type_v));
     }
 
-    if (!whisper_kv_cache_init(state->kv_cross, state->backends[0], ctx->itype,
+    if (!whisper_kv_cache_init(state->kv_cross, state->backends[0], 
+                ctx->params.type_k_cross, ctx->params.type_v_cross,
                 ctx->model.hparams.n_text_state,
                 ctx->model.hparams.n_text_layer,
                 GGML_PAD(ctx->model.hparams.n_audio_ctx, 256))) {
@@ -3442,21 +3515,24 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
 
     {
         const size_t memory_size = ggml_nbytes(state->kv_cross.k) + ggml_nbytes(state->kv_cross.v);
-        WHISPER_LOG_INFO("%s: kv cross size = %7.2f MB\n", __func__, memory_size / 1e6);
+        WHISPER_LOG_INFO("%s: kv cross size = %7.2f MB (K: %s, V: %s)\n", __func__, memory_size / 1e6,
+            ggml_type_name(ctx->params.type_k_cross), ggml_type_name(ctx->params.type_v_cross));
     }
 
-    if (!whisper_kv_cache_init(state->kv_pad, state->backends[0], ctx->itype,
+    if (!whisper_kv_cache_init(state->kv_pad, state->backends[0], 
+                ctx->params.type_k_pad, ctx->params.type_v_pad,
                 ctx->model.hparams.n_audio_state,
                 1,
                 GGML_PAD(ctx->model.hparams.n_audio_ctx, 256))) {
-        WHISPER_LOG_ERROR("%s: whisper_kv_cache_init() failed for self-attention cache\n", __func__);
+        WHISPER_LOG_ERROR("%s: whisper_kv_cache_init() failed for pad buffer\n", __func__);
         whisper_free_state(state);
         return nullptr;
     }
 
     {
         const size_t memory_size = ggml_nbytes(state->kv_pad.k) + ggml_nbytes(state->kv_pad.v);
-        WHISPER_LOG_INFO("%s: kv pad  size  = %7.2f MB\n", __func__, memory_size / 1e6);
+        WHISPER_LOG_INFO("%s: kv pad  size  = %7.2f MB (K: %s, V: %s)\n", __func__, memory_size / 1e6,
+            ggml_type_name(ctx->params.type_k_pad), ggml_type_name(ctx->params.type_v_pad));
     }
 
     // [EXPERIMENTAL] Token-level timestamps with DTW
@@ -3641,6 +3717,13 @@ struct whisper_context_params whisper_context_default_params() {
         /*.use_gpu              =*/ true,
         /*.flash_attn           =*/ true,
         /*.gpu_device           =*/ 0,
+
+        /*.type_k               =*/ GGML_TYPE_F16,
+        /*.type_v               =*/ GGML_TYPE_F16,
+        /*.type_k_cross         =*/ GGML_TYPE_F16,
+        /*.type_v_cross         =*/ GGML_TYPE_F16,
+        /*.type_k_pad           =*/ GGML_TYPE_F16,
+        /*.type_v_pad           =*/ GGML_TYPE_F16,
 
         /*.dtw_token_timestamps =*/ false,
         /*.dtw_aheads_preset    =*/ WHISPER_AHEADS_NONE,
@@ -7160,7 +7243,8 @@ int whisper_full_with_state(
                     // overallocate to workaround KV cache fragmentation issues
                     const int factor = n_decoders_cur > 1 ? n_decoders_cur + 2 : 1;
 
-                    if (!whisper_kv_cache_init(state->kv_self, state->backends[0], ctx->itype,
+                    if (!whisper_kv_cache_init(state->kv_self, state->backends[0], 
+                                ctx->params.type_k, ctx->params.type_v,
                                 ctx->model.hparams.n_text_state,
                                 ctx->model.hparams.n_text_layer,
                                 GGML_PAD(ctx->model.hparams.n_text_ctx, 256)*factor)) {

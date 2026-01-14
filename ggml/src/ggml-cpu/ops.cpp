@@ -8195,6 +8195,22 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
 
                 // V += v*expf(s - M) - optimized Q8_0 path without full dequantization
                 ggml_vec_mad_q8_0(DV, VKQ32, v_data, vs);
+            } else if (v->type == GGML_TYPE_Q4_0) {
+                // Optimized path for Q4_0: directly operate on quantized data
+                if (s > M) {
+                    // s is new maximum, ms < 1.0f, vs == expf(s - s) == 1.0f
+                    M = s;
+                    ms = expf(Mold - M);
+
+                    // V = V*expf(Mold - M)
+                    ggml_vec_scale_f32(DV, VKQ32, ms);
+                } else {
+                    // no new maximum, ms == 1.0f, vs != 1.0f
+                    vs = expf(s - M);
+                }
+
+                // V += v*expf(s - M) - optimized Q4_0 path without full dequantization
+                ggml_vec_mad_q4_0(DV, VKQ32, v_data, vs);
             } else {
                 if (s > M) {
                     // s is new maximum, ms < 1.0f, vs == expf(s - s) == 1.0f

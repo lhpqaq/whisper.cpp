@@ -1042,10 +1042,82 @@ if (v->type == GGML_TYPE_F16) {
 
 本实现为后续更深层的 ggml 优化提供了基础：
 
-1. **SIMD 优化**：添加 AVX2/AVX-512/NEON 向量化版本的 `ggml_vec_mad_q8_0`
-2. **Q4_0 支持**：实现 `ggml_vec_mad_q4_0` 等更低精度变体
+1. **SIMD 优化**：✅ 已实现 AVX2/NEON 向量化版本的 `ggml_vec_mad_q8_0` 和 `ggml_vec_mad_q4_0`
+2. **Q4_0 支持**：✅ 已实现 `ggml_vec_mad_q4_0`，可在 flash attention 中直接使用 Q4_0 量化的 V cache
 3. **专用 KV 类型**：参考 ik_llama.cpp 添加 `GGML_TYPE_Q8_KV` 等专门为 KV cache 优化的量化类型
-4. **GPU 后端**：在 CUDA/Metal 中实现类似优化
+4. **GPU 后端**：CUDA 已内置支持 Q4_0/Q8_0 flash attention (fattn-vec-instance-*.cu)
+
+### 5.5 已实现的 SIMD 优化
+
+#### 5.5.1 `ggml_vec_mad_q8_0` SIMD 实现
+
+**ARM NEON (aarch64)**:
+```cpp
+// 使用 NEON 128-bit 向量寄存器
+// 每个 Q8_0 块处理 32 个 int8 元素
+for (int j = 0; j < 2; ++j) {
+    const int8x16_t qi = vld1q_s8(qs + j * 16);  // 加载 16 个 int8
+    // 拓宽到 int32，转换为 float32
+    const float32x4_t qf = vcvtq_f32_s32(vmovl_s16(vget_low_s16(vmovl_s8(vget_low_s8(qi)))));
+    // FMA: y += dv * q
+    yv = vfmaq_f32(yv, qf, dvf);
+    vst1q_f32(y_ptr, yv);
+}
+```
+
+**x86 AVX2**:
+```cpp
+// 使用 AVX2 256-bit 向量寄存器
+for (int j = 0; j < 4; ++j) {
+    __m128i qi8 = _mm_loadl_epi64((const __m128i *)(qs + j * 8));
+    __m256i qi32 = _mm256_cvtepi8_epi32(qi8);  // 符号扩展到 int32
+    __m256 qf = _mm256_cvtepi32_ps(qi32);       // 转换为 float32
+    __m256 yv = _mm256_loadu_ps(y_ptr + j * 8);
+    yv = _mm256_fmadd_ps(qf, dvf, yv);          // FMA
+    _mm256_storeu_ps(y_ptr + j * 8, yv);
+}
+```
+
+#### 5.5.2 `ggml_vec_mad_q4_0` SIMD 实现
+
+**ARM NEON (aarch64)**:
+```cpp
+// Q4_0: 16 bytes 存储 32 个 4-bit 值
+const uint8x16_t qbytes = vld1q_u8(qs);
+// 解包低 nibble 和高 nibble
+const int8x16_t q_lo = vreinterpretq_s8_u8(vandq_u8(qbytes, vdupq_n_u8(0x0F)));
+const int8x16_t q_hi = vreinterpretq_s8_u8(vshrq_n_u8(qbytes, 4));
+// 减去 8 得到有符号值 (-8 到 +7)
+const int8x16_t q_lo_s = vsubq_s8(q_lo, s8x16_0x8);
+// 然后拓宽到 float32 并 FMA
+```
+
+**x86 AVX2**:
+```cpp
+// 使用 AVX2 处理 4-bit 解包
+__m128i qbytes = _mm_loadu_si128((const __m128i *)qs);
+__m128i q_lo = _mm_and_si128(qbytes, _mm_set1_epi8(0x0F));
+__m128i q_hi = _mm_and_si128(_mm_srli_epi16(qbytes, 4), _mm_set1_epi8(0x0F));
+// 减去 8 并扩展到 int32
+__m128i q8_lo = _mm_sub_epi8(q_lo, _mm_set1_epi8(8));
+__m256i q32 = _mm256_cvtepi8_epi32(q8_lo);
+// 转换为 float 并 FMA
+```
+
+### 5.6 CUDA 支持
+
+CUDA 后端已内置支持 Q4_0 和 Q8_0 类型的 flash attention。相关模板实例：
+
+```cpp
+// ggml/src/ggml-cuda/template-instances/
+DECL_FATTN_VEC_CASE( 64, GGML_TYPE_Q8_0, GGML_TYPE_Q8_0);
+DECL_FATTN_VEC_CASE(128, GGML_TYPE_Q8_0, GGML_TYPE_Q8_0);
+DECL_FATTN_VEC_CASE( 64, GGML_TYPE_Q4_0, GGML_TYPE_Q4_0);
+DECL_FATTN_VEC_CASE(128, GGML_TYPE_Q4_0, GGML_TYPE_Q4_0);
+// ... 等多种 K/V 类型组合
+```
+
+这些模板实例在 `fattn-common.cuh` 中使用专门的 `vec_dot_fattn_vec_KQ_q4_0` 和 `vec_dot_fattn_vec_KQ_q8_0` 函数，直接在量化数据上执行点积运算。
 
 ---
 
@@ -1058,6 +1130,8 @@ if (v->type == GGML_TYPE_F16) {
 | Decoder 图构建 | src/whisper.cpp | `whisper_build_graph_decoder` |
 | KV Cache 操作 | src/whisper.cpp | `whisper_kv_cache_find_slot`, `whisper_kv_cache_clear` |
 | Context 参数 | include/whisper.h | `whisper_context_params` |
-| ggml 量化类型 | ggml/include/ggml.h | `GGML_TYPE_Q8_0` |
-| Q8_0 MAD 优化 | ggml/src/ggml-cpu/vec.h | `ggml_vec_mad_q8_0` |
+| ggml 量化类型 | ggml/include/ggml.h | `GGML_TYPE_Q8_0`, `GGML_TYPE_Q4_0` |
+| Q8_0 MAD 优化 | ggml/src/ggml-cpu/vec.h | `ggml_vec_mad_q8_0` (NEON + AVX2) |
+| Q4_0 MAD 优化 | ggml/src/ggml-cpu/vec.h | `ggml_vec_mad_q4_0` (NEON + AVX2) |
 | Flash Attention | ggml/src/ggml-cpu/ops.cpp | `ggml_compute_forward_flash_attn_ext` |
+| CUDA Flash Attn | ggml/src/ggml-cuda/fattn*.cu | Q4_0/Q8_0 模板实例 |

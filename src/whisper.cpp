@@ -976,7 +976,7 @@ static bool whisper_kv_cache_init(
     const int64_t n_mem = n_text_layer*n_ctx;
 
     // For quantized types, we need to ensure n_text_state is aligned to block size
-    // Q8_0, Q4_0, Q4_1, Q5_0, Q5_1, Q2_K, Q3_K, Q4_K, Q5_K, Q6_K all use block size 32
+    // Block size is determined dynamically using ggml_blck_size()
     const int64_t blck_size_k = ggml_blck_size(type_k);
     const int64_t blck_size_v = ggml_blck_size(type_v);
     

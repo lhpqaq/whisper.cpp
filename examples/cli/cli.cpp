@@ -80,6 +80,14 @@ struct whisper_params {
     bool suppress_nst    = false;
     bool carry_initial_prompt = false;
 
+    // KV cache precision options
+    std::string kv_type_k        = "f16";  // K cache type for kv_self
+    std::string kv_type_v        = "f16";  // V cache type for kv_self
+    std::string kv_type_k_cross  = "f16";  // K cache type for kv_cross
+    std::string kv_type_v_cross  = "f16";  // V cache type for kv_cross
+    std::string kv_type_k_pad    = "f16";  // K cache type for kv_pad
+    std::string kv_type_v_pad    = "f16";  // V cache type for kv_pad
+
     std::string language  = "en";
     std::string prompt;
     std::string font_path = "/System/Library/Fonts/Supplemental/Courier New Bold.ttf";
@@ -197,6 +205,12 @@ static bool whisper_params_parse(int argc, char ** argv, whisper_params & params
         else if (arg == "-ng"   || arg == "--no-gpu")               { params.use_gpu         = false; }
         else if (arg == "-fa"   || arg == "--flash-attn")           { params.flash_attn      = true; }
         else if (arg == "-nfa"  || arg == "--no-flash-attn")        { params.flash_attn      = false; }
+        else if (                  arg == "--kv-type-k")            { params.kv_type_k       = ARGV_NEXT; }
+        else if (                  arg == "--kv-type-v")            { params.kv_type_v       = ARGV_NEXT; }
+        else if (                  arg == "--kv-type-k-cross")      { params.kv_type_k_cross = ARGV_NEXT; }
+        else if (                  arg == "--kv-type-v-cross")      { params.kv_type_v_cross = ARGV_NEXT; }
+        else if (                  arg == "--kv-type-k-pad")        { params.kv_type_k_pad   = ARGV_NEXT; }
+        else if (                  arg == "--kv-type-v-pad")        { params.kv_type_v_pad   = ARGV_NEXT; }
         else if (arg == "-sns"  || arg == "--suppress-nst")         { params.suppress_nst    = true; }
         else if (                  arg == "--suppress-regex")       { params.suppress_regex  = ARGV_NEXT; }
         else if (                  arg == "--grammar")              { params.grammar         = ARGV_NEXT; }
@@ -278,6 +292,16 @@ static void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params
     fprintf(stderr, "  -ng,       --no-gpu               [%-7s] disable GPU\n",                                    params.use_gpu ? "false" : "true");
     fprintf(stderr, "  -fa,       --flash-attn           [%-7s] enable flash attention\n",                         params.flash_attn ? "true" : "false");
     fprintf(stderr, "  -nfa,      --no-flash-attn        [%-7s] disable flash attention\n",                        params.flash_attn ? "false" : "true");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "KV cache type options (quantized types require flash attention):\n");
+    fprintf(stderr, "  Supported types: f16, f32, q8_0, q4_0, q4_1, q5_0, q5_1\n");
+    fprintf(stderr, "             --kv-type-k TYPE       [%-7s] kv_self K cache type (decoder self-attention)\n",  params.kv_type_k.c_str());
+    fprintf(stderr, "             --kv-type-v TYPE       [%-7s] kv_self V cache type (decoder self-attention)\n",  params.kv_type_v.c_str());
+    fprintf(stderr, "             --kv-type-k-cross TYPE [%-7s] kv_cross K cache type (encoder cross-attention)\n", params.kv_type_k_cross.c_str());
+    fprintf(stderr, "             --kv-type-v-cross TYPE [%-7s] kv_cross V cache type (encoder cross-attention)\n", params.kv_type_v_cross.c_str());
+    fprintf(stderr, "             --kv-type-k-pad TYPE   [%-7s] kv_pad K cache type (encoder flash-attn buffer)\n", params.kv_type_k_pad.c_str());
+    fprintf(stderr, "             --kv-type-v-pad TYPE   [%-7s] kv_pad V cache type (encoder flash-attn buffer)\n", params.kv_type_v_pad.c_str());
+    fprintf(stderr, "\n");
     fprintf(stderr, "  -sns,      --suppress-nst         [%-7s] suppress non-speech tokens\n",                     params.suppress_nst ? "true" : "false");
     fprintf(stderr, "  --suppress-regex REGEX            [%-7s] regular expression matching tokens to suppress\n", params.suppress_regex.c_str());
     fprintf(stderr, "  --grammar GRAMMAR                 [%-7s] GBNF grammar to guide decoding\n",                 params.grammar.c_str());
@@ -1004,6 +1028,26 @@ int main(int argc, char ** argv) {
 
     cparams.use_gpu    = params.use_gpu;
     cparams.flash_attn = params.flash_attn;
+
+    // Parse KV cache types
+    auto parse_kv_type = [&](const std::string & type_str, const char * name) -> ggml_type {
+        if (type_str == "f32")  return GGML_TYPE_F32;
+        if (type_str == "f16")  return GGML_TYPE_F16;
+        if (type_str == "q8_0") return GGML_TYPE_Q8_0;
+        if (type_str == "q4_0") return GGML_TYPE_Q4_0;
+        if (type_str == "q4_1") return GGML_TYPE_Q4_1;
+        if (type_str == "q5_0") return GGML_TYPE_Q5_0;
+        if (type_str == "q5_1") return GGML_TYPE_Q5_1;
+        fprintf(stderr, "warning: unknown %s type '%s', defaulting to f16\n", name, type_str.c_str());
+        return GGML_TYPE_F16; // default
+    };
+
+    cparams.type_k       = parse_kv_type(params.kv_type_k, "kv-type-k");
+    cparams.type_v       = parse_kv_type(params.kv_type_v, "kv-type-v");
+    cparams.type_k_cross = parse_kv_type(params.kv_type_k_cross, "kv-type-k-cross");
+    cparams.type_v_cross = parse_kv_type(params.kv_type_v_cross, "kv-type-v-cross");
+    cparams.type_k_pad   = parse_kv_type(params.kv_type_k_pad, "kv-type-k-pad");
+    cparams.type_v_pad   = parse_kv_type(params.kv_type_v_pad, "kv-type-v-pad");
 
     if (!params.dtw.empty()) {
         cparams.dtw_token_timestamps = true;

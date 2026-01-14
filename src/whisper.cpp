@@ -3453,6 +3453,20 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
         return nullptr;
     }
 
+    // Quantized KV cache types require flash attention due to ggml tensor layout constraints
+    // Non-flash attention path uses transposed V views which are incompatible with quantized types
+    if (!ctx->params.flash_attn) {
+        const bool k_is_quantized = ggml_is_quantized(ctx->params.type_k);
+        const bool v_is_quantized = ggml_is_quantized(ctx->params.type_v);
+        if (k_is_quantized || v_is_quantized) {
+            WHISPER_LOG_ERROR("%s: quantized KV cache types (K: %s, V: %s) require flash attention to be enabled\n",
+                __func__, ggml_type_name(ctx->params.type_k), ggml_type_name(ctx->params.type_v));
+            WHISPER_LOG_ERROR("%s: please use --flash-attn or -fa flag, or use f16/f32 for KV cache types\n", __func__);
+            whisper_free_state(state);
+            return nullptr;
+        }
+    }
+
     // at this point, we don't know yet how many decoders will be used
     // later during decoding, if more decoders are used, we will recreate the KV cache respectively
     state->kv_self_n_dec = 1;

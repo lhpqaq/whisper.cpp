@@ -672,6 +672,31 @@ if (v->type == GGML_TYPE_F16) {
 
 3. **预反量化策略**：在 attention 计算前一次性反量化整层 V，而非逐行反量化
 
+### 3.6.6 量化 KV Cache 与 Flash Attention 的兼容性
+
+**重要限制**：量化 KV Cache 类型（Q8_0、Q4_0 等）**必须与 Flash Attention 一起使用**。
+
+**原因**：
+- Flash Attention 路径：K 和 V 使用相同的 `[n_state_head, n_kv, n_head]` 布局，支持行对齐访问
+- 非 Flash Attention 路径：V 需要转置存储为 `[n_kv, n_state_head, n_head]`，需要元素级访问
+- ggml 量化类型不支持子行访问（最小访问粒度是 block_size=32 个元素）
+
+**错误示例**：
+```bash
+# 错误：禁用 flash attention 时使用量化类型会导致断言失败
+./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k q8_0 --kv-type-v q8_0 -nfa
+# GGML_ASSERT: data_size + view_offs <= ggml_nbytes(view_src)
+```
+
+**正确用法**：
+```bash
+# 正确：量化类型需要启用 flash attention（默认已启用）
+./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k q8_0 --kv-type-v f16 -fa
+
+# 正确：禁用 flash attention 时只能使用 f16/f32
+./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k f16 --kv-type-v f16 -nfa
+```
+
 ---
 
 ## 第四阶段：易于实现的创新优化方案 (Practical Innovations)

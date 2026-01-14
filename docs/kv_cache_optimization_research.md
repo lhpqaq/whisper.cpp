@@ -945,6 +945,110 @@ if (n_tokens == 1 && kv_head > 0) {
 
 ---
 
+## 第五阶段：ggml 层优化实现 (GGML-Level Optimization)
+
+### 5.1 背景分析
+
+之前的实现在应用层（whisper.cpp）支持了 KV cache 量化类型配置，但性能分析显示 Q8_0 V cache 反而比 F16 更慢。根因是 ggml flash attention 在处理量化 V 时，需要在热循环内逐行调用 `dequantize_row_q8_0()` 进行反量化：
+
+```cpp
+// ggml/src/ggml-cpu/ops.cpp 原始实现
+if (v_to_float) {
+    v_to_float(v_data, V32, DV);  // 每次迭代都调用反量化
+    ggml_vec_mad_f32(DV, VKQ32, V32, vs);
+}
+```
+
+这导致：
+- 每次 attention step 都需要完整反量化一行 V 数据
+- 反量化开销 (`dequantize_row_q8_0`) 占用 127ms（30% 的 flash attention 时间）
+- Q8_0 V cache 实际推理时间反而增加 25%
+
+### 5.2 优化方案：`ggml_vec_mad_q8_0`
+
+参考 [ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp) 的实现思路，我们在 ggml 层实现了专门针对 Q8_0 量化类型的 multiply-add 操作：
+
+#### 5.2.1 新增函数声明
+
+```cpp
+// 文件: ggml/src/ggml-cpu/vec.h
+
+// Optimized multiply-add for Q8_0 quantized vectors
+// y += x * v, where x is Q8_0 quantized data and y is float
+// This avoids the need to dequantize entire rows upfront
+inline static void ggml_vec_mad_q8_0(const int n, float * GGML_RESTRICT y, 
+                                      const void * GGML_RESTRICT vx, const float v);
+```
+
+#### 5.2.2 实现原理
+
+Q8_0 量化格式结构：
+- 块大小 (QK8_0) = 32 元素
+- 每块结构: `{ ggml_half d; int8_t qs[32]; }`
+- 块大小 = 2 (scale) + 32 (quants) = 34 bytes
+
+优化的 `ggml_vec_mad_q8_0` 直接在量化数据上操作：
+
+```cpp
+for (int i = 0; i < nb; ++i) {
+    float d = fp16_to_fp32(block[i].d);  // 读取 scale
+    float dv = d * v;  // 预乘 scale 和权重
+    
+    for (int j = 0; j < 32; ++j) {
+        y[i*32 + j] += dv * block[i].qs[j];  // 直接使用 int8 quants
+    }
+}
+```
+
+优势：
+1. 避免分配临时 F32 缓冲区 (`V32`)
+2. 避免调用完整的 `dequantize_row_q8_0()`
+3. 融合反量化和 multiply-add 操作，减少内存带宽
+
+#### 5.2.3 Flash Attention 集成
+
+在 flash attention 中添加 Q8_0 专用路径：
+
+```cpp
+// 文件: ggml/src/ggml-cpu/ops.cpp - ggml_compute_forward_flash_attn_ext
+
+if (v->type == GGML_TYPE_F16) {
+    // ... F16 快速路径
+    ggml_vec_mad_f16(DV, VKQ16, (const ggml_fp16_t *) v_data, vs);
+} else if (v->type == GGML_TYPE_Q8_0) {
+    // 新增：Q8_0 优化路径
+    ggml_vec_mad_q8_0(DV, VKQ32, v_data, vs);
+} else {
+    // 通用路径：反量化 + F32 操作
+    v_to_float(v_data, V32, DV);
+    ggml_vec_mad_f32(DV, VKQ32, V32, vs);
+}
+```
+
+### 5.3 性能预期
+
+| 配置 | Flash Attention 时间 | 改进 |
+|------|---------------------|------|
+| V=F16 (baseline) | 340ms | - |
+| V=Q8_0 (原始反量化) | 424ms | -25% (更慢) |
+| V=Q8_0 (优化后) | ~310ms | +10% (预期) |
+
+**理论分析**：
+- 消除 `dequantize_row_q8_0` 127ms 开销
+- 减少临时内存分配
+- Q8_0 读取带宽仅为 F16 的 ~53%（34B vs 64B per 32 elements）
+
+### 5.4 扩展方向
+
+本实现为后续更深层的 ggml 优化提供了基础：
+
+1. **SIMD 优化**：添加 AVX2/AVX-512/NEON 向量化版本的 `ggml_vec_mad_q8_0`
+2. **Q4_0 支持**：实现 `ggml_vec_mad_q4_0` 等更低精度变体
+3. **专用 KV 类型**：参考 ik_llama.cpp 添加 `GGML_TYPE_Q8_KV` 等专门为 KV cache 优化的量化类型
+4. **GPU 后端**：在 CUDA/Metal 中实现类似优化
+
+---
+
 ## 参考源码位置
 
 | 功能 | 文件 | 函数/结构体 |
@@ -955,3 +1059,5 @@ if (n_tokens == 1 && kv_head > 0) {
 | KV Cache 操作 | src/whisper.cpp | `whisper_kv_cache_find_slot`, `whisper_kv_cache_clear` |
 | Context 参数 | include/whisper.h | `whisper_context_params` |
 | ggml 量化类型 | ggml/include/ggml.h | `GGML_TYPE_Q8_0` |
+| Q8_0 MAD 优化 | ggml/src/ggml-cpu/vec.h | `ggml_vec_mad_q8_0` |
+| Flash Attention | ggml/src/ggml-cpu/ops.cpp | `ggml_compute_forward_flash_attn_ext` |

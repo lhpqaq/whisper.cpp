@@ -1580,6 +1580,51 @@ inline static void ggml_vec_argmax_f32(const int n, int * s, const float * x) {
     *s = idx;
 }
 
+// Optimized multiply-add for Q8_0 quantized vectors
+// y += x * v, where x is Q8_0 quantized data and y is float
+// This avoids the need to dequantize entire rows upfront
+inline static void ggml_vec_mad_q8_0(const int n, float * GGML_RESTRICT y, const void * GGML_RESTRICT vx, const float v) {
+    // Q8_0 block size is 32 elements
+    const int qk = 32;
+    const int nb = n / qk;
+    
+    // Q8_0 block structure: half d (scale), int8_t qs[32]
+    const uint8_t * x = (const uint8_t *)vx;
+    
+    for (int i = 0; i < nb; ++i) {
+        // Read scale factor (first 2 bytes as fp16)
+        const uint16_t d_bits = *(const uint16_t *)(x + i * 34); // 2 bytes d + 32 bytes qs
+        
+        // Convert fp16 to fp32
+        const uint32_t sign = (d_bits >> 15) & 0x1;
+        const uint32_t exp = (d_bits >> 10) & 0x1F;
+        const uint32_t mant = d_bits & 0x3FF;
+        
+        float d;
+        if (exp == 0) {
+            d = (sign ? -1.0f : 1.0f) * (mant / 1024.0f) * (1.0f / 16384.0f);
+        } else if (exp == 31) {
+            d = sign ? -INFINITY : INFINITY;
+        } else {
+            union { uint32_t u; float f; } conv;
+            conv.u = (sign << 31) | ((exp - 15 + 127) << 23) | (mant << 13);
+            d = conv.f;
+        }
+        
+        const float dv = d * v;
+        const int8_t * qs = (const int8_t *)(x + i * 34 + 2); // offset past the d value
+        
+        // Process 32 elements per block
+        for (int j = 0; j < qk; ++j) {
+            y[i * qk + j] += dv * qs[j];
+        }
+    }
+}
+
+// Optimized scale for Q8_0 quantized vectors stored as float accumulator
+// y *= v, where y is a float accumulator
+// (This is the standard ggml_vec_scale_f32, but we need it for completeness)
+
 #ifdef __cplusplus
 }
 #endif

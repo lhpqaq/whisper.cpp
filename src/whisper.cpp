@@ -2381,6 +2381,7 @@ static struct ggml_cgraph * whisper_build_graph_cross(
                     kv_v_row_size*(il*n_ctx_pad));
         } else {
             // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
+            // Quantized V types are blocked at initialization; only f16/f32 work in this path
             Vcross = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcross, n_state, n_ctx));
 
             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
@@ -2638,7 +2639,9 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                             kv_v_row_size*(il*n_ctx + kv_head));
                 } else {
                     // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
-                    // Note: Quantized V types require kv_head to be aligned to block size
+                    // The offset uses kv_head * element_size which is not block-aligned for quantized types
+                    // (kv_head is not guaranteed to be a multiple of block_size=32)
+                    // Therefore, quantized V types are blocked at initialization and only f16/f32 work here
                     Vcur = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcur, n_state, n_tokens));
 
                     k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
@@ -2691,6 +2694,7 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                 struct ggml_tensor * KQ_soft_max = ggml_soft_max_ext(ctx0, KQ, KQ_mask, 1.0f, 0.0f);
 
                 // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
+                // Quantized V types are blocked at initialization; only f16/f32 work in this path
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_self.v,
                             n_kv, n_state_head, n_head,
@@ -2780,6 +2784,7 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                             cross_k_row_size*n_audio_ctx*il);
 
                 // For non-flash attention, V is stored transposed with layout [n_audio_ctx, n_state, n_layer]
+                // Quantized V types are blocked at initialization; only f16/f32 work in this path
                 struct ggml_tensor * Vcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.v,
                             n_audio_ctx, n_state_head, n_head,

@@ -973,8 +973,18 @@ static bool whisper_kv_cache_init(
                              int64_t   n_text_state,
                              int64_t   n_text_layer,
                                  int   n_ctx) {
-    const int64_t n_mem      = n_text_layer*n_ctx;
-    const int64_t n_elements = n_text_state*n_mem;
+    const int64_t n_mem = n_text_layer*n_ctx;
+
+    // For quantized types, we need to ensure n_text_state is aligned to block size
+    // Q8_0, Q4_0, Q4_1, Q5_0, Q5_1, Q2_K, Q3_K, Q4_K, Q5_K, Q6_K all use block size 32
+    const int64_t blck_size_k = ggml_blck_size(type_k);
+    const int64_t blck_size_v = ggml_blck_size(type_v);
+    
+    if (n_text_state % blck_size_k != 0 || n_text_state % blck_size_v != 0) {
+        WHISPER_LOG_ERROR("%s: n_text_state (%lld) must be a multiple of block size (K: %lld, V: %lld) for quantized types\n", 
+            __func__, (long long)n_text_state, (long long)blck_size_k, (long long)blck_size_v);
+        return false;
+    }
 
     cache.ctx_buf.resize(2*ggml_tensor_overhead());
 
@@ -997,8 +1007,10 @@ static bool whisper_kv_cache_init(
         return false;
     }
 
-    cache.k = ggml_new_tensor_1d(ctx, type_k, n_elements);
-    cache.v = ggml_new_tensor_1d(ctx, type_v, n_elements);
+    // Use 2D tensor layout: [n_text_state, n_mem]
+    // This ensures each row is properly aligned for quantized types
+    cache.k = ggml_new_tensor_2d(ctx, type_k, n_text_state, n_mem);
+    cache.v = ggml_new_tensor_2d(ctx, type_v, n_text_state, n_mem);
 
     cache.buffer = ggml_backend_alloc_ctx_tensors(ctx, backend);
     if (!cache.buffer) {
@@ -2176,18 +2188,24 @@ static struct ggml_cgraph * whisper_build_graph_encoder(
                 ggml_build_forward_expand(gf, ggml_cpy(ctx0, Kcur, ggml_view_1d(ctx0, kv_pad.k, n_ctx*n_state, 0)));
                 ggml_build_forward_expand(gf, ggml_cpy(ctx0, Vcur, ggml_view_1d(ctx0, kv_pad.v, n_ctx*n_state, 0)));
 
+                // Use ggml_row_size for proper quantized type support
+                const size_t kv_k_row_size = ggml_row_size(kv_pad.k->type, n_state);
+                const size_t kv_v_row_size = ggml_row_size(kv_pad.v->type, n_state);
+                const size_t kv_k_head_size = ggml_row_size(kv_pad.k->type, n_state_head);
+                const size_t kv_v_head_size = ggml_row_size(kv_pad.v->type, n_state_head);
+
                 struct ggml_tensor * K =
                     ggml_view_3d(ctx0, kv_pad.k,
                             n_state_head, n_ctx_pad, n_head,
-                            ggml_element_size(kv_pad.k)*n_state,
-                            ggml_element_size(kv_pad.k)*n_state_head,
+                            kv_k_row_size,
+                            kv_k_head_size,
                             0);
 
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_pad.v,
                             n_state_head, n_ctx_pad, n_head,
-                            ggml_element_size(kv_pad.v)*n_state,
-                            ggml_element_size(kv_pad.v)*n_state_head,
+                            kv_v_row_size,
+                            kv_v_head_size,
                             0);
 
                 cur = ggml_flash_attn_ext(ctx0, Q, K, V, nullptr, KQscale, 0.0f, 0.0f);
@@ -2351,21 +2369,25 @@ static struct ggml_cgraph * whisper_build_graph_cross(
         struct ggml_tensor * k;
         struct ggml_tensor * v;
 
+        // Use ggml_row_size for proper quantized type support
+        const size_t kv_k_row_size = ggml_row_size(wstate.kv_cross.k->type, n_state);
+        const size_t kv_v_row_size = ggml_row_size(wstate.kv_cross.v->type, n_state);
+
         if (wctx.params.flash_attn) {
             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
-                    (ggml_element_size(wstate.kv_cross.k)*n_state)*(il*n_ctx_pad));
+                    kv_k_row_size*(il*n_ctx_pad));
 
             v = ggml_view_1d(ctx0, wstate.kv_cross.v, n_state*n_ctx,
-                    (ggml_element_size(wstate.kv_cross.v)*n_state)*(il*n_ctx_pad));
+                    kv_v_row_size*(il*n_ctx_pad));
         } else {
             Vcross = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcross, n_state, n_ctx));
 
             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
-                    (ggml_element_size(wstate.kv_cross.k)*n_state)*(il*n_ctx));
+                    kv_k_row_size*(il*n_ctx));
 
             v = ggml_view_2d(ctx0, wstate.kv_cross.v, n_ctx, n_state,
-                    (   n_ctx)*ggml_element_size(wstate.kv_cross.v),
-                    (il*n_ctx)*ggml_element_size(wstate.kv_cross.v)*n_state);
+                    kv_v_row_size,
+                    kv_v_row_size*(il*n_ctx));
         }
 
         ggml_build_forward_expand(gf, ggml_cpy(ctx0, Kcross, k));
@@ -2603,21 +2625,25 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                 struct ggml_tensor * k;
                 struct ggml_tensor * v;
 
+                // Use ggml_row_size for proper quantized type support
+                const size_t kv_k_row_size = ggml_row_size(kv_self.k->type, n_state);
+                const size_t kv_v_row_size = ggml_row_size(kv_self.v->type, n_state);
+
                 if (wctx.params.flash_attn) {
                     k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
-                            (ggml_element_size(kv_self.k)*n_state)*(il*n_ctx + kv_head));
+                            kv_k_row_size*(il*n_ctx + kv_head));
 
                     v = ggml_view_1d(ctx0, kv_self.v, n_tokens*n_state,
-                            (ggml_element_size(kv_self.v)*n_state)*(il*n_ctx + kv_head));
+                            kv_v_row_size*(il*n_ctx + kv_head));
                 } else {
                     Vcur = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcur, n_state, n_tokens));
 
                     k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
-                            (ggml_element_size(kv_self.k)*n_state)*(il*n_ctx + kv_head));
+                            kv_k_row_size*(il*n_ctx + kv_head));
 
                     v = ggml_view_2d(ctx0, kv_self.v, n_tokens, n_state,
-                            (   n_ctx)*ggml_element_size(kv_self.v),
-                            (il*n_ctx)*ggml_element_size(kv_self.v)*n_state + kv_head*ggml_element_size(kv_self.v));
+                            kv_v_row_size,
+                            kv_v_row_size*(il*n_ctx) + ggml_row_size(kv_self.v->type, kv_head));
                 }
 
                 ggml_build_forward_expand(gf, ggml_cpy(ctx0, Kcur, k));
@@ -2631,20 +2657,26 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                         ggml_reshape_3d(ctx0, Qcur, n_state_head, n_head, n_tokens),
                         0, 2, 1, 3);
 
+            // Use ggml_row_size for proper quantized type support
+            const size_t kv_k_row_size = ggml_row_size(kv_self.k->type, n_state);
+            const size_t kv_v_row_size = ggml_row_size(kv_self.v->type, n_state);
+            const size_t kv_k_head_size = ggml_row_size(kv_self.k->type, n_state_head);
+            const size_t kv_v_head_size = ggml_row_size(kv_self.v->type, n_state_head);
+
             struct ggml_tensor * K =
                 ggml_view_3d(ctx0, kv_self.k,
                         n_state_head, n_kv, n_head,
-                        ggml_element_size(kv_self.k)*n_state,
-                        ggml_element_size(kv_self.k)*n_state_head,
-                        ggml_element_size(kv_self.k)*n_state*n_ctx*il);
+                        kv_k_row_size,
+                        kv_k_head_size,
+                        kv_k_row_size*n_ctx*il);
 
             if (wctx.params.flash_attn) {
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_self.v,
                             n_state_head, n_kv, n_head,
-                            ggml_element_size(kv_self.v)*n_state,
-                            ggml_element_size(kv_self.v)*n_state_head,
-                            ggml_element_size(kv_self.v)*n_state*n_ctx*il);
+                            kv_v_row_size,
+                            kv_v_head_size,
+                            kv_v_row_size*n_ctx*il);
 
                 cur = ggml_flash_attn_ext(ctx0, Q, K, V, KQ_mask_f16, 1.0f, 0.0f, 0.0f);
 
@@ -2658,9 +2690,9 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_self.v,
                             n_kv, n_state_head, n_head,
-                            n_ctx*ggml_element_size(kv_self.v),
-                            n_ctx*ggml_element_size(kv_self.v)*n_state_head,
-                            n_ctx*ggml_element_size(kv_self.v)*n_state*il);
+                            kv_v_row_size,
+                            kv_v_row_size*n_state_head,
+                            kv_v_row_size*n_state*il);
 
                 struct ggml_tensor * KQV = ggml_mul_mat(ctx0, V, KQ_soft_max);
 
@@ -2711,20 +2743,26 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                         ggml_reshape_3d(ctx0, Qcur, n_state_head, n_head, n_tokens),
                         0, 2, 1, 3);
 
+            // Use ggml_row_size for proper quantized type support
+            const size_t cross_k_row_size = ggml_row_size(wstate.kv_cross.k->type, n_state);
+            const size_t cross_v_row_size = ggml_row_size(wstate.kv_cross.v->type, n_state);
+            const size_t cross_k_head_size = ggml_row_size(wstate.kv_cross.k->type, n_state_head);
+            const size_t cross_v_head_size = ggml_row_size(wstate.kv_cross.v->type, n_state_head);
+
             if (wctx.params.flash_attn) {
                 struct ggml_tensor * Kcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.k,
                             n_state_head, n_audio_ctx_pad, n_head,
-                            ggml_element_size(wstate.kv_cross.k)*n_state,
-                            ggml_element_size(wstate.kv_cross.k)*n_state_head,
-                            ggml_element_size(wstate.kv_cross.k)*n_state*n_audio_ctx_pad*il);
+                            cross_k_row_size,
+                            cross_k_head_size,
+                            cross_k_row_size*n_audio_ctx_pad*il);
 
                 struct ggml_tensor * Vcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.v,
                             n_state_head, n_audio_ctx_pad, n_head,
-                            ggml_element_size(wstate.kv_cross.v)*n_state,
-                            ggml_element_size(wstate.kv_cross.v)*n_state_head,
-                            ggml_element_size(wstate.kv_cross.v)*n_state*n_audio_ctx_pad*il);
+                            cross_v_row_size,
+                            cross_v_head_size,
+                            cross_v_row_size*n_audio_ctx_pad*il);
 
                 cur = ggml_flash_attn_ext(ctx0, Q, Kcross, Vcross, nullptr, KQscale, 0.0f, 0.0f);
 
@@ -2733,16 +2771,16 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                 struct ggml_tensor * Kcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.k,
                             n_state_head, n_audio_ctx, n_head,
-                            ggml_element_size(wstate.kv_cross.k)*n_state,
-                            ggml_element_size(wstate.kv_cross.k)*n_state_head,
-                            ggml_element_size(wstate.kv_cross.k)*n_state*n_audio_ctx*il);
+                            cross_k_row_size,
+                            cross_k_head_size,
+                            cross_k_row_size*n_audio_ctx*il);
 
                 struct ggml_tensor * Vcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.v,
                             n_audio_ctx, n_state_head, n_head,
-                            n_audio_ctx*ggml_element_size(wstate.kv_cross.v),
-                            n_audio_ctx*ggml_element_size(wstate.kv_cross.v)*n_state_head,
-                            n_audio_ctx*ggml_element_size(wstate.kv_cross.v)*n_state*il);
+                            cross_v_row_size,
+                            cross_v_row_size*n_state_head,
+                            cross_v_row_size*n_state*il);
 
                 // ------
 

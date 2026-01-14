@@ -284,8 +284,8 @@ static void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params
     fprintf(stderr, "  -ng,       --no-gpu               [%-7s] disable GPU\n",                                    params.use_gpu ? "false" : "true");
     fprintf(stderr, "  -fa,       --flash-attn           [%-7s] enable flash attention\n",                         params.flash_attn ? "true" : "false");
     fprintf(stderr, "  -nfa,      --no-flash-attn        [%-7s] disable flash attention\n",                        params.flash_attn ? "false" : "true");
-    fprintf(stderr, "             --kv-type-k TYPE       [%-7s] KV cache K type (f16, f32)\n",                     params.kv_type_k.c_str());
-    fprintf(stderr, "             --kv-type-v TYPE       [%-7s] KV cache V type (f16, f32)\n",                     params.kv_type_v.c_str());
+    fprintf(stderr, "             --kv-type-k TYPE       [%-7s] KV cache K type (f16, f32, q8_0, q4_0, q4_1, q5_0, q5_1)\n", params.kv_type_k.c_str());
+    fprintf(stderr, "             --kv-type-v TYPE       [%-7s] KV cache V type (f16, f32, q8_0, q4_0, q4_1, q5_0, q5_1)\n", params.kv_type_v.c_str());
     fprintf(stderr, "  -sns,      --suppress-nst         [%-7s] suppress non-speech tokens\n",                     params.suppress_nst ? "true" : "false");
     fprintf(stderr, "  --suppress-regex REGEX            [%-7s] regular expression matching tokens to suppress\n", params.suppress_regex.c_str());
     fprintf(stderr, "  --grammar GRAMMAR                 [%-7s] GBNF grammar to guide decoding\n",                 params.grammar.c_str());
@@ -1015,8 +1015,13 @@ int main(int argc, char ** argv) {
 
     // Parse KV cache types
     auto parse_kv_type = [&](const std::string & type_str, const char * name) -> ggml_type {
-        if (type_str == "f32") return GGML_TYPE_F32;
-        if (type_str == "f16") return GGML_TYPE_F16;
+        if (type_str == "f32")  return GGML_TYPE_F32;
+        if (type_str == "f16")  return GGML_TYPE_F16;
+        if (type_str == "q8_0") return GGML_TYPE_Q8_0;
+        if (type_str == "q4_0") return GGML_TYPE_Q4_0;
+        if (type_str == "q4_1") return GGML_TYPE_Q4_1;
+        if (type_str == "q5_0") return GGML_TYPE_Q5_0;
+        if (type_str == "q5_1") return GGML_TYPE_Q5_1;
         fprintf(stderr, "warning: unknown %s type '%s', defaulting to f16\n", name, type_str.c_str());
         return GGML_TYPE_F16; // default
     };

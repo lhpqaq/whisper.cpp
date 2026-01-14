@@ -1,0 +1,57 @@
+Model Execution Times
+=====================
+
+Total execution started at: Tue Jan 13 08:25:57 PM CST 2026
+
+Model: largev3-q40
+  Start time: Tue Jan 13 08:25:57 PM CST 2026
+  End time: Tue Jan 13 09:30:24 PM CST 2026
+  Duration: 3867 seconds (01:04:27)
+
+Model: large-v3
+  Start time: Tue Jan 13 09:30:24 PM CST 2026
+  End time: Wed Jan 14 07:59:47 AM CST 2026
+  Duration: 37763 seconds (10:29:23)
+
+Model: largev3-q2k-r1
+  Start time: Wed Jan 14 07:59:47 AM CST 2026
+  End time: Wed Jan 14 09:13:34 AM CST 2026
+  Duration: 4427 seconds (01:13:47)
+
+Model: largev3-q2k-r2
+  Start time: Wed Jan 14 09:13:34 AM CST 2026
+  End time: Wed Jan 14 10:27:32 AM CST 2026
+  Duration: 4438 seconds (01:13:58)
+
+Model: largev3-q2k-r3
+  Start time: Wed Jan 14 10:27:32 AM CST 2026
+  End time: Wed Jan 14 01:52:31 PM CST 2026
+  Duration: 12299 seconds (03:24:59)
+
+Model: largev3-q2k-r4
+  Start time: Wed Jan 14 01:52:31 PM CST 2026
+  End time: Wed Jan 14 03:12:38 PM CST 2026
+  Duration: 4807 seconds (01:20:07)
+
+Model: largev3-q2k-r5
+  Start time: Wed Jan 14 03:12:38 PM CST 2026
+  End time: Wed Jan 14 04:25:58 PM CST 2026
+  Duration: 4400 seconds (01:13:20)
+
+Model: largev3-q2k-r6
+  Start time: Wed Jan 14 04:25:58 PM CST 2026
+  End time: Wed Jan 14 05:39:48 PM CST 2026
+  Duration: 4430 seconds (01:13:50)
+
+Model: largev3-q2k-r7
+  Start time: Wed Jan 14 05:39:48 PM CST 2026
+  End time: Wed Jan 14 06:55:03 PM CST 2026
+  Duration: 4515 seconds (01:15:15)
+
+Model: largev3-q2k-1
+  Start time: Wed Jan 14 06:55:03 PM CST 2026
+  End time: Wed Jan 14 08:12:49 PM CST 2026
+  Duration: 4666 seconds (01:17:46)
+
+Model: largev3-q2k-2
+  Start time: Wed Jan 14 08:12:49 PM CST 2026

@@ -2381,7 +2381,6 @@ static struct ggml_cgraph * whisper_build_graph_cross(
                     kv_v_row_size*(il*n_ctx_pad));
         } else {
             // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
-            // So strides are based on n_ctx, not n_state (original element-based calculation)
             Vcross = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcross, n_state, n_ctx));
 
             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
@@ -2639,7 +2638,7 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                             kv_v_row_size*(il*n_ctx + kv_head));
                 } else {
                     // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
-                    // So strides are based on n_ctx, not n_state (original element-based calculation)
+                    // Note: Quantized V types require kv_head to be aligned to block size
                     Vcur = ggml_transpose(ctx0, ggml_reshape_2d(ctx0, Vcur, n_state, n_tokens));
 
                     k = ggml_view_1d(ctx0, kv_self.k, n_tokens*n_state,
@@ -2692,7 +2691,6 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                 struct ggml_tensor * KQ_soft_max = ggml_soft_max_ext(ctx0, KQ, KQ_mask, 1.0f, 0.0f);
 
                 // For non-flash attention, V is stored transposed with layout [n_ctx, n_state, n_layer]
-                // So strides are based on n_ctx, not n_state (original element-based calculation)
                 struct ggml_tensor * V =
                     ggml_view_3d(ctx0, kv_self.v,
                             n_kv, n_state_head, n_head,
@@ -2782,7 +2780,6 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
                             cross_k_row_size*n_audio_ctx*il);
 
                 // For non-flash attention, V is stored transposed with layout [n_audio_ctx, n_state, n_layer]
-                // So strides are based on n_audio_ctx, not n_state (original element-based calculation)
                 struct ggml_tensor * Vcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.v,
                             n_audio_ctx, n_state_head, n_head,
@@ -3461,26 +3458,22 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
         return nullptr;
     }
 
-    // Quantized KV cache types require flash attention due to ggml tensor layout constraints
-    // Non-flash attention path uses transposed V views which are incompatible with quantized types
+    // Quantized V cache types require flash attention due to non-block-aligned access patterns
+    // K cache quantization works with both flash and non-flash attention
     if (!ctx->params.flash_attn) {
-        const bool self_k_quantized = ggml_is_quantized(ctx->params.type_k);
         const bool self_v_quantized = ggml_is_quantized(ctx->params.type_v);
-        const bool cross_k_quantized = ggml_is_quantized(ctx->params.type_k_cross);
         const bool cross_v_quantized = ggml_is_quantized(ctx->params.type_v_cross);
-        const bool pad_k_quantized = ggml_is_quantized(ctx->params.type_k_pad);
         const bool pad_v_quantized = ggml_is_quantized(ctx->params.type_v_pad);
         
-        if (self_k_quantized || self_v_quantized || 
-            cross_k_quantized || cross_v_quantized ||
-            pad_k_quantized || pad_v_quantized) {
-            WHISPER_LOG_ERROR("%s: quantized KV cache types require flash attention to be enabled\n", __func__);
-            WHISPER_LOG_ERROR("%s: kv_self: K=%s, V=%s; kv_cross: K=%s, V=%s; kv_pad: K=%s, V=%s\n",
+        if (self_v_quantized || cross_v_quantized || pad_v_quantized) {
+            WHISPER_LOG_ERROR("%s: quantized V cache types require flash attention to be enabled\n", __func__);
+            WHISPER_LOG_ERROR("%s: V types: kv_self=%s, kv_cross=%s, kv_pad=%s\n",
                 __func__, 
-                ggml_type_name(ctx->params.type_k), ggml_type_name(ctx->params.type_v),
-                ggml_type_name(ctx->params.type_k_cross), ggml_type_name(ctx->params.type_v_cross),
-                ggml_type_name(ctx->params.type_k_pad), ggml_type_name(ctx->params.type_v_pad));
-            WHISPER_LOG_ERROR("%s: please use --flash-attn or -fa flag, or use f16/f32 for all KV cache types\n", __func__);
+                ggml_type_name(ctx->params.type_v),
+                ggml_type_name(ctx->params.type_v_cross),
+                ggml_type_name(ctx->params.type_v_pad));
+            WHISPER_LOG_ERROR("%s: use --flash-attn/-fa flag, or use f16/f32 for V cache types\n", __func__);
+            WHISPER_LOG_ERROR("%s: note: K cache quantization works with non-flash attention\n", __func__);
             whisper_free_state(state);
             return nullptr;
         }

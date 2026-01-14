@@ -687,28 +687,30 @@ if (v->type == GGML_TYPE_F16) {
 
 ### 3.6.6 量化 KV Cache 与 Flash Attention 的兼容性
 
-**重要限制**：量化 KV Cache 类型（Q8_0、Q4_0 等）**必须与 Flash Attention 一起使用**。
+**重要说明**：量化 KV Cache 类型（Q8_0、Q4_0 等）对 K 和 V 有不同的兼容性要求：
 
-**原因**：
-- Flash Attention 路径：K 和 V 使用相同的 `[n_state_head, n_kv, n_head]` 布局，支持行对齐访问
-- 非 Flash Attention 路径：V 需要转置存储为 `[n_kv, n_state_head, n_head]`，需要元素级访问
-- ggml 量化类型不支持子行访问（最小访问粒度是 block_size=32 个元素）
+**K Cache 量化**：✅ 同时支持 Flash Attention 和非 Flash Attention 模式
+- K cache 使用行对齐的 1D 视图访问
+- 偏移量以完整行为单位，天然支持块对齐
 
-**错误示例**：
+**V Cache 量化**：⚠️ 仅支持 Flash Attention 模式
+- Flash Attention：V 使用与 K 相同的布局，支持行对齐访问
+- 非 Flash Attention：V 需要转置存储，需要元素级偏移访问
+- ggml 量化类型不支持非块对齐的偏移访问
+
+**用法示例**：
 ```bash
-# 错误：禁用 flash attention 时使用量化类型会导致断言失败
-./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k q8_0 --kv-type-v q8_0 -nfa
-# GGML_ASSERT: data_size + view_offs <= ggml_nbytes(view_src)
+# 启用 flash attention（支持 K 和 V 量化）
+./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k q8_0 --kv-type-v q8_0 -fa
+
+# 禁用 flash attention（仅支持 K 量化，V 必须是 f16/f32）
+./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k q8_0 --kv-type-v f16 -nfa
 ```
 
-**正确用法**：
-```bash
-# 正确：量化类型需要启用 flash attention（默认已启用）
-./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k q8_0 --kv-type-v f16 -fa
-
-# 正确：禁用 flash attention 时只能使用 f16/f32
-./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k f16 --kv-type-v f16 -nfa
-```
+**技术原因**：
+- K cache 写入使用 `ggml_view_1d`，偏移量是 `row_size * (layer * n_ctx + kv_head)`
+- V cache 在非 flash attention 模式下写入使用 `ggml_view_2d`，偏移量包含 `kv_head * element_size`
+- 对于量化类型，`kv_head` 通常不是块大小（32）的倍数，导致无效的非块对齐访问
 
 ---
 

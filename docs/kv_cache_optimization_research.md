@@ -624,6 +624,54 @@ cparams.type_v = GGML_TYPE_F32;  // V cache 使用 FP32 (更高精度)
 ./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k f16 --kv-type-v f32
 ```
 
+### 3.6.5 量化 KV Cache 性能分析
+
+**重要发现**：KV Cache 量化（如 Q8_0）目前会导致性能下降，原因是 ggml 的 flash attention 实现需要在每次 attention 计算时实时反量化 V 值。
+
+**性能对比分析**（基于用户测试数据）：
+
+| 配置 | `ggml_compute_forward_flash_attn_ext` | 反量化开销 | 总时间 |
+|------|--------------------------------------|-----------|--------|
+| K: F16, V: F16 | 340ms | 0ms | 340ms |
+| K: Q8_0, V: Q8_0 | 424ms | 127ms (`dequantize_row_q8_0`) | 424ms |
+
+**根因分析**：
+
+查看 `ggml/src/ggml-cpu/ops.cpp` 的 flash attention 实现：
+
+```cpp
+// ggml_compute_forward_flash_attn_ext_f16_one_chunk
+ggml_to_float_t const v_to_float = ggml_get_type_traits(v->type)->to_float;
+
+// 在 attention 循环中
+if (v->type == GGML_TYPE_F16) {
+    // 快速路径：直接使用 F16 操作
+    ggml_vec_mad_f16(DV, VKQ16, (const ggml_fp16_t *) v_data, vs);
+} else {
+    // 慢速路径：每次迭代都需要反量化
+    v_to_float(v_data, V32, DV);  // <- 这里调用 dequantize_row_q8_0
+    ggml_vec_mad_f32(DV, VKQ32, V32, vs);
+}
+```
+
+**数据流过程**：
+1. 计算 K×Q 得到 attention scores（K 量化可用 `vec_dot_q8_0_q8_0` 快速计算）
+2. 对于 V：每个 attention step 都需要将 V 从 Q8_0 反量化为 F32
+3. 反量化在 **热循环** 内执行，导致显著开销
+
+**优化建议**：
+
+1. **推荐配置**：K 使用量化（节省内存+计算），V 保持 F16（避免反量化开销）
+   ```bash
+   ./bin/whisper-cli -m model.bin -f audio.wav --kv-type-k q8_0 --kv-type-v f16
+   ```
+
+2. **ggml 层面优化**（需要修改 ggml 库）：
+   - 实现 `ggml_vec_mad_q8_0` 等直接操作量化数据的函数
+   - 参考 [ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp) 的量化 attention 实现
+
+3. **预反量化策略**：在 attention 计算前一次性反量化整层 V，而非逐行反量化
+
 ---
 
 ## 第四阶段：易于实现的创新优化方案 (Practical Innovations)

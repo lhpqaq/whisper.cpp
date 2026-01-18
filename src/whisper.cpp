@@ -1696,19 +1696,25 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
     std::map<std::string, tensor_info> tensor_data_map;
 
     // Read all tensor metadata and data from the file
+    // Note: This approach temporarily doubles memory usage during model loading.
+    // This is necessary because the loader interface doesn't support seeking,
+    // so we must read tensor data before we can determine the correct types for allocation.
     {
         while (true) {
             int32_t n_dims;
-            int32_t length;
-            int32_t ttype;
 
             read_safe(loader, n_dims);
-            read_safe(loader, length);
-            read_safe(loader, ttype);
 
+            // Check for EOF after reading the first field of the header
             if (loader->eof(loader->context)) {
                 break;
             }
+
+            int32_t length;
+            int32_t ttype;
+
+            read_safe(loader, length);
+            read_safe(loader, ttype);
 
             tensor_info info;
             info.n_dims = n_dims;
@@ -1782,6 +1788,9 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
                     meta->nb[i] = meta->nb[i-1] * meta->ne[i-1];
                 }
             }
+        } else {
+            // Tensor not found in pre-scanned data - this shouldn't happen with a valid model file
+            WHISPER_LOG_WARN("%s: tensor '%s' not found in model file, using default type\n", __func__, tensor_name.c_str());
         }
 
         ggml_op op = ASR_TENSOR_INFO.at(type);
@@ -1938,16 +1947,16 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
 
         for (auto & [name, info] : tensor_data_map) {
             if (model.tensors.find(name) == model.tensors.end()) {
-                WHISPER_LOG_ERROR("%s: unknown tensor '%s' in model file\n", __func__, name.data());
+                WHISPER_LOG_ERROR("%s: unknown tensor '%s' in model file\n", __func__, name.c_str());
                 return false;
             }
 
-            auto tensor = model.tensors[name.data()];
+            auto tensor = model.tensors[name];
 
             // Verify tensor properties match
             const int32_t nelements = info.ne[0] * info.ne[1] * info.ne[2] * info.ne[3];
             if (ggml_nelements(tensor) != nelements) {
-                WHISPER_LOG_ERROR("%s: tensor '%s' has wrong size in model file\n", __func__, name.data());
+                WHISPER_LOG_ERROR("%s: tensor '%s' has wrong size in model file\n", __func__, name.c_str());
                 WHISPER_LOG_ERROR("%s: shape: [%d, %d, %d], expected: [%d, %d, %d]\n",
                         __func__, info.ne[0], info.ne[1], info.ne[2], (int) tensor->ne[0], (int) tensor->ne[1], (int) tensor->ne[2]);
                 return false;
@@ -1955,14 +1964,14 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
 
             if (tensor->ne[0] != info.ne[0] || tensor->ne[1] != info.ne[1] || tensor->ne[2] != info.ne[2]) {
                 WHISPER_LOG_ERROR("%s: tensor '%s' has wrong shape in model file: got [%d, %d, %d], expected [%d, %d, %d]\n",
-                        __func__, name.data(), (int) tensor->ne[0], (int) tensor->ne[1], (int) tensor->ne[2], info.ne[0], info.ne[1], info.ne[2]);
+                        __func__, name.c_str(), (int) tensor->ne[0], (int) tensor->ne[1], (int) tensor->ne[2], info.ne[0], info.ne[1], info.ne[2]);
                 return false;
             }
 
             // Type should already match since we used the file's type during tensor creation
             if (tensor->type != info.type) {
                 WHISPER_LOG_ERROR("%s: tensor '%s' has wrong type: expected %s, got %s\n",
-                        __func__, name.data(), ggml_type_name(info.type), ggml_type_name(tensor->type));
+                        __func__, name.c_str(), ggml_type_name(info.type), ggml_type_name(tensor->type));
                 return false;
             }
 

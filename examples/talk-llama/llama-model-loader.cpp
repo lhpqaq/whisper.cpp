@@ -495,6 +495,7 @@ llama_model_loader::llama_model_loader(
         const std::string & fname,
         std::vector<std::string> & splits,
         bool use_mmap,
+        bool use_direct_io,
         bool check_tensors,
         bool no_alloc,
         const llama_model_kv_override * param_overrides_p,
@@ -527,8 +528,16 @@ llama_model_loader::llama_model_loader(
     get_key(llm_kv(LLM_KV_GENERAL_ARCHITECTURE), arch_name, false);
     llm_kv = LLM_KV(llm_arch_from_string(arch_name));
 
-    files.emplace_back(new llama_file(fname.c_str(), "rb", !use_mmap));
+    files.emplace_back(new llama_file(fname.c_str(), "rb", use_direct_io));
     contexts.emplace_back(ctx);
+
+    use_direct_io = use_direct_io && files.back()->has_direct_io();
+
+    // Disable mmap in case Direct I/O is enabled and available
+    if (use_direct_io && use_mmap) {
+        use_mmap = false;
+        LLAMA_LOG_WARN("%s: direct I/O is enabled, disabling mmap\n", __func__);
+    }
 
     // Save tensors data offset of the main file.
     // For subsidiary files, `meta` tensor data offset must not be used,
@@ -595,7 +604,7 @@ llama_model_loader::llama_model_loader(
                 }
             }
 
-            files.emplace_back(new llama_file(fname_split, "rb", !use_mmap));
+            files.emplace_back(new llama_file(fname_split, "rb", use_direct_io));
             contexts.emplace_back(ctx);
 
             // Save tensors data offset info of the shard.
@@ -739,6 +748,7 @@ llama_model_loader::llama_model_loader(
     }
 
     this->use_mmap = use_mmap;
+    this->use_direct_io = use_direct_io;
     this->check_tensors = check_tensors;
     this->no_alloc = no_alloc;
 }
@@ -1132,7 +1142,7 @@ bool llama_model_loader::load_all_data(
                         ggml_backend_event_synchronize(events[buffer_idx]);
 
                         // Read aligned chunk from file
-                        file->read_raw(reinterpret_cast<void *>(ptr_dest_aligned), read_size);
+                        file->read_raw_unsafe(reinterpret_cast<void *>(ptr_dest_aligned), read_size);
 
                         // Calculate actual data portion (excluding alignment padding)
                         uintptr_t ptr_data = ptr_dest_aligned;

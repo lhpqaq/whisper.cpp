@@ -1684,6 +1684,60 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
 
     const size_t n_tensors = 10 /* input */ + 15 + 15*n_audio_layer + 24*n_text_layer;
 
+    // Pre-scan tensor metadata and data from file
+    // This allows us to create tensors with the correct type from the file,
+    // ensuring proper memory allocation on the device
+    struct tensor_info {
+        ggml_type type;
+        int32_t ne[4];
+        int32_t n_dims;
+        std::vector<char> data;
+    };
+    std::map<std::string, tensor_info> tensor_data_map;
+
+    // Read all tensor metadata and data from the file
+    {
+        while (true) {
+            int32_t n_dims;
+            int32_t length;
+            int32_t ttype;
+
+            read_safe(loader, n_dims);
+            read_safe(loader, length);
+            read_safe(loader, ttype);
+
+            if (loader->eof(loader->context)) {
+                break;
+            }
+
+            tensor_info info;
+            info.n_dims = n_dims;
+            info.type = ggml_type(ttype);
+            info.ne[0] = 1;
+            info.ne[1] = 1;
+            info.ne[2] = 1;
+            info.ne[3] = 1;
+
+            int32_t nelements = 1;
+            for (int i = 0; i < n_dims; ++i) {
+                read_safe(loader, info.ne[i]);
+                nelements *= info.ne[i];
+            }
+
+            std::string name;
+            std::vector<char> tmp(length);
+            loader->read(loader->context, &tmp[0], tmp.size());
+            name.assign(&tmp[0], tmp.size());
+
+            // Calculate and read tensor data
+            const size_t tensor_data_size = ggml_row_size(info.type, info.ne[0]) * (nelements / info.ne[0]);
+            info.data.resize(tensor_data_size);
+            loader->read(loader->context, info.data.data(), tensor_data_size);
+
+            tensor_data_map[name] = std::move(info);
+        }
+    }
+
     std::map<ggml_backend_buffer_type_t, ggml_context *> ctx_map;
     auto get_ctx = [&](ggml_backend_buffer_type_t buft) -> ggml_context * {
         auto it = ctx_map.find(buft);
@@ -1712,6 +1766,24 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
     buft_list_t buft_list = make_buft_list(wctx.params);
 
     auto create_tensor = [&](asr_tensor type, asr_system system, ggml_tensor * meta, int layer = 0) -> ggml_tensor * {
+        // Get the tensor name and look up its actual type from the pre-scanned file data
+        std::string tensor_name = format(ASR_TENSOR_NAMES.at(system).at(type), layer);
+        auto it = tensor_data_map.find(tensor_name);
+        if (it != tensor_data_map.end()) {
+            // Use the type from the file to ensure proper memory allocation
+            const tensor_info & info = it->second;
+            if (meta->type != info.type) {
+                // Update meta tensor type to match the file
+                meta->type = info.type;
+                // Update strides based on new type
+                meta->nb[0] = ggml_type_size(meta->type);
+                meta->nb[1] = meta->nb[0] * (meta->ne[0] / ggml_blck_size(meta->type));
+                for (int i = 2; i < GGML_MAX_DIMS; i++) {
+                    meta->nb[i] = meta->nb[i-1] * meta->ne[i-1];
+                }
+            }
+        }
+
         ggml_op op = ASR_TENSOR_INFO.at(type);
         ggml_backend_buffer_type_t buft = select_weight_buft(hparams, meta, op, buft_list);
         if (!buft) {
@@ -1721,7 +1793,7 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
         ggml_context * ctx = get_ctx(buft);
         ggml_tensor * tensor = ggml_dup_tensor(ctx, meta);
 
-        model.tensors[format(ASR_TENSOR_NAMES.at(system).at(type), layer)] = tensor;
+        model.tensors[tensor_name] = tensor;
 
         return tensor;
     };
@@ -1858,39 +1930,13 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
         }
     }
 
-    // load weights
+    // load weights from pre-scanned tensor data
     {
         size_t total_size = 0;
 
         model.n_loaded = 0;
 
-        std::vector<char> read_buf;
-
-        while (true) {
-            int32_t n_dims;
-            int32_t length;
-            int32_t ttype;
-
-            read_safe(loader, n_dims);
-            read_safe(loader, length);
-            read_safe(loader, ttype);
-
-            if (loader->eof(loader->context)) {
-                break;
-            }
-
-            int32_t nelements = 1;
-            int32_t ne[4] = { 1, 1, 1, 1 };
-            for (int i = 0; i < n_dims; ++i) {
-                read_safe(loader, ne[i]);
-                nelements *= ne[i];
-            }
-
-            std::string name;
-            std::vector<char> tmp(length); // create a buffer
-            loader->read(loader->context, &tmp[0], tmp.size()); // read to buffer
-            name.assign(&tmp[0], tmp.size());
-
+        for (auto & [name, info] : tensor_data_map) {
             if (model.tensors.find(name) == model.tensors.end()) {
                 WHISPER_LOG_ERROR("%s: unknown tensor '%s' in model file\n", __func__, name.data());
                 return false;
@@ -1898,76 +1944,45 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
 
             auto tensor = model.tensors[name.data()];
 
+            // Verify tensor properties match
+            const int32_t nelements = info.ne[0] * info.ne[1] * info.ne[2] * info.ne[3];
             if (ggml_nelements(tensor) != nelements) {
                 WHISPER_LOG_ERROR("%s: tensor '%s' has wrong size in model file\n", __func__, name.data());
                 WHISPER_LOG_ERROR("%s: shape: [%d, %d, %d], expected: [%d, %d, %d]\n",
-                        __func__, ne[0], ne[1], ne[2], (int) tensor->ne[0], (int) tensor->ne[1], (int) tensor->ne[2]);
+                        __func__, info.ne[0], info.ne[1], info.ne[2], (int) tensor->ne[0], (int) tensor->ne[1], (int) tensor->ne[2]);
                 return false;
             }
 
-            if (tensor->ne[0] != ne[0] || tensor->ne[1] != ne[1] || tensor->ne[2] != ne[2]) {
+            if (tensor->ne[0] != info.ne[0] || tensor->ne[1] != info.ne[1] || tensor->ne[2] != info.ne[2]) {
                 WHISPER_LOG_ERROR("%s: tensor '%s' has wrong shape in model file: got [%d, %d, %d], expected [%d, %d, %d]\n",
-                        __func__, name.data(), (int) tensor->ne[0], (int) tensor->ne[1], (int) tensor->ne[2], ne[0], ne[1], ne[2]);
+                        __func__, name.data(), (int) tensor->ne[0], (int) tensor->ne[1], (int) tensor->ne[2], info.ne[0], info.ne[1], info.ne[2]);
                 return false;
             }
 
-            // Calculate size based on file's tensor type
-            const size_t file_tensor_size = ggml_row_size(ggml_type(ttype), ne[0]) * (nelements / ne[0]);
-            const size_t expected_tensor_size = ggml_nbytes(tensor);
-            
-            // For mixed precision models, the tensor type in file may differ from the type
-            // the tensor was created with. We need to handle this carefully.
-            if (tensor->type != ggml_type(ttype)) {
-                // Mixed precision: tensor created with one type, file has another
-                // We need to update the tensor's type to match the file
-                WHISPER_LOG_DEBUG("%s: tensor '%s' type mismatch (expected %s, file has %s)\n",
-                        __func__, name.data(), ggml_type_name(tensor->type), ggml_type_name(ggml_type(ttype)));
-                
-                // Check if the allocated buffer is large enough for the file's data
-                if (file_tensor_size > expected_tensor_size) {
-                    WHISPER_LOG_ERROR("%s: tensor '%s' buffer too small: allocated %zu bytes for %s, but file needs %zu bytes for %s\n",
-                            __func__, name.data(), expected_tensor_size, ggml_type_name(tensor->type), 
-                            file_tensor_size, ggml_type_name(ggml_type(ttype)));
-                    return false;
-                }
-                
-                // Update tensor type to match the file
-                tensor->type = ggml_type(ttype);
-                
-                // Update tensor strides (nb) based on new type
-                tensor->nb[0] = ggml_type_size(tensor->type);
-                tensor->nb[1] = tensor->nb[0] * (tensor->ne[0] / ggml_blck_size(tensor->type));
-                for (int i = 2; i < GGML_MAX_DIMS; i++) {
-                    tensor->nb[i] = tensor->nb[i-1] * tensor->ne[i-1];
-                }
-            } else {
-                // Normal case: types match, verify size
-                if (file_tensor_size != expected_tensor_size) {
-                    WHISPER_LOG_ERROR("%s: tensor '%s' has wrong size in model file: got %zu, expected %zu\n",
-                            __func__, name.data(), expected_tensor_size, file_tensor_size);
-                    return false;
-                }
+            // Type should already match since we used the file's type during tensor creation
+            if (tensor->type != info.type) {
+                WHISPER_LOG_ERROR("%s: tensor '%s' has wrong type: expected %s, got %s\n",
+                        __func__, name.data(), ggml_type_name(info.type), ggml_type_name(tensor->type));
+                return false;
             }
-            
-            // Now read the data - use the file's size
-            const size_t bytes_to_read = file_tensor_size;
+
+            const size_t bytes_to_write = info.data.size();
 
             if (ggml_backend_buffer_is_host(tensor->buffer)) {
-                // for the CPU and Metal backend, we can read directly into the tensor
-                loader->read(loader->context, tensor->data, bytes_to_read);
+                // for the CPU and Metal backend, we can copy directly into the tensor
+                memcpy(tensor->data, info.data.data(), bytes_to_write);
                 BYTESWAP_TENSOR(tensor);
             } else {
-                // read into a temporary buffer first, then copy to device memory
-                read_buf.resize(bytes_to_read);
-
-                loader->read(loader->context, read_buf.data(), read_buf.size());
-
-                ggml_backend_tensor_set(tensor, read_buf.data(), 0, bytes_to_read);
+                // copy to device memory
+                ggml_backend_tensor_set(tensor, info.data.data(), 0, bytes_to_write);
             }
 
-            total_size += bytes_to_read;
+            total_size += bytes_to_write;
             model.n_loaded++;
         }
+
+        // Clear the pre-scanned data to free memory
+        tensor_data_map.clear();
 
         WHISPER_LOG_INFO("%s: model size    = %7.2f MB\n", __func__, total_size/1e6);
 

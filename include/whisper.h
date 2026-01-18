@@ -156,6 +156,17 @@ extern "C" {
         size_t (*read)(void * ctx, void * output, size_t read_size);
         bool    (*eof)(void * ctx);
         void  (*close)(void * ctx);
+        // Optional: skip forward by offset bytes.
+        // If NULL, skipping is not supported.
+        // Returns true on success, false on failure.
+        bool  (*skip)(void * ctx, size_t offset);
+        // Optional: seek to absolute position in the file.
+        // If NULL, absolute seeking is not supported.
+        // Returns true on success, false on failure.
+        bool  (*seek)(void * ctx, size_t offset);
+        // Optional: get current position in the file.
+        // If NULL, position tracking is not supported.
+        size_t (*tell)(void * ctx);
     } whisper_model_loader;
 
     // grammar element type

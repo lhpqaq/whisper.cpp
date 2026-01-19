@@ -118,6 +118,34 @@ extern "C" {
         bool  flash_attn;
         int   gpu_device;  // CUDA device
 
+        // [EXPERIMENTAL] KV cache data types for different caches
+        // Allows using different precision for kv_self (decoder), kv_cross (encoder), and kv_pad
+        // Default: GGML_TYPE_F16 for all. Quantized types (q8_0, q4_0, etc.) require flash_attn=true.
+        //
+        // kv_self:  Decoder self-attention KV cache - caches K/V from previous decoder tokens
+        //           Size = n_text_layer * n_text_ctx * n_text_state
+        //           Recommended: K=q8_0, V=f16 (quantized K saves memory, f16 V avoids dequantization overhead)
+        //
+        // kv_cross: Cross-attention KV cache - caches encoder output for decoder cross-attention
+        //           Size = n_text_layer * n_audio_ctx * n_text_state (largest, computed once per audio)
+        //           Recommended: f16 (precision sensitive, read many times)
+        //
+        // kv_pad:   Encoder padding buffer for flash-attention - temporary cache for encoder
+        //           Size = 1 * n_audio_ctx * n_audio_state (smallest)
+        //           Recommended: f16 (small, temporary)
+
+        // KV cache types for kv_self (decoder self-attention)
+        enum ggml_type type_k;        // K cache type for kv_self (default: F16)
+        enum ggml_type type_v;        // V cache type for kv_self (default: F16)
+
+        // KV cache types for kv_cross (encoder cross-attention) - typically largest cache
+        enum ggml_type type_k_cross;  // K cache type for kv_cross (default: F16)
+        enum ggml_type type_v_cross;  // V cache type for kv_cross (default: F16)
+
+        // KV cache types for kv_pad (encoder flash-attention padding buffer)
+        enum ggml_type type_k_pad;    // K cache type for kv_pad (default: F16)
+        enum ggml_type type_v_pad;    // V cache type for kv_pad (default: F16)
+
         // [EXPERIMENTAL] Token-level timestamps with DTW
         bool dtw_token_timestamps;
         enum whisper_alignment_heads_preset dtw_aheads_preset;

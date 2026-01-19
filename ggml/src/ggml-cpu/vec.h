@@ -334,6 +334,7 @@ inline static void ggml_vec_dot_f16_unroll(const int n, const int xs, float * GG
     }
 }
 
+// #undef GGML_SIMD
 inline static void ggml_vec_mad_f32(const int n, float * GGML_RESTRICT y, const float * GGML_RESTRICT x, const float v) {
 #if defined(GGML_SIMD)
     #if defined(__ARM_FEATURE_SVE)
@@ -1578,6 +1579,316 @@ inline static void ggml_vec_argmax_f32(const int n, int * s, const float * x) {
         if (max == x[i]) { idx = i; }
     }
     *s = idx;
+}
+
+// #undef __ARM_NEON
+inline static void ggml_vec_mad_q8_0(const int n, float * GGML_RESTRICT y, const void * GGML_RESTRICT vx, const float v) {
+    // Q8_0 constants
+    const int QK8_0_SIZE = 32;                  // block size in elements
+    const int QK8_0_BLOCK_BYTES = 34;           // sizeof(block_q8_0) = 2 (half) + 32 (qs)
+    const int nb = n / QK8_0_SIZE;
+    
+    const uint8_t * x = (const uint8_t *)vx;
+    
+#if defined(__ARM_NEON) && defined(__aarch64__)
+    
+    for (int i = 0; i < nb; ++i) {
+        // Read scale factor (first 2 bytes as fp16)
+        const uint16_t d_bits = *(const uint16_t *)(x + i * QK8_0_BLOCK_BYTES);
+        const ggml_fp16_t d_fp16 = *(const ggml_fp16_t *)(&d_bits);
+        const float d = GGML_CPU_FP16_TO_FP32(d_fp16);
+        const float dv = d * v;
+        const float32x4_t dvf = vdupq_n_f32(dv);
+        
+        const int8_t * qs = (const int8_t *)(x + i * QK8_0_BLOCK_BYTES + 2);
+        float * y_ptr = y + i * QK8_0_SIZE;
+        
+        // Process 32 elements in blocks of 16
+        for (int j = 0; j < 2; ++j) {
+            // Load 16 int8 values
+            const int8x16_t qi = vld1q_s8(qs + j * 16);
+            
+            // Split into two 8-element vectors and widen to int16
+            const int8x8_t qi_low = vget_low_s8(qi);
+            const int8x8_t qi_high = vget_high_s8(qi);
+            const int16x8_t qi16_low = vmovl_s8(qi_low);
+            const int16x8_t qi16_high = vmovl_s8(qi_high);
+            
+            // Widen to int32
+            const int32x4_t qi32_0 = vmovl_s16(vget_low_s16(qi16_low));
+            const int32x4_t qi32_1 = vmovl_s16(vget_high_s16(qi16_low));
+            const int32x4_t qi32_2 = vmovl_s16(vget_low_s16(qi16_high));
+            const int32x4_t qi32_3 = vmovl_s16(vget_high_s16(qi16_high));
+            
+            // Convert to float
+            const float32x4_t qf_0 = vcvtq_f32_s32(qi32_0);
+            const float32x4_t qf_1 = vcvtq_f32_s32(qi32_1);
+            const float32x4_t qf_2 = vcvtq_f32_s32(qi32_2);
+            const float32x4_t qf_3 = vcvtq_f32_s32(qi32_3);
+            
+            // Load y values
+            float32x4_t yv_0 = vld1q_f32(y_ptr + j * 16 + 0);
+            float32x4_t yv_1 = vld1q_f32(y_ptr + j * 16 + 4);
+            float32x4_t yv_2 = vld1q_f32(y_ptr + j * 16 + 8);
+            float32x4_t yv_3 = vld1q_f32(y_ptr + j * 16 + 12);
+            
+            // Multiply-add: y += dv * q
+            yv_0 = vfmaq_f32(yv_0, qf_0, dvf);
+            yv_1 = vfmaq_f32(yv_1, qf_1, dvf);
+            yv_2 = vfmaq_f32(yv_2, qf_2, dvf);
+            yv_3 = vfmaq_f32(yv_3, qf_3, dvf);
+            
+            // Store results
+            vst1q_f32(y_ptr + j * 16 + 0, yv_0);
+            vst1q_f32(y_ptr + j * 16 + 4, yv_1);
+            vst1q_f32(y_ptr + j * 16 + 8, yv_2);
+            vst1q_f32(y_ptr + j * 16 + 12, yv_3);
+        }
+    }
+#elif defined(__AVX2__)
+    for (int i = 0; i < nb; ++i) {
+        // Read scale factor (first 2 bytes as fp16)
+        const uint16_t d_bits = *(const uint16_t *)(x + i * QK8_0_BLOCK_BYTES);
+        const ggml_fp16_t d_fp16 = *(const ggml_fp16_t *)(&d_bits);
+        const float d = GGML_CPU_FP16_TO_FP32(d_fp16);
+        const float dv = d * v;
+        const __m256 dvf = _mm256_set1_ps(dv);
+        
+        const int8_t * qs = (const int8_t *)(x + i * QK8_0_BLOCK_BYTES + 2);
+        float * y_ptr = y + i * QK8_0_SIZE;
+        
+        // Process 32 elements in blocks of 8
+        for (int j = 0; j < 4; ++j) {
+            // Load 8 int8 values
+            __m128i qi8 = _mm_loadl_epi64((const __m128i *)(qs + j * 8));
+            
+            // Sign extend to int32
+            __m256i qi32 = _mm256_cvtepi8_epi32(qi8);
+            
+            // Convert to float
+            __m256 qf = _mm256_cvtepi32_ps(qi32);
+            
+            // Load y values
+            __m256 yv = _mm256_loadu_ps(y_ptr + j * 8);
+            
+            // Multiply-add: y += dv * q
+            yv = _mm256_fmadd_ps(qf, dvf, yv);
+            
+            // Store results
+            _mm256_storeu_ps(y_ptr + j * 8, yv);
+        }
+    }
+#else
+    // Scalar fallback
+    for (int i = 0; i < nb; ++i) {
+        // Read scale factor (first 2 bytes as fp16) and use GGML_CPU_FP16_TO_FP32
+        const uint16_t d_bits = *(const uint16_t *)(x + i * QK8_0_BLOCK_BYTES);
+        const ggml_fp16_t d_fp16 = *(const ggml_fp16_t *)(&d_bits);
+        const float d = GGML_CPU_FP16_TO_FP32(d_fp16);
+        
+        const float dv = d * v;
+        const int8_t * qs = (const int8_t *)(x + i * QK8_0_BLOCK_BYTES + 2);
+        
+        // Process 32 elements per block
+        for (int j = 0; j < QK8_0_SIZE; ++j) {
+            y[i * QK8_0_SIZE + j] += dv * qs[j];
+        }
+    }
+#endif
+}
+
+// Optimized multiply-accumulate for Q4_0 quantized vectors
+// y[i] += v * dequantize(x[i])
+// Q4_0 block structure: half d (scale), uint8_t qs[16] (32 4-bit quants packed into 16 bytes)
+inline static void ggml_vec_mad_q4_0(const int n, float * GGML_RESTRICT y, const void * GGML_RESTRICT vx, const float v) {
+    // Q4_0 constants
+    const int QK4_0_SIZE = 32;                  // block size in elements
+    const int QK4_0_BLOCK_BYTES = 18;           // sizeof(block_q4_0) = 2 (half) + 16 (qs)
+    const int nb = n / QK4_0_SIZE;
+    
+    const uint8_t * x = (const uint8_t *)vx;
+    
+#if defined(__ARM_NEON) && defined(__aarch64__)
+    const int8x16_t s8x16_0x8 = vdupq_n_s8(0x8);
+    
+    for (int i = 0; i < nb; ++i) {
+        // Read scale factor (first 2 bytes as fp16)
+        const uint16_t d_bits = *(const uint16_t *)(x + i * QK4_0_BLOCK_BYTES);
+        const ggml_fp16_t d_fp16 = *(const ggml_fp16_t *)(&d_bits);
+        const float d = GGML_CPU_FP16_TO_FP32(d_fp16);
+        const float dv = d * v;
+        const float32x4_t dvf = vdupq_n_f32(dv);
+        
+        const uint8_t * qs = x + i * QK4_0_BLOCK_BYTES + 2;
+        float * y_ptr = y + i * QK4_0_SIZE;
+        
+        // Load 16 bytes of packed 4-bit values (32 nibbles)
+        const uint8x16_t qbytes = vld1q_u8(qs);
+        
+        // Unpack low nibbles (first 16 elements)
+        const int8x16_t q_lo = vreinterpretq_s8_u8(vandq_u8(qbytes, vdupq_n_u8(0x0F)));
+        // Unpack high nibbles (next 16 elements)
+        const int8x16_t q_hi = vreinterpretq_s8_u8(vshrq_n_u8(qbytes, 4));
+        
+        // Subtract 8 to get signed values (Q4_0 stores unsigned 0-15, needs -8 offset)
+        const int8x16_t q_lo_s = vsubq_s8(q_lo, s8x16_0x8);
+        const int8x16_t q_hi_s = vsubq_s8(q_hi, s8x16_0x8);
+        
+        // Process first 16 elements (low nibbles)
+        {
+            // Split into two 8-element vectors and widen to int16
+            const int8x8_t qi_low = vget_low_s8(q_lo_s);
+            const int8x8_t qi_high = vget_high_s8(q_lo_s);
+            const int16x8_t qi16_low = vmovl_s8(qi_low);
+            const int16x8_t qi16_high = vmovl_s8(qi_high);
+            
+            // Widen to int32
+            const int32x4_t qi32_0 = vmovl_s16(vget_low_s16(qi16_low));
+            const int32x4_t qi32_1 = vmovl_s16(vget_high_s16(qi16_low));
+            const int32x4_t qi32_2 = vmovl_s16(vget_low_s16(qi16_high));
+            const int32x4_t qi32_3 = vmovl_s16(vget_high_s16(qi16_high));
+            
+            // Convert to float
+            const float32x4_t qf_0 = vcvtq_f32_s32(qi32_0);
+            const float32x4_t qf_1 = vcvtq_f32_s32(qi32_1);
+            const float32x4_t qf_2 = vcvtq_f32_s32(qi32_2);
+            const float32x4_t qf_3 = vcvtq_f32_s32(qi32_3);
+            
+            // Load y values
+            float32x4_t yv_0 = vld1q_f32(y_ptr + 0);
+            float32x4_t yv_1 = vld1q_f32(y_ptr + 4);
+            float32x4_t yv_2 = vld1q_f32(y_ptr + 8);
+            float32x4_t yv_3 = vld1q_f32(y_ptr + 12);
+            
+            // Multiply-add: y += dv * q
+            yv_0 = vfmaq_f32(yv_0, qf_0, dvf);
+            yv_1 = vfmaq_f32(yv_1, qf_1, dvf);
+            yv_2 = vfmaq_f32(yv_2, qf_2, dvf);
+            yv_3 = vfmaq_f32(yv_3, qf_3, dvf);
+            
+            // Store results
+            vst1q_f32(y_ptr + 0, yv_0);
+            vst1q_f32(y_ptr + 4, yv_1);
+            vst1q_f32(y_ptr + 8, yv_2);
+            vst1q_f32(y_ptr + 12, yv_3);
+        }
+        
+        // Process next 16 elements (high nibbles)
+        {
+            const int8x8_t qi_low = vget_low_s8(q_hi_s);
+            const int8x8_t qi_high = vget_high_s8(q_hi_s);
+            const int16x8_t qi16_low = vmovl_s8(qi_low);
+            const int16x8_t qi16_high = vmovl_s8(qi_high);
+            
+            const int32x4_t qi32_0 = vmovl_s16(vget_low_s16(qi16_low));
+            const int32x4_t qi32_1 = vmovl_s16(vget_high_s16(qi16_low));
+            const int32x4_t qi32_2 = vmovl_s16(vget_low_s16(qi16_high));
+            const int32x4_t qi32_3 = vmovl_s16(vget_high_s16(qi16_high));
+            
+            const float32x4_t qf_0 = vcvtq_f32_s32(qi32_0);
+            const float32x4_t qf_1 = vcvtq_f32_s32(qi32_1);
+            const float32x4_t qf_2 = vcvtq_f32_s32(qi32_2);
+            const float32x4_t qf_3 = vcvtq_f32_s32(qi32_3);
+            
+            float32x4_t yv_0 = vld1q_f32(y_ptr + 16 + 0);
+            float32x4_t yv_1 = vld1q_f32(y_ptr + 16 + 4);
+            float32x4_t yv_2 = vld1q_f32(y_ptr + 16 + 8);
+            float32x4_t yv_3 = vld1q_f32(y_ptr + 16 + 12);
+            
+            yv_0 = vfmaq_f32(yv_0, qf_0, dvf);
+            yv_1 = vfmaq_f32(yv_1, qf_1, dvf);
+            yv_2 = vfmaq_f32(yv_2, qf_2, dvf);
+            yv_3 = vfmaq_f32(yv_3, qf_3, dvf);
+            
+            vst1q_f32(y_ptr + 16 + 0, yv_0);
+            vst1q_f32(y_ptr + 16 + 4, yv_1);
+            vst1q_f32(y_ptr + 16 + 8, yv_2);
+            vst1q_f32(y_ptr + 16 + 12, yv_3);
+        }
+    }
+#elif defined(__AVX2__)
+    for (int i = 0; i < nb; ++i) {
+        // Read scale factor (first 2 bytes as fp16)
+        const uint16_t d_bits = *(const uint16_t *)(x + i * QK4_0_BLOCK_BYTES);
+        const ggml_fp16_t d_fp16 = *(const ggml_fp16_t *)(&d_bits);
+        const float d = GGML_CPU_FP16_TO_FP32(d_fp16);
+        const float dv = d * v;
+        const __m256 dvf = _mm256_set1_ps(dv);
+        
+        const uint8_t * qs = x + i * QK4_0_BLOCK_BYTES + 2;
+        float * y_ptr = y + i * QK4_0_SIZE;
+        
+        // Load 16 bytes of packed nibbles
+        __m128i qbytes = _mm_loadu_si128((const __m128i *)qs);
+        
+        // Unpack low nibbles
+        __m128i q_lo = _mm_and_si128(qbytes, _mm_set1_epi8(0x0F));
+        // Unpack high nibbles
+        __m128i q_hi = _mm_and_si128(_mm_srli_epi16(qbytes, 4), _mm_set1_epi8(0x0F));
+        
+        // Process first 8 elements (from low nibbles)
+        {
+            __m128i q8_lo = _mm_sub_epi8(q_lo, _mm_set1_epi8(8));
+            __m256i q32 = _mm256_cvtepi8_epi32(q8_lo);
+            __m256 qf = _mm256_cvtepi32_ps(q32);
+            __m256 yv = _mm256_loadu_ps(y_ptr);
+            yv = _mm256_fmadd_ps(qf, dvf, yv);
+            _mm256_storeu_ps(y_ptr, yv);
+        }
+        
+        // Process next 8 elements (from low nibbles, high part)
+        {
+            __m128i q8_lo_hi = _mm_sub_epi8(_mm_srli_si128(q_lo, 8), _mm_set1_epi8(8));
+            __m256i q32 = _mm256_cvtepi8_epi32(q8_lo_hi);
+            __m256 qf = _mm256_cvtepi32_ps(q32);
+            __m256 yv = _mm256_loadu_ps(y_ptr + 8);
+            yv = _mm256_fmadd_ps(qf, dvf, yv);
+            _mm256_storeu_ps(y_ptr + 8, yv);
+        }
+        
+        // Process next 8 elements (from high nibbles)
+        {
+            __m128i q8_hi = _mm_sub_epi8(q_hi, _mm_set1_epi8(8));
+            __m256i q32 = _mm256_cvtepi8_epi32(q8_hi);
+            __m256 qf = _mm256_cvtepi32_ps(q32);
+            __m256 yv = _mm256_loadu_ps(y_ptr + 16);
+            yv = _mm256_fmadd_ps(qf, dvf, yv);
+            _mm256_storeu_ps(y_ptr + 16, yv);
+        }
+        
+        // Process last 8 elements (from high nibbles, high part)
+        {
+            __m128i q8_hi_hi = _mm_sub_epi8(_mm_srli_si128(q_hi, 8), _mm_set1_epi8(8));
+            __m256i q32 = _mm256_cvtepi8_epi32(q8_hi_hi);
+            __m256 qf = _mm256_cvtepi32_ps(q32);
+            __m256 yv = _mm256_loadu_ps(y_ptr + 24);
+            yv = _mm256_fmadd_ps(qf, dvf, yv);
+            _mm256_storeu_ps(y_ptr + 24, yv);
+        }
+    }
+#else
+    // Scalar fallback
+    for (int i = 0; i < nb; ++i) {
+        // Read scale factor (first 2 bytes as fp16) and use GGML_CPU_FP16_TO_FP32
+        const uint16_t d_bits = *(const uint16_t *)(x + i * QK4_0_BLOCK_BYTES);
+        const ggml_fp16_t d_fp16 = *(const ggml_fp16_t *)(&d_bits);
+        const float d = GGML_CPU_FP16_TO_FP32(d_fp16);
+        
+        const float dv = d * v;
+        const uint8_t * qs = x + i * QK4_0_BLOCK_BYTES + 2;
+        
+        // Process 32 elements per block (16 bytes of packed nibbles)
+        for (int j = 0; j < 16; ++j) {
+            // Low nibble (first 16 elements)
+            const int8_t q_lo = (qs[j] & 0x0F) - 8;
+            y[i * QK4_0_SIZE + j] += dv * q_lo;
+            
+            // High nibble (next 16 elements)
+            const int8_t q_hi = (qs[j] >> 4) - 8;
+            y[i * QK4_0_SIZE + 16 + j] += dv * q_hi;
+        }
+    }
+#endif
 }
 
 #ifdef __cplusplus

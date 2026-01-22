@@ -322,38 +322,57 @@ static __global__ void flash_attn_ext_vec(
             }
 #pragma unroll
             for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
-                half2 tmp[V_rows_per_thread/2];
-                dequantize_V(V + k*nb21, tmp,
-                    2*i_VKQ_0 + (nthreads_V == WARP_SIZE ? threadIdx.x : threadIdx.x % nthreads_V)*V_rows_per_thread);
+                const int i_v_offset = 2*i_VKQ_0 + (nthreads_V == WARP_SIZE ? threadIdx.x : threadIdx.x % nthreads_V)*V_rows_per_thread;
+
+                if constexpr (type_V == GGML_TYPE_Q8_0 && ncols == 1) {
+                    const block_q8_0 * x = (const block_q8_0 *) (V + k*nb21);
+                    const int64_t ib  = i_v_offset / QK8_0;
+                    const int     iqs = i_v_offset % QK8_0;
+
+                    int8_t qs[V_rows_per_thread];
+                    ggml_cuda_memcpy_1<V_rows_per_thread, 2>(qs, x[ib].qs + iqs);
+
+#ifdef V_DOT2_F32_F16_AVAILABLE
+                    const half2 d_scaled = __half2half2(x[ib].d) * KQ_k[0];
+
 #pragma unroll
-                for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
-#pragma unroll
-                    for (int j = 0; j < ncols; ++j) {
-                        VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1] += tmp[i_VKQ_1]*KQ_k[j];
+                    for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
+                        VKQ[0][i_VKQ_0/nthreads_V + i_VKQ_1] += d_scaled * make_half2(qs[2*i_VKQ_1], qs[2*i_VKQ_1+1]);
                     }
-                }
-            }
 #else
-            float KQ_k[ncols];
+                    const float d_scaled = x[ib].d * KQ_k[0];
+
 #pragma unroll
-            for (int j = 0; j < ncols; ++j) {
-                KQ_k[j] = KQ[j*nthreads + k];
-            }
-#pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
-                float2 tmp[V_rows_per_thread/2];
-                dequantize_V(V + k*nb21, tmp,
-                    2*i_VKQ_0 + (nthreads_V == WARP_SIZE ? threadIdx.x : threadIdx.x % nthreads_V)*V_rows_per_thread);
-#pragma unroll
-                for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
-#pragma unroll
-                    for (int j = 0; j < ncols; ++j) {
-                        VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1].x += tmp[i_VKQ_1].x*KQ_k[j];
-                        VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1].y += tmp[i_VKQ_1].y*KQ_k[j];
+                    for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
+                        VKQ[0][i_VKQ_0/nthreads_V + i_VKQ_1].x += d_scaled * qs[2*i_VKQ_1];
+                        VKQ[0][i_VKQ_0/nthreads_V + i_VKQ_1].y += d_scaled * qs[2*i_VKQ_1+1];
                     }
+#endif // V_DOT2_F32_F16_AVAILABLE
+                } else {
+#ifdef V_DOT2_F32_F16_AVAILABLE
+                    half2 tmp[V_rows_per_thread/2];
+                    dequantize_V(V + k*nb21, tmp, i_v_offset);
+#pragma unroll
+                    for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
+#pragma unroll
+                        for (int j = 0; j < ncols; ++j) {
+                            VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1] += tmp[i_VKQ_1]*KQ_k[j];
+                        }
+                    }
+#else
+                    float2 tmp[V_rows_per_thread/2];
+                    dequantize_V(V + k*nb21, tmp, i_v_offset);
+#pragma unroll
+                    for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
+#pragma unroll
+                        for (int j = 0; j < ncols; ++j) {
+                            VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1].x += tmp[i_VKQ_1].x*KQ_k[j];
+                            VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1].y += tmp[i_VKQ_1].y*KQ_k[j];
+                        }
+                    }
+#endif // V_DOT2_F32_F16_AVAILABLE
                 }
             }
-#endif // V_DOT2_F32_F16_AVAILABLE
         }
     }
 

@@ -320,6 +320,14 @@ static __global__ void flash_attn_ext_vec(
             for (int j = 0; j < ncols; ++j) {
                 KQ_k[j] = __half2half2(KQ[j*nthreads + k]);
             }
+#else
+            float KQ_k[ncols];
+#pragma unroll
+            for (int j = 0; j < ncols; ++j) {
+                KQ_k[j] = KQ[j*nthreads + k];
+            }
+#endif // V_DOT2_F32_F16_AVAILABLE
+
 #pragma unroll
             for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
                 const int i_v_offset = 2*i_VKQ_0 + (nthreads_V == WARP_SIZE ? threadIdx.x : threadIdx.x % nthreads_V)*V_rows_per_thread;

@@ -348,7 +348,7 @@ static __global__ void flash_attn_ext_vec(
                         VKQ[0][i_VKQ_0/nthreads_V + i_VKQ_1] += d_scaled * make_half2(qs[2*i_VKQ_1], qs[2*i_VKQ_1+1]);
                     }
 #else
-                    const float d_scaled = x[ib].d * KQ_k[0];
+                    const float d_scaled = __half2float(x[ib].d) * KQ_k[0];
 
 #pragma unroll
                     for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {

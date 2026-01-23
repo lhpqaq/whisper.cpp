@@ -2,9 +2,10 @@
 
 # 模型列表
 MODELS=("small-q80" "small-q40" "small-best" "small-6" "small" "small-1" "small-2" "small-3" "small-4" "small-5" "small-7" "small-r1" "small-r2" "small-r3" "small-r4" "small-r5" "small-r6" "small-r7")
+# MODELS=("largev3-q40" "largev3-q2k" "large-v3" "largev3-q2k-r1" "largev3-q2k-r2" "largev3-q2k-r3" "largev3-q2k-r4" "largev3-q2k-r5" "largev3-q2k-r6" "largev3-q2k-r7" "largev3-q2k-1" "largev3-q2k-2" "largev3-q2k-3" "largev3-q2k-4" "largev3-q2k-5" "largev3-q2k-6" "largev3-q2k-7" "largev3-q80")
 
 # 结果存储目录
-RESULT_DIR="../../result/earnings/"
+RESULT_DIR="../../result/earnings/largev3"
 
 # 确保结果目录存在
 mkdir -p "$RESULT_DIR"

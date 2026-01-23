@@ -1,0 +1,1149 @@
+make -f eval.mk
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/earnings21'
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-largev3-q80.bin --file speech-datasets/earnings21/media/4320211.mp3 --output-file speech-datasets/earnings21/media/4320211.mp3.tmp
+
+[00:00:00.000 --> 00:00:09.000]   Good morning, ladies and gentlemen, and welcome to the Monroe, Inc.'s Earnings Conference Call for the Third Quarter Fiscal 2020.
+[00:00:09.000 --> 00:00:17.000]   At this time, all participants are in a listen-only mode. Later, we will conduct a question-and-answer session, and instructions will follow at that time.
+[00:00:17.000 --> 00:00:22.000]   If anyone should require assistance during the call, please press *0 on your touch-tone phone.
+[00:00:22.000 --> 00:00:29.000]   As a reminder, ladies and gentlemen, this conference is being recorded and may not be reproduced in whole or in part without permission from the company.
+[00:00:29.000 --> 00:00:38.000]   I would now like to introduce Ms. Maureen Mulholland, Senior Vice President, General Counsel, and Secretary of Monroe. Thank you. Please go ahead.
+[00:00:38.000 --> 00:00:43.000]   Thank you. Hello, everyone, and thank you for joining us on this morning's call.
+[00:00:43.000 --> 00:00:58.000]   Before we get started, please note that as part of the call this morning, we will be referencing a presentation that is available on the Investors section of our website at corporate.monroe.com/investors/investors.
+[00:00:58.000 --> 00:01:15.000]   If I could draw your attention to the Safe Harbor Statement on slide 2 of the presentation, I'd like to remind participants on this morning's call that our presentation includes some forward-looking statements about Monroe's future performance.
+[00:01:15.000 --> 00:01:27.000]   Actual results may differ materially from those suggested by our comments today. The most significant factors that could affect future results are outlined in Monroe's filings with the SEC
+[00:01:27.000 --> 00:01:56.000]   and in our earnings release. The company disclaims any intention or obligation to update or revise any forward-looking statements, whether as a result of new information, future events, or otherwise, except as required by law. Additionally, on today's call, management statements include a discussion of certain non-GAAP financial measures, which are intended to supplement and not be substitutes for comparable GAAP measures.
+[00:01:56.000 --> 00:02:05.000]   Reconciliations of such supplemental information to the comparable GAAP measures will be included as part of today's presentation and in our earnings release.
+[00:02:05.000 --> 00:02:13.000]   With that, I'd like to turn the call over to our President and Chief Executive Officer, Brett Ponton. Brett?
+[00:02:13.000 --> 00:02:25.000]   Thank you, Maureen, and good morning, everyone. Thanks for joining us. I'll get started today with a brief overview of our third quarter results, followed by an update on the progress we've made on our Monroe Forward strategy.
+[00:02:25.000 --> 00:02:26.000]   As illustrated on slide 3, we reported comps down 0.9% in the third quarter, as higher year-over-year ticket was offset by negative traffic. In October and the beginning of November, we performed well against difficult comparisons in the prior year. Mild weather conditions towards the end of November and end of December caused a slowdown across our core northern markets. These conditions have continued into January, and will continue to do so until the end of next year.
+[00:02:26.000 --> 00:02:27.000]   As illustrated on slide 3, we reported comps down 0.9% in the third quarter, as higher year-over-year ticket was offset by negative traffic. In October and the beginning of November, we performed well against difficult comparisons in the prior year. Mild weather conditions towards the end of November and end of December caused a slowdown across our core northern markets. These conditions have continued into January, and will continue to do so until the end of November.
+[00:02:55.000 --> 00:02:58.360]   with our comparable store sales down 4% during the month.
+[00:02:58.360 --> 00:03:01.440]   We do not like talking about the weather.
+[00:03:01.440 --> 00:03:05.800]   However, it is impossible to ignore the impact it has on our business.
+[00:03:05.800 --> 00:03:09.660]   While we are not satisfied with our financial results this quarter,
+[00:03:09.660 --> 00:03:13.520]   we are executing well against the areas within our control.
+[00:03:13.520 --> 00:03:18.180]   In particular, we continue to move deeper into our company transformation
+[00:03:18.180 --> 00:03:20.900]   and are confident we are on the right path.
+[00:03:21.160 --> 00:03:25.820]   We are committed to making the necessary changes across our organization
+[00:03:25.820 --> 00:03:31.620]   to position us to deliver strong results no matter the external circumstances.
+[00:03:31.620 --> 00:03:35.840]   Moving on to our performance by category in the third quarter,
+[00:03:35.840 --> 00:03:40.400]   we were down 1% year-over-year in entire comparable store sales,
+[00:03:40.400 --> 00:03:44.780]   as higher ticket year-over-year was offset by a decline in tire volume.
+[00:03:44.780 --> 00:03:49.020]   We experienced more normalized retail pricing this quarter
+[00:03:49.020 --> 00:03:51.020]   and are focused on further recovery
+[00:03:51.160 --> 00:03:55.300]   by redefining our tire strategy to drive strength in our largest category.
+[00:03:55.300 --> 00:04:01.100]   Importantly, we are on track to roll out our tire category management and pricing system
+[00:04:01.100 --> 00:04:03.620]   beginning in the first quarter of fiscal 2021,
+[00:04:03.620 --> 00:04:08.780]   which will enable a more dynamic and sophisticated approach to real-time pricing.
+[00:04:08.780 --> 00:04:11.360]   I'll provide more details on this shortly.
+[00:04:11.360 --> 00:04:14.840]   Turning to our service and repair categories,
+[00:04:14.840 --> 00:04:17.920]   we saw a 3% decline in breaks year-over-year,
+[00:04:17.920 --> 00:04:21.100]   falling short of a difficult comparison in the third quarter,
+[00:04:21.160 --> 00:04:22.280]   and a decline of 1% year-over-year.
+[00:04:22.280 --> 00:04:25.920]   In maintenance, we were flat while front-end shocks were down 1%
+[00:04:25.920 --> 00:04:28.560]   and alignments declined 3% year-over-year.
+[00:04:28.560 --> 00:04:32.880]   Overall, our southern markets outperformed our northern markets,
+[00:04:32.880 --> 00:04:37.380]   as expected, given the mild winter weather conditions we faced in this region.
+[00:04:37.380 --> 00:04:42.180]   New stores added $22.7 million in revenue during the quarter,
+[00:04:42.180 --> 00:04:45.780]   including $20.7 million from recent acquisitions.
+[00:04:45.780 --> 00:04:49.040]   Regarding our gross margin performance during the quarter,
+[00:04:49.040 --> 00:04:51.040]   we saw a decline of 20 basis points,
+[00:04:51.160 --> 00:04:53.800]   compared to the prior year period,
+[00:04:53.800 --> 00:04:57.180]   primarily driven by the decrease in our comparable store sales,
+[00:04:57.180 --> 00:05:00.820]   which resulted in higher fixed costs as a percentage of sales.
+[00:05:00.820 --> 00:05:03.800]   Our variable margin, on the other hand,
+[00:05:03.800 --> 00:05:08.340]   expanded due to lower year-over-year material costs as a percentage of sales.
+[00:05:08.340 --> 00:05:10.900]   While slightly higher than the prior year quarter,
+[00:05:10.900 --> 00:05:15.660]   technician labor as a percentage of sales decreased sequentially from last quarter.
+[00:05:15.660 --> 00:05:20.140]   This is a good example of us executing well against the areas within our control.
+[00:05:20.140 --> 00:05:21.140]   We identified a decline in sales,
+[00:05:21.140 --> 00:05:24.040]   identified issues last quarter that arose from our transformation,
+[00:05:24.040 --> 00:05:26.980]   and took corrective action to drive improved results.
+[00:05:26.980 --> 00:05:31.920]   We will have additional opportunities to continue to improve results in this area
+[00:05:31.920 --> 00:05:36.020]   as we implement our cloud-based store staffing and scheduling model
+[00:05:36.020 --> 00:05:38.300]   towards the end of this fiscal year,
+[00:05:38.300 --> 00:05:41.940]   which will be critical for us to seamlessly adjust the changes
+[00:05:41.940 --> 00:05:45.380]   and demand dynamics without sacrificing sales.
+[00:05:45.380 --> 00:05:50.480]   I'd now like to turn to the progress we've made in our Monroe Forward strategy.
+[00:05:50.980 --> 00:05:54.700]   Beginning with our store rebrand and re-image initiative on slide four.
+[00:05:54.700 --> 00:05:59.660]   This initiative focuses on creating a more consistent store appearance
+[00:05:59.660 --> 00:06:04.120]   while also implementing standardized in-store operating procedures,
+[00:06:04.120 --> 00:06:06.440]   which we call our Monroe Playbook.
+[00:06:06.440 --> 00:06:11.000]   Additionally, we are rebranding select stores to a tire-oriented banner
+[00:06:11.000 --> 00:06:14.680]   where targeted demographics favor this type of store format
+[00:06:14.680 --> 00:06:19.540]   in order to increase tire sales without sacrificing service revenues.
+[00:06:20.960 --> 00:06:22.860]   During the first half of fiscal 2020,
+[00:06:22.860 --> 00:06:25.960]   we finalized the transformations of our first group of stores,
+[00:06:25.960 --> 00:06:30.600]   which includes 44 locations in Rochester, New York, and the Mid-Atlantic,
+[00:06:30.600 --> 00:06:35.040]   as well as the second group, which includes 43 stores in our southern market.
+[00:06:35.040 --> 00:06:39.380]   During the third quarter, we continued to scale this initiative across our base
+[00:06:39.380 --> 00:06:43.580]   and moved forward with the transformation of 74 stores in four markets
+[00:06:43.580 --> 00:06:47.120]   and 42 of our recently acquired California stores.
+[00:06:47.120 --> 00:06:50.940]   We have completed the transformation of the 74 stores,
+[00:06:50.940 --> 00:06:54.020]   and have substantially completed our California stores,
+[00:06:54.020 --> 00:06:59.260]   which are being rebranded under our Tire Choice Auto Service Centers banner
+[00:06:59.260 --> 00:07:01.500]   to drive higher awareness for tires.
+[00:07:01.500 --> 00:07:05.780]   Turning to slide five, I'd like to provide some additional context
+[00:07:05.780 --> 00:07:09.800]   regarding our strategic rationale as we transform our store base.
+[00:07:09.800 --> 00:07:13.760]   As many of you know, we operate in two-store format.
+[00:07:13.760 --> 00:07:20.100]   Our service brand stores, which generate approximately $600,000 per store in annualized sales,
+[00:07:20.100 --> 00:07:20.920]   and our Tire Choice Auto Service Centers, which generate approximately $600,000 per store in annualized sales,
+[00:07:20.920 --> 00:07:25.980]   and our Tire Brand stores, which generate approximately $1.2 million per store in annualized sales.
+[00:07:25.980 --> 00:07:33.720]   Prior to any rebrand activity, we operated 555 service brand stores and 734 tire brand stores.
+[00:07:33.720 --> 00:07:38.540]   And as we work to create a nationwide chain of consistently operated stores,
+[00:07:38.540 --> 00:07:41.860]   we are prioritizing the higher-volume tire brand.
+[00:07:41.860 --> 00:07:46.340]   Throughout this process, we will be consolidating our regional brands,
+[00:07:46.340 --> 00:07:49.840]   focusing on shifting our service brands over to tire brands.
+[00:07:49.840 --> 00:07:50.900]   The lower our service brands, the higher our sales.
+[00:07:50.900 --> 00:07:54.820]   The lower our number of brands will also allow us to improve our marketing productivity.
+[00:07:54.820 --> 00:08:01.260]   When we speak to re-imaging stores, this primarily means modernizing the appearance of our stores
+[00:08:01.260 --> 00:08:03.060]   with no associated brand change.
+[00:08:03.060 --> 00:08:07.840]   As we are making decisions regarding rebranding versus re-imaging stores,
+[00:08:07.840 --> 00:08:13.960]   we are leveraging our analytical model as well as taking into account our brand equity in that market.
+[00:08:13.960 --> 00:08:19.520]   Looking at the bottom left of the slide, you can see here the progress we have made so far.
+[00:08:19.520 --> 00:08:20.880]   We are very much in line with our brand equity.
+[00:08:20.880 --> 00:08:27.180]   We are very much in the early innings of this transformation with 203 stores substantially completed out of our portfolio.
+[00:08:27.180 --> 00:08:31.340]   We have separated these stores out between comp stores and non-comp stores,
+[00:08:31.340 --> 00:08:35.520]   which helps us to evaluate their performance post-refresh.
+[00:08:35.520 --> 00:08:40.460]   Of our approximately 900 comp stores that we set out to transform,
+[00:08:40.460 --> 00:08:43.320]   we have completed 134 stores.
+[00:08:43.320 --> 00:08:48.320]   And of our approximately 150 non-comp stores, we have substantially completed 69.
+[00:08:48.320 --> 00:08:50.860]   As we move forward with expanding this portfolio,
+[00:08:50.860 --> 00:08:58.780]   we will continue to prioritize markets that we expect will drive the largest benefit to our sales performance
+[00:08:58.780 --> 00:09:03.320]   and our approach will be measured in order to keep sales disruption to a minimum.
+[00:09:03.320 --> 00:09:10.760]   Through the end of this fiscal year, we are focusing on finalizing the transformation of our recently acquired California stores
+[00:09:10.760 --> 00:09:18.220]   while starting the transformation of approximately 80 more stores that will be completed in Q1 of FY21.
+[00:09:18.220 --> 00:09:20.840]   Moving on to the performance of the store we are working on,
+[00:09:20.840 --> 00:09:24.760]   to help provide some additional granularity,
+[00:09:24.760 --> 00:09:30.760]   we separated out how rebranded stores have performed versus the stores that have just been re-imaged.
+[00:09:30.760 --> 00:09:36.740]   Importantly, this data only includes comp stores that have had a full quarter of performance
+[00:09:36.740 --> 00:09:39.240]   following the completion of their transformation.
+[00:09:39.240 --> 00:09:47.500]   This is how we will speak to this performance of our transformed stores moving forward.
+[00:09:47.500 --> 00:09:50.820]   As you can see, and in line with our expectations,
+[00:09:50.820 --> 00:09:54.940]   we see a significant sales lift when we rebrand stores.
+[00:09:54.940 --> 00:10:02.780]   This shift optimizes our brand awareness and increases our tire sales without sacrificing our service revenues.
+[00:10:02.780 --> 00:10:09.220]   The stores that have been re-imaged were slightly down as these are located in our northern markets,
+[00:10:09.220 --> 00:10:13.260]   which were impacted by the mild weather conditions I mentioned earlier.
+[00:10:13.260 --> 00:10:17.460]   We believe this performance clearly highlights the strong opportunity we have
+[00:10:17.460 --> 00:10:20.800]   and the benefits that come with a streamlined brand portfolio.
+[00:10:20.800 --> 00:10:27.020]   The 74 stores that we recently completed and are not included in this calculation,
+[00:10:27.020 --> 00:10:30.580]   given they have not had a full quarter post-transformation yet,
+[00:10:30.580 --> 00:10:36.620]   but we are seeing early signs of strength at these stores and are pleased with the results.
+[00:10:36.620 --> 00:10:41.780]   While we still have a while to go to roll this program out to our entire base,
+[00:10:41.780 --> 00:10:47.680]   the sustained performance we've seen at the stores that have completed the transformation to date
+[00:10:47.680 --> 00:10:50.780]   underscores the impact of this important initiative.
+[00:10:50.780 --> 00:10:54.980]   Turning to slide six and the remainder of our Monroe Forward initiatives,
+[00:10:54.980 --> 00:10:59.220]   I'd like to focus my discussion on the initiatives that are top priority,
+[00:10:59.220 --> 00:11:02.840]   which we believe will be critical to supporting our broader strategy.
+[00:11:02.840 --> 00:11:08.480]   In the third quarter, we began modernizing our store IT infrastructure
+[00:11:08.480 --> 00:11:11.960]   at all of our approximately 1,300 locations.
+[00:11:11.960 --> 00:11:16.520]   This new infrastructure enables state-of-the-art technology,
+[00:11:16.520 --> 00:11:19.700]   including our new digital phone and texting system,
+[00:11:19.700 --> 00:11:20.760]   which is amazing.
+[00:11:20.760 --> 00:11:24.520]   It is a major step towards improving the overall customer experience.
+[00:11:24.520 --> 00:11:27.940]   This system will allow us to better track customer execution,
+[00:11:27.940 --> 00:11:30.400]   driving a more consistent phone strategy,
+[00:11:30.400 --> 00:11:32.660]   and improve conversion.
+[00:11:32.660 --> 00:11:35.180]   Our store infrastructure modernization will be completed
+[00:11:35.180 --> 00:11:38.360]   by the end of the first quarter of fiscal 2021,
+[00:11:38.360 --> 00:11:40.780]   allowing us to leverage our new phone system,
+[00:11:40.780 --> 00:11:43.640]   which will be critical to driving traffic to our stores.
+[00:11:43.640 --> 00:11:47.040]   Another priority for us is the optimization
+[00:11:47.040 --> 00:11:49.300]   of our entire category management.
+[00:11:49.300 --> 00:11:50.740]   We are on track, and by the end of the first quarter,
+[00:11:50.740 --> 00:11:55.520]   we expect our new pricing software will be operational.
+[00:11:55.520 --> 00:11:59.780]   We believe this will be critical to driving long-term margin expansion
+[00:11:59.780 --> 00:12:03.600]   by providing improved visibility into demand dynamics,
+[00:12:03.600 --> 00:12:06.060]   allowing us to better refine our assortment
+[00:12:06.060 --> 00:12:09.300]   and execute our strategy to become the number one destination
+[00:12:09.300 --> 00:12:11.220]   for tires at any price point.
+[00:12:11.220 --> 00:12:14.900]   Finally, we are right on track to roll out
+[00:12:14.900 --> 00:12:17.920]   our cloud-based store scheduling model pilot by year-end,
+[00:12:17.920 --> 00:12:20.720]   gaining real-time visibility into our labor model
+[00:12:20.720 --> 00:12:21.560]   by year-end.
+[00:12:21.560 --> 00:12:23.680]   This model, via the cloud, will help us be more effective
+[00:12:23.680 --> 00:12:26.720]   and strategic, ensuring we are not understaffed
+[00:12:26.720 --> 00:12:29.140]   and losing sales or overstaffed
+[00:12:29.140 --> 00:12:31.280]   when there is a lack of demand.
+[00:12:31.280 --> 00:12:33.320]   Regarding our other teammate initiatives,
+[00:12:33.320 --> 00:12:35.420]   we have rolled out the Monroe University program
+[00:12:35.420 --> 00:12:38.580]   to all of our teammates and are continuing to expand
+[00:12:38.580 --> 00:12:40.640]   and enhance the course content.
+[00:12:40.640 --> 00:12:43.320]   We've also implemented mandatory onboard training
+[00:12:43.320 --> 00:12:47.420]   to ensure that everyone who joins our team is trained
+[00:12:47.420 --> 00:12:50.700]   on our Monroe Playbook operating procedures.
+[00:12:50.700 --> 00:12:53.020]   We will also provide a quality five-star experience
+[00:12:53.020 --> 00:12:53.980]   to our customers.
+[00:12:53.980 --> 00:12:57.580]   Moving on to slide seven, while we are very focused
+[00:12:57.580 --> 00:12:59.400]   on the rollout of Monroe Forward,
+[00:12:59.400 --> 00:13:02.480]   acquisitions remain a cornerstone of our growth strategy.
+[00:13:02.480 --> 00:13:05.640]   During the quarter, we closed the previously announced
+[00:13:05.640 --> 00:13:09.140]   acquisitions of three companies, one with 14 locations
+[00:13:09.140 --> 00:13:12.060]   in Las Vegas, Nevada, and four in Boise, Idaho,
+[00:13:12.060 --> 00:13:14.340]   as well as two companies that include nine stores
+[00:13:14.340 --> 00:13:17.180]   in Northern California, further solidifying
+[00:13:17.180 --> 00:13:19.700]   our growing position in the Western United States.
+[00:13:19.700 --> 00:13:20.660]   Our program will continue to grow,
+[00:13:20.660 --> 00:13:22.660]   and we will continue to increase our sales
+[00:13:22.660 --> 00:13:23.660]   in the region.
+[00:13:23.660 --> 00:13:24.660]   Our presence in this region allows us
+[00:13:24.660 --> 00:13:25.660]   to better service national accounts,
+[00:13:25.660 --> 00:13:26.660]   as well as benefit from the high concentration
+[00:13:26.660 --> 00:13:29.900]   of vehicles in this market and the potential
+[00:13:29.900 --> 00:13:33.080]   long-term consumer shift to ride-sharing.
+[00:13:33.080 --> 00:13:34.760]   The acquisition in Nevada and Idaho,
+[00:13:34.760 --> 00:13:36.600]   which are new states to Monroe, is expected
+[00:13:36.600 --> 00:13:40.160]   to add approximately $20 million in annualized sales,
+[00:13:40.160 --> 00:13:45.140]   represented a sales mix of 75% service and 25% tires.
+[00:13:45.140 --> 00:13:46.940]   The acquisitions in California are expected
+[00:13:46.940 --> 00:13:50.620]   to add approximately $25 million in annualized sales,
+[00:13:50.620 --> 00:13:55.940]   represented a sales mix of 55% service and 45% tires.
+[00:13:55.940 --> 00:13:59.560]   These acquisitions are expected to be diluted
+[00:13:59.560 --> 00:14:02.860]   to diluted earnings per share in fiscal 2020.
+[00:14:02.860 --> 00:14:05.800]   Overall, acquisitions announced and completed
+[00:14:05.800 --> 00:14:09.120]   in fiscal 2020 collectively represent an expected
+[00:14:09.120 --> 00:14:12.580]   $120 million in annualized sales.
+[00:14:12.580 --> 00:14:14.940]   We operate in a very fragmented industry
+[00:14:14.940 --> 00:14:19.080]   with significant opportunities for further consolidation,
+[00:14:19.080 --> 00:14:20.580]   and we believe we are well-positioned
+[00:14:20.580 --> 00:14:24.300]   to continue to execute on our robust pipeline
+[00:14:24.300 --> 00:14:26.800]   of attractive M&A targets.
+[00:14:26.800 --> 00:14:28.900]   We currently have over 10 NDAs signed,
+[00:14:28.900 --> 00:14:32.320]   with opportunities ranging from 5 to 40 stores,
+[00:14:32.320 --> 00:14:34.120]   which we believe will allow us to maintain
+[00:14:34.120 --> 00:14:36.760]   our leadership position in the markets we serve
+[00:14:36.760 --> 00:14:39.900]   while continuing to expand our geographic footprint
+[00:14:39.900 --> 00:14:42.620]   into attractive and underserved regions.
+[00:14:42.620 --> 00:14:45.460]   Further, by continuing to execute our Monroe Forward
+[00:14:45.460 --> 00:14:47.580]   initiatives, including our new brand standards
+[00:14:47.580 --> 00:14:50.540]   and operating procedures, we expect to integrate our
+[00:14:50.540 --> 00:14:54.540]   new acquisitions more effectively and efficiently.
+[00:14:54.540 --> 00:14:57.240]   Lastly, we opened one greenfield location
+[00:14:57.240 --> 00:15:00.880]   during third quarter, bringing our total greenfield store
+[00:15:00.880 --> 00:15:04.160]   openings to seven in fiscal 2020.
+[00:15:04.160 --> 00:15:06.780]   In conclusion, we are confident we are on the right track
+[00:15:06.780 --> 00:15:09.540]   to drive future success in our business.
+[00:15:09.540 --> 00:15:12.400]   We are in the early innings of a significant company
+[00:15:12.400 --> 00:15:15.920]   transformation that will result in a platform capable
+[00:15:15.920 --> 00:15:19.380]   of delivering sustainable long-term growth.
+[00:15:19.380 --> 00:15:20.500]   We are not there yet.
+[00:15:20.500 --> 00:15:23.060]   Nor do we expect our results to be linear
+[00:15:23.060 --> 00:15:25.360]   as we move through the transformation.
+[00:15:25.360 --> 00:15:28.120]   But we are committed to driving the necessary changes
+[00:15:28.120 --> 00:15:30.740]   to improve our business, making the appropriate
+[00:15:30.740 --> 00:15:32.760]   course corrections when necessary,
+[00:15:32.760 --> 00:15:36.340]   and executing well against the areas within our control.
+[00:15:36.340 --> 00:15:38.740]   I'd like to thank the entire team at Monroe
+[00:15:38.740 --> 00:15:42.120]   for their exceptional work as we execute this strategy,
+[00:15:42.120 --> 00:15:44.400]   as well as our customers and shareholders
+[00:15:44.400 --> 00:15:46.660]   for their continued support.
+[00:15:46.660 --> 00:15:48.300]   With that, I'll turn the call over
+[00:15:48.300 --> 00:15:50.460]   to our Executive Vice President, Chief Financial Officer,
+[00:15:50.460 --> 00:15:54.780]   and Treasurer, Brian D'Ambrosio, who will provide additional detail
+[00:15:54.780 --> 00:15:56.720]   on our third quarter financial performance
+[00:15:56.720 --> 00:15:59.260]   and fiscal 2020 outlook.
+[00:15:59.260 --> 00:16:01.600]   Thank you, Brett, and good morning, everyone.
+[00:16:01.600 --> 00:16:04.980]   Turning to slide eight in our performance during the quarter.
+[00:16:04.980 --> 00:16:11.180]   Sales increased 6.2% year-over-year to $329.3 million,
+[00:16:11.180 --> 00:16:15.320]   driven by sales from new stores of $22.7 million,
+[00:16:15.320 --> 00:16:20.420]   including $20.7 million from recent acquisition, partially offset by
+[00:16:20.420 --> 00:16:25.840]   a decrease in sales from closed stores of approximately $0.8 million.
+[00:16:25.840 --> 00:16:30.020]   Same-store sales in the quarter were down 0.9% year-over-year.
+[00:16:30.020 --> 00:16:34.300]   The third quarter of fiscal 2020 had 89 selling days,
+[00:16:34.300 --> 00:16:37.420]   in line with the previous year period.
+[00:16:37.420 --> 00:16:41.780]   Gross margin decreased 20 basis points to 37.8%
+[00:16:41.780 --> 00:16:45.600]   in the third quarter of fiscal 2020 from 38%
+[00:16:45.600 --> 00:16:47.500]   in the prior year period.
+[00:16:47.500 --> 00:16:50.380]   This decrease was partially due to an increase in distribution
+[00:16:50.380 --> 00:16:53.580]   and occupancy costs as a percentage of sales
+[00:16:53.580 --> 00:16:56.540]   as we lost leverage on these largely fixed costs
+[00:16:56.540 --> 00:16:58.840]   with lower comparable store sales.
+[00:16:58.840 --> 00:17:01.620]   However, as Brett mentioned, we saw improvements
+[00:17:01.620 --> 00:17:04.720]   in our variable margin, driven by lower material costs
+[00:17:04.720 --> 00:17:06.760]   as a percentage of sales.
+[00:17:06.760 --> 00:17:10.700]   Operating expenses for the quarter increased $5.5 million
+[00:17:10.700 --> 00:17:15.580]   to $92.8 million, or 28.2% of sales,
+[00:17:15.580 --> 00:17:20.340]   as compared with $87.3 million, or 28.1% of sales,
+[00:17:20.340 --> 00:17:22.660]   for the prior year period.
+[00:17:22.660 --> 00:17:25.500]   The year-over-year dollar increase includes expenses
+[00:17:25.500 --> 00:17:28.860]   from 103 net new stores.
+[00:17:28.860 --> 00:17:33.820]   Our operating income for the third quarter was $31.6 million,
+[00:17:33.820 --> 00:17:37.740]   which increased by 2.8% as compared to operating income
+[00:17:37.740 --> 00:17:41.940]   of $30.7 million for the same quarter last year,
+[00:17:41.940 --> 00:17:47.980]   and decreased as a percentage of sales from 9.9% to 9.6%.
+[00:17:47.980 --> 00:17:50.300]   Net interest expense for the third quarter increased by 2.8%
+[00:17:50.300 --> 00:17:53.260]   as compared to operating income of $2.2 million to $7.0 million,
+[00:17:53.260 --> 00:17:55.780]   as compared to operating income of $6.8 million
+[00:17:55.780 --> 00:17:57.860]   in the same period last year.
+[00:17:57.860 --> 00:18:00.660]   The weighted average debt outstanding for the third quarter
+[00:18:00.660 --> 00:18:05.840]   of fiscal 2020 increased by approximately $112 million
+[00:18:05.840 --> 00:18:08.180]   as compared to the prior year period.
+[00:18:08.180 --> 00:18:10.940]   The increase is primarily related to an increase
+[00:18:10.940 --> 00:18:13.620]   in financing lease debt recorded in connection
+[00:18:13.620 --> 00:18:17.800]   with our fiscal 2020 acquisitions and greenfield expansion,
+[00:18:17.800 --> 00:18:20.260]   as well as an increase in debt outstanding under our
+[00:18:20.260 --> 00:18:22.780]   revolving credit facility to fund the purchase
+[00:18:22.780 --> 00:18:24.380]   of our acquisitions.
+[00:18:24.380 --> 00:18:26.620]   The weighted average interest rate for the third quarter
+[00:18:26.620 --> 00:18:30.980]   decreased by approximately 140 basis points year-over-year
+[00:18:30.980 --> 00:18:33.520]   due to lower LIBOR and prime interest rates,
+[00:18:33.520 --> 00:18:37.820]   as well as lower borrowing rates associated with new leases.
+[00:18:37.820 --> 00:18:41.720]   Our effective tax rate was 24.1% for the third quarter,
+[00:18:41.720 --> 00:18:45.580]   compared to 15.3% for the same period last year.
+[00:18:45.580 --> 00:18:50.220]   The year-over-year increase is primarily due to a one-time income
+[00:18:50.220 --> 00:18:54.060]   tax benefit adjustment we realized in the prior year
+[00:18:54.060 --> 00:18:57.140]   related to a retroactive accounting method change,
+[00:18:57.140 --> 00:19:00.620]   which was related to certain deductions that the IRS accepted
+[00:19:00.620 --> 00:19:07.080]   during an examination of our fiscal 2016 and fiscal 2017 tax return.
+[00:19:07.080 --> 00:19:11.180]   Net income for the third quarter was $18.9 million,
+[00:19:11.180 --> 00:19:15.000]   compared to $20.5 million in the prior year period.
+[00:19:15.000 --> 00:19:20.180]   Diluted earnings per share for the third quarter of fiscal 2020 were 56 cents,
+[00:19:20.220 --> 00:19:26.860]   compared to diluted earnings per share of 61 cents in the third quarter of fiscal 2019.
+[00:19:26.860 --> 00:19:30.700]   Adjusted diluted earnings per share, which is a non-GAAP measure,
+[00:19:30.700 --> 00:19:34.900]   for the third quarter of fiscal 2020 was 60 cents,
+[00:19:34.900 --> 00:19:38.780]   which excludes from diluted earnings per share 3 cents of costs related to
+[00:19:38.780 --> 00:19:42.780]   Monroe Forward Initiatives and 1 cent of costs related to acquisition,
+[00:19:42.780 --> 00:19:44.940]   due diligence, and integration.
+[00:19:44.940 --> 00:19:50.180]   This compares to adjusted diluted earnings per share of 57 cents in the third quarter of fiscal
+[00:19:50.180 --> 00:19:55.740]   2019, which excludes 1 cent of costs related to Monroe Forward Initiatives,
+[00:19:55.740 --> 00:19:59.860]   1 cent of non-recurring corporate and field management realignment costs,
+[00:19:59.860 --> 00:20:04.240]   and 6 cents benefit from the one-time income tax adjustment.
+[00:20:04.240 --> 00:20:08.580]   For more information on this non-GAAP measure, please see the Reconciliation of Adjusted
+[00:20:08.580 --> 00:20:14.020]   Diluted Earnings per Share to Diluted Earnings per Share in our earnings release.
+[00:20:14.020 --> 00:20:20.140]   Lastly, we opened one greenfield location during the third quarter. As a reminder, greenfield stores include
+[00:20:20.140 --> 00:20:25.100]   new construction as well as the acquisition of 1 to 4 store operations.
+[00:20:25.100 --> 00:20:31.660]   Greenfield locations, on average, are expected to add approximately $1 million each in annual sales.
+[00:20:31.660 --> 00:20:40.820]   As of December 28, 2019, the company had 1,289 company-operated stores and 99 franchise locations,
+[00:20:40.820 --> 00:20:50.100]   as compared with 1,186 company-operated stores and 99 franchise locations as of December 29, 2018.
+[00:20:50.100 --> 00:20:55.780]   During the third quarter, we added 27 company-operated stores and closed none.
+[00:20:55.780 --> 00:21:04.580]   Turning to slide 9, we continue to maintain our disciplined approach to capital allocation as we execute our growth strategy.
+[00:21:04.580 --> 00:21:10.740]   Our capital expenditures were $42.2 million in the first nine months of fiscal 2020,
+[00:21:10.740 --> 00:21:16.980]   of which approximately $18 million was related to investments in our Monroe Forward Initiative.
+[00:21:16.980 --> 00:21:20.060]   We are pleased with the progress of our Monroe Forward Strategy
+[00:21:20.060 --> 00:21:25.660]   and we continue to expect an incremental $75 million in capital expenditures
+[00:21:25.660 --> 00:21:31.900]   above our normal run rate over five years to support investments in store reimage and technology.
+[00:21:31.900 --> 00:21:38.140]   Additionally, accretive acquisitions support our growth strategy.
+[00:21:38.140 --> 00:21:44.460]   During the first nine months of the year, we spent approximately $104 million on acquisitions,
+[00:21:44.460 --> 00:21:50.020]   including 1 to 4 store acquisitions completed as part of our greenfield expansion strategy.
+[00:21:50.020 --> 00:21:55.140]   As Brett mentioned, acquisitions announced and completed in fiscal 2020
+[00:21:55.140 --> 00:22:00.340]   collectively represent an expected $120 million in annualized sales.
+[00:22:00.340 --> 00:22:03.140]   I'd like to provide some additional clarity here.
+[00:22:03.140 --> 00:22:09.860]   The $120 million in sales represents the expected run rate for these stores once they have been fully integrated,
+[00:22:09.860 --> 00:22:14.660]   which as we've stated in the past, is usually in year three post-acquisition.
+[00:22:14.660 --> 00:22:19.980]   During years one and two following the acquisition, we typically see a step down in sales,
+[00:22:19.980 --> 00:22:23.820]   given the process of onboarding new stores to our model.
+[00:22:23.820 --> 00:22:29.900]   Moving on, we continue to be committed to returning capital to our shareholders through our dividend program
+[00:22:29.900 --> 00:22:35.860]   and paid approximately $22 million in dividends in the first nine months of fiscal 2020.
+[00:22:35.860 --> 00:22:42.860]   Finally, we remain focused on maintaining a solid balance sheet with ample flexibility to support our strategic growth initiative.
+[00:22:42.860 --> 00:22:48.900]   We entered the third quarter with strong leverage ratios and have ample room under our financial covenant.
+[00:22:48.900 --> 00:22:49.940]   We generated approximately $2.5 million in sales over the first three months of fiscal 2020.
+[00:22:49.940 --> 00:22:56.900]   We have made approximately $125 million of cash flow from operating activities during the first nine months of fiscal 2020
+[00:22:56.900 --> 00:23:02.740]   and debt under our revolving credit facility increased by approximately $59 million.
+[00:23:02.740 --> 00:23:07.980]   Now, turning to our outlook for fiscal 2020 on slide 10.
+[00:23:07.980 --> 00:23:14.980]   We have updated our fiscal 2020 comparable store sales guidance range to a decrease of 1% to flat
+[00:23:14.980 --> 00:23:19.900]   to reflect the impact of our year-to-date performance.
+[00:23:19.900 --> 00:23:23.860]   In addition to the increase in store sales guidance and the contribution from recently closed acquisitions,
+[00:23:23.860 --> 00:23:33.860]   we now anticipate fiscal 2020 sales to be in the range of $1,275,000,000 to $1,290,000,000,
+[00:23:33.860 --> 00:23:39.860]   an increase of 6.2% to 7.5% as compared to fiscal 2019 sales.
+[00:23:39.860 --> 00:23:49.860]   This compares to the previous sales guidance range of $1,295,000,000 to $1,315,000,000.
+[00:23:49.860 --> 00:23:55.820]   In addition, our fiscal 2020 comparable store sales guidance assumes relatively stable overall tire and oil costs for the balance of fiscal 2020.
+[00:23:55.820 --> 00:24:06.820]   Given the impact of our year-to-date performance, we expect fiscal 2020 earnings per diluted share to be in the range of $2.25 to $2.35,
+[00:24:06.820 --> 00:24:19.820]   representing a decline of 5.1% to 0.8% year-over-year, compared to $2.37 in fiscal 2019.
+[00:24:19.820 --> 00:24:33.780]   On an adjusted basis, which is a non-GAAP measure, the company expects diluted earnings per share to be in the range of $2.35 to $2.45,
+[00:24:33.780 --> 00:24:40.780]   representing a decline of 1.7% to growth of 2.5%, which excludes from diluted earnings per share
+[00:24:40.780 --> 00:24:45.780]   Monroe Forward Initiative costs and Acquisition Due Diligence and Integration costs.
+[00:24:45.780 --> 00:24:49.780]   This compares to adjusted diluted earnings per share of $2.35 to $2.45,
+[00:24:49.780 --> 00:24:55.740]   representing a decline of 0.39% to $2.39 in fiscal 2019, which excludes Monroe Forward Initiative costs,
+[00:24:55.740 --> 00:25:01.740]   non-recurring corporate and field management realignment costs, Acquisition Due Diligence and Integration costs,
+[00:25:01.740 --> 00:25:05.740]   and the benefit from the one-time income tax adjustment.
+[00:25:05.740 --> 00:25:13.740]   Acquisitions announced and completed in fiscal 2020 are expected to be diluted to earnings per diluted share during the year.
+[00:25:13.740 --> 00:25:19.740]   At the midpoint of our guidance range, we expect an operating margin of approximately 10.2%,
+[00:25:19.740 --> 00:25:26.700]   with interest expense to be approximately $29 million, depreciation and amortization to be approximately $65 million,
+[00:25:26.700 --> 00:25:30.700]   and EBITDA to be approximately $196 million.
+[00:25:30.700 --> 00:25:35.700]   We expect capital expenditures to be approximately $60 million this year.
+[00:25:35.700 --> 00:25:44.700]   This guidance reflects an effective tax rate of approximately 23.5% and is based on 34 million diluted weighted average shares outstanding.
+[00:25:44.700 --> 00:25:49.700]   As always, our guidance does not assume any future acquisitions or Greenfield store openings.
+[00:25:49.700 --> 00:25:54.660]   I'll now turn the call over to Brett to provide some closing remarks before we move to Q&A.
+[00:25:54.660 --> 00:25:56.660]   Thanks, Brian.
+[00:25:56.660 --> 00:26:03.660]   We are making solid strides in the execution of our Monroe Forward Strategy, in particular our store rebrand and reimage initiative.
+[00:26:03.660 --> 00:26:10.660]   The strong results of the locations that have completed this transformation underscore our confidence in this initiative.
+[00:26:10.660 --> 00:26:19.660]   The store rebrand and reimage program is further supported by our technological investments, which we believe will help drive long-term margin expansion.
+[00:26:19.660 --> 00:26:25.620]   We remain committed to driving the necessary changes to improve our business, making the appropriate course corrections when necessary,
+[00:26:25.620 --> 00:26:28.620]   and executing well against the areas within our control.
+[00:26:28.620 --> 00:26:33.620]   We are excited for our future and look forward to capitalizing on the attractive opportunities ahead.
+[00:26:33.620 --> 00:26:37.620]   With that, I will now turn the call over to the operator for questions.
+[00:26:37.620 --> 00:26:38.620]   Thank you.
+[00:26:38.620 --> 00:26:42.620]   At this time, we will be conducting a question and answer session.
+[00:26:42.620 --> 00:26:46.620]   If you would like to ask a question, please press star 1 on your telephone keypad.
+[00:26:46.620 --> 00:26:49.620]   A confirmation tone will indicate your line of contact.
+[00:26:49.620 --> 00:26:51.620]   The question is in the question queue.
+[00:26:51.620 --> 00:26:55.620]   You may press star 2 if you would like to remove your question from the queue.
+[00:26:55.620 --> 00:27:01.620]   For participants using speaker equipment, it may be necessary to pick up your handset before pressing the star keys.
+[00:27:01.620 --> 00:27:05.620]   Once again, that is star 1 to register questions at this time.
+[00:27:05.620 --> 00:27:08.620]   Our first question is coming from Brian Nagel of Oppenheimer.
+[00:27:08.620 --> 00:27:10.620]   Please go ahead.
+[00:27:10.620 --> 00:27:12.620]   Good morning.
+[00:27:12.620 --> 00:27:14.620]   Good morning, Brian.
+[00:27:14.620 --> 00:27:19.580]   So I want to focus -- and I apologize for focusing on the weather here.
+[00:27:19.580 --> 00:27:23.580]   I just want to dive a little deeper into sales trends in the quarter.
+[00:27:23.580 --> 00:27:27.580]   So, Brad, you mentioned -- I think, Brian, you did, too, in your prepared comments.
+[00:27:27.580 --> 00:27:33.580]   You made some comments, you know, commentary suggesting that, you know, to the degree to which weather impacted the business.
+[00:27:33.580 --> 00:27:40.580]   I was wondering if you could drill down a little further and say, you know, what that negative .9 comp, you know, would have been had the weather cooperated.
+[00:27:40.580 --> 00:27:49.540]   And some of the other metrics you're seeing that really suggest the underlying business is trending better than what we saw in the weather effects.
+[00:27:49.540 --> 00:27:53.540]   What are some of the other metrics that you're seeing that you're seeing in the weather effects that may have affected fiscal Q3?
+[00:27:53.540 --> 00:27:58.540]   Yeah, I'll take the first part, and I'll let Brian take the second part of the question, Brian.
+[00:27:58.540 --> 00:28:04.540]   When we look at the performance in the quarter, as we talked about, our northern markets certainly underperformed the southern markets.
+[00:28:04.540 --> 00:28:19.500]   And to give you a little more granularity on that, certainly our stores up in the northeast and the Midwest were where you would expect to have more exposure to weather conditions like you have in the northeast.
+[00:28:19.500 --> 00:28:21.500]   But, you know, what we're seeing is that, you know, that's not necessarily the case.
+[00:28:21.500 --> 00:28:23.500]   You know, certainly we were expecting, you know, positive comps in the quarter.
+[00:28:23.500 --> 00:28:25.500]   I think it's difficult to say what we would have done.
+[00:28:25.500 --> 00:28:27.500]   You know, certainly I think we were expecting, you know, positive comps in the quarter.
+[00:28:27.500 --> 00:28:39.500]   Our internal expectations would have been closer to plus one to plus one and a half, assuming normalized weather conditions that we have seen in the past.
+[00:28:39.500 --> 00:28:49.460]   We felt really good coming out of October and November, given the strength of last year's performance that we were comping against.
+[00:28:49.460 --> 00:28:56.460]   You know, we were expecting a lot more from the weather in December that we were certainly expecting.
+[00:28:56.460 --> 00:29:19.420]   As I made the comments in my prepared remarks, we certainly don't like talking about the weather, Brian, but we can't ignore the fact that when 50% of our business is tires and we have a high concentration of stores in the northeast and Midwest, we are going to have outsized exposure to our comp performance.
+[00:29:19.420 --> 00:29:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:21.420 --> 00:29:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:23.420 --> 00:29:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:25.420 --> 00:29:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:27.420 --> 00:29:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:29.420 --> 00:29:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:31.420 --> 00:29:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:33.420 --> 00:29:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:35.420 --> 00:29:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:37.420 --> 00:29:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:39.420 --> 00:29:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:41.420 --> 00:29:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:43.420 --> 00:29:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:45.420 --> 00:29:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:47.420 --> 00:29:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:49.420 --> 00:29:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:51.420 --> 00:29:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:53.420 --> 00:29:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:55.420 --> 00:29:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:57.420 --> 00:29:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:29:59.420 --> 00:30:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:01.420 --> 00:30:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:03.420 --> 00:30:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:05.420 --> 00:30:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:07.420 --> 00:30:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:09.420 --> 00:30:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:11.420 --> 00:30:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:13.420 --> 00:30:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:15.420 --> 00:30:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:17.420 --> 00:30:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:19.420 --> 00:30:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:21.420 --> 00:30:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:23.420 --> 00:30:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:25.420 --> 00:30:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:27.420 --> 00:30:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:29.420 --> 00:30:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:31.420 --> 00:30:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:33.420 --> 00:30:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:35.420 --> 00:30:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:37.420 --> 00:30:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:39.420 --> 00:30:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:41.420 --> 00:30:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:43.420 --> 00:30:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:45.420 --> 00:30:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:47.420 --> 00:30:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:49.420 --> 00:30:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:51.420 --> 00:30:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:53.420 --> 00:30:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:55.420 --> 00:30:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:57.420 --> 00:30:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:30:59.420 --> 00:31:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:01.420 --> 00:31:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:03.420 --> 00:31:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:05.420 --> 00:31:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:07.420 --> 00:31:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:09.420 --> 00:31:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:11.420 --> 00:31:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:13.420 --> 00:31:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:15.420 --> 00:31:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:17.420 --> 00:31:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:19.420 --> 00:31:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:21.420 --> 00:31:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:23.420 --> 00:31:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:25.420 --> 00:31:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:27.420 --> 00:31:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:29.420 --> 00:31:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:31.420 --> 00:31:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:33.420 --> 00:31:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:35.420 --> 00:31:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:37.420 --> 00:31:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:39.420 --> 00:31:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:41.420 --> 00:31:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:43.420 --> 00:31:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:45.420 --> 00:31:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:47.420 --> 00:31:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:49.420 --> 00:31:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:51.420 --> 00:31:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:53.420 --> 00:31:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:55.420 --> 00:31:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:57.420 --> 00:31:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:31:59.420 --> 00:32:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:01.420 --> 00:32:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:03.420 --> 00:32:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:05.420 --> 00:32:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:07.420 --> 00:32:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:09.420 --> 00:32:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:11.420 --> 00:32:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:13.420 --> 00:32:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:15.420 --> 00:32:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:17.420 --> 00:32:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:19.420 --> 00:32:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:21.420 --> 00:32:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:23.420 --> 00:32:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:25.420 --> 00:32:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:27.420 --> 00:32:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:29.420 --> 00:32:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:31.420 --> 00:32:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:33.420 --> 00:32:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:35.420 --> 00:32:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:37.420 --> 00:32:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:39.420 --> 00:32:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:41.420 --> 00:32:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:43.420 --> 00:32:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:45.420 --> 00:32:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:47.420 --> 00:32:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:49.420 --> 00:32:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:51.420 --> 00:32:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:53.420 --> 00:32:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:55.420 --> 00:32:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:57.420 --> 00:32:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:32:59.420 --> 00:33:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:01.420 --> 00:33:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:03.420 --> 00:33:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:05.420 --> 00:33:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:07.420 --> 00:33:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:09.420 --> 00:33:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:11.420 --> 00:33:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:13.420 --> 00:33:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:15.420 --> 00:33:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:17.420 --> 00:33:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:19.420 --> 00:33:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:21.420 --> 00:33:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:23.420 --> 00:33:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:25.420 --> 00:33:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:27.420 --> 00:33:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:29.420 --> 00:33:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:31.420 --> 00:33:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:33.420 --> 00:33:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:35.420 --> 00:33:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:37.420 --> 00:33:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:39.420 --> 00:33:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:41.420 --> 00:33:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:43.420 --> 00:33:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:45.420 --> 00:33:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:47.420 --> 00:33:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:49.420 --> 00:33:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:51.420 --> 00:33:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:53.420 --> 00:33:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:55.420 --> 00:33:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:57.420 --> 00:33:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:33:59.420 --> 00:34:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:01.420 --> 00:34:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:03.420 --> 00:34:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:05.420 --> 00:34:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:07.420 --> 00:34:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:09.420 --> 00:34:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:11.420 --> 00:34:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:13.420 --> 00:34:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:15.420 --> 00:34:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:17.420 --> 00:34:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:19.420 --> 00:34:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:21.420 --> 00:34:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:23.420 --> 00:34:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:25.420 --> 00:34:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:27.420 --> 00:34:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:29.420 --> 00:34:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:31.420 --> 00:34:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:33.420 --> 00:34:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:35.420 --> 00:34:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:37.420 --> 00:34:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:39.420 --> 00:34:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:41.420 --> 00:34:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:43.420 --> 00:34:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:45.420 --> 00:34:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:47.420 --> 00:34:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:49.420 --> 00:34:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:51.420 --> 00:34:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:53.420 --> 00:34:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:55.420 --> 00:34:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:57.420 --> 00:34:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:34:59.420 --> 00:35:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:01.420 --> 00:35:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:03.420 --> 00:35:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:05.420 --> 00:35:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:07.420 --> 00:35:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:09.420 --> 00:35:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:11.420 --> 00:35:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:13.420 --> 00:35:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:15.420 --> 00:35:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:17.420 --> 00:35:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:19.420 --> 00:35:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:21.420 --> 00:35:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:23.420 --> 00:35:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:25.420 --> 00:35:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:27.420 --> 00:35:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:29.420 --> 00:35:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:31.420 --> 00:35:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:33.420 --> 00:35:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:35.420 --> 00:35:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:37.420 --> 00:35:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:39.420 --> 00:35:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:41.420 --> 00:35:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:43.420 --> 00:35:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:45.420 --> 00:35:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:47.420 --> 00:35:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:49.420 --> 00:35:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:51.420 --> 00:35:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:53.420 --> 00:35:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:55.420 --> 00:35:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:57.420 --> 00:35:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:35:59.420 --> 00:36:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:01.420 --> 00:36:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:03.420 --> 00:36:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:05.420 --> 00:36:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:07.420 --> 00:36:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:09.420 --> 00:36:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:11.420 --> 00:36:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:13.420 --> 00:36:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:15.420 --> 00:36:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:17.420 --> 00:36:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:19.420 --> 00:36:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:21.420 --> 00:36:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:23.420 --> 00:36:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:25.420 --> 00:36:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:27.420 --> 00:36:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:29.420 --> 00:36:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:31.420 --> 00:36:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:33.420 --> 00:36:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:35.420 --> 00:36:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:37.420 --> 00:36:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:39.420 --> 00:36:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:41.420 --> 00:36:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:43.420 --> 00:36:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:45.420 --> 00:36:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:47.420 --> 00:36:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:49.420 --> 00:36:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:51.420 --> 00:36:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:53.420 --> 00:36:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:55.420 --> 00:36:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:57.420 --> 00:36:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:36:59.420 --> 00:37:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:01.420 --> 00:37:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:03.420 --> 00:37:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:05.420 --> 00:37:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:07.420 --> 00:37:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:09.420 --> 00:37:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:11.420 --> 00:37:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:13.420 --> 00:37:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:15.420 --> 00:37:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:17.420 --> 00:37:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:19.420 --> 00:37:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:21.420 --> 00:37:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:23.420 --> 00:37:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:25.420 --> 00:37:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:27.420 --> 00:37:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:29.420 --> 00:37:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:31.420 --> 00:37:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:33.420 --> 00:37:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:35.420 --> 00:37:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:37.420 --> 00:37:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:39.420 --> 00:37:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:41.420 --> 00:37:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:43.420 --> 00:37:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:45.420 --> 00:37:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:47.420 --> 00:37:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:49.420 --> 00:37:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:51.420 --> 00:37:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:53.420 --> 00:37:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:55.420 --> 00:37:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:57.420 --> 00:37:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:37:59.420 --> 00:38:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:01.420 --> 00:38:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:03.420 --> 00:38:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:05.420 --> 00:38:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:07.420 --> 00:38:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:09.420 --> 00:38:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:11.420 --> 00:38:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:13.420 --> 00:38:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:15.420 --> 00:38:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:17.420 --> 00:38:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:19.420 --> 00:38:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:21.420 --> 00:38:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:23.420 --> 00:38:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:25.420 --> 00:38:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:27.420 --> 00:38:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:29.420 --> 00:38:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:31.420 --> 00:38:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:33.420 --> 00:38:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:35.420 --> 00:38:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:37.420 --> 00:38:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:39.420 --> 00:38:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:41.420 --> 00:38:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:43.420 --> 00:38:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:45.420 --> 00:38:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:47.420 --> 00:38:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:49.420 --> 00:38:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:51.420 --> 00:38:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:53.420 --> 00:38:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:55.420 --> 00:38:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:57.420 --> 00:38:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:38:59.420 --> 00:39:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:01.420 --> 00:39:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:03.420 --> 00:39:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:05.420 --> 00:39:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:07.420 --> 00:39:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:09.420 --> 00:39:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:11.420 --> 00:39:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:13.420 --> 00:39:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:15.420 --> 00:39:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:17.420 --> 00:39:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:19.420 --> 00:39:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:21.420 --> 00:39:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:23.420 --> 00:39:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:25.420 --> 00:39:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:27.420 --> 00:39:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:29.420 --> 00:39:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:31.420 --> 00:39:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:33.420 --> 00:39:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:35.420 --> 00:39:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:37.420 --> 00:39:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:39.420 --> 00:39:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:41.420 --> 00:39:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:43.420 --> 00:39:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:45.420 --> 00:39:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:47.420 --> 00:39:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:49.420 --> 00:39:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:51.420 --> 00:39:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:53.420 --> 00:39:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:55.420 --> 00:39:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:57.420 --> 00:39:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:39:59.420 --> 00:40:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:01.420 --> 00:40:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:03.420 --> 00:40:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:05.420 --> 00:40:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:07.420 --> 00:40:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:09.420 --> 00:40:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:11.420 --> 00:40:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:13.420 --> 00:40:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:15.420 --> 00:40:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:17.420 --> 00:40:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:19.420 --> 00:40:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:21.420 --> 00:40:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:23.420 --> 00:40:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:25.420 --> 00:40:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:27.420 --> 00:40:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:29.420 --> 00:40:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:31.420 --> 00:40:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:33.420 --> 00:40:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:35.420 --> 00:40:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:37.420 --> 00:40:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:39.420 --> 00:40:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:41.420 --> 00:40:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:43.420 --> 00:40:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:45.420 --> 00:40:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:47.420 --> 00:40:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:49.420 --> 00:40:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:51.420 --> 00:40:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:53.420 --> 00:40:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:55.420 --> 00:40:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:57.420 --> 00:40:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:40:59.420 --> 00:41:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:01.420 --> 00:41:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:03.420 --> 00:41:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:05.420 --> 00:41:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:07.420 --> 00:41:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:09.420 --> 00:41:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:11.420 --> 00:41:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:13.420 --> 00:41:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:15.420 --> 00:41:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:17.420 --> 00:41:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:19.420 --> 00:41:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:21.420 --> 00:41:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:23.420 --> 00:41:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:25.420 --> 00:41:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:27.420 --> 00:41:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:29.420 --> 00:41:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:31.420 --> 00:41:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:33.420 --> 00:41:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:35.420 --> 00:41:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:37.420 --> 00:41:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:39.420 --> 00:41:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:41.420 --> 00:41:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:43.420 --> 00:41:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:45.420 --> 00:41:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:47.420 --> 00:41:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:49.420 --> 00:41:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:51.420 --> 00:41:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:53.420 --> 00:41:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:55.420 --> 00:41:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:57.420 --> 00:41:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:41:59.420 --> 00:42:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:01.420 --> 00:42:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:03.420 --> 00:42:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:05.420 --> 00:42:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:07.420 --> 00:42:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:09.420 --> 00:42:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:11.420 --> 00:42:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:13.420 --> 00:42:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:15.420 --> 00:42:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:17.420 --> 00:42:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:19.420 --> 00:42:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:21.420 --> 00:42:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:23.420 --> 00:42:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:25.420 --> 00:42:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:27.420 --> 00:42:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:29.420 --> 00:42:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:31.420 --> 00:42:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:33.420 --> 00:42:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:35.420 --> 00:42:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:37.420 --> 00:42:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:39.420 --> 00:42:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:41.420 --> 00:42:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:43.420 --> 00:42:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:45.420 --> 00:42:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:47.420 --> 00:42:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:49.420 --> 00:42:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:51.420 --> 00:42:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:53.420 --> 00:42:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:55.420 --> 00:42:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:57.420 --> 00:42:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:42:59.420 --> 00:43:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:01.420 --> 00:43:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:03.420 --> 00:43:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:05.420 --> 00:43:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:07.420 --> 00:43:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:09.420 --> 00:43:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:11.420 --> 00:43:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:13.420 --> 00:43:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:15.420 --> 00:43:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:17.420 --> 00:43:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:19.420 --> 00:43:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:21.420 --> 00:43:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:23.420 --> 00:43:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:25.420 --> 00:43:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:27.420 --> 00:43:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:29.420 --> 00:43:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:31.420 --> 00:43:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:33.420 --> 00:43:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:35.420 --> 00:43:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:37.420 --> 00:43:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:39.420 --> 00:43:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:41.420 --> 00:43:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:43.420 --> 00:43:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:45.420 --> 00:43:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:47.420 --> 00:43:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:49.420 --> 00:43:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:51.420 --> 00:43:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:53.420 --> 00:43:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:55.420 --> 00:43:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:57.420 --> 00:43:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:43:59.420 --> 00:44:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:01.420 --> 00:44:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:03.420 --> 00:44:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:05.420 --> 00:44:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:07.420 --> 00:44:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:09.420 --> 00:44:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:11.420 --> 00:44:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:13.420 --> 00:44:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:15.420 --> 00:44:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:17.420 --> 00:44:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:19.420 --> 00:44:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:21.420 --> 00:44:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:23.420 --> 00:44:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:25.420 --> 00:44:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:27.420 --> 00:44:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:29.420 --> 00:44:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:31.420 --> 00:44:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:33.420 --> 00:44:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:35.420 --> 00:44:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:37.420 --> 00:44:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:39.420 --> 00:44:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:41.420 --> 00:44:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:43.420 --> 00:44:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:45.420 --> 00:44:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:47.420 --> 00:44:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:49.420 --> 00:44:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:51.420 --> 00:44:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:53.420 --> 00:44:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:55.420 --> 00:44:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:57.420 --> 00:44:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:44:59.420 --> 00:45:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:01.420 --> 00:45:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:03.420 --> 00:45:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:05.420 --> 00:45:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:07.420 --> 00:45:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:09.420 --> 00:45:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:11.420 --> 00:45:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:13.420 --> 00:45:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:15.420 --> 00:45:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:17.420 --> 00:45:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:19.420 --> 00:45:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:21.420 --> 00:45:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:23.420 --> 00:45:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:25.420 --> 00:45:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:27.420 --> 00:45:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:29.420 --> 00:45:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:31.420 --> 00:45:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:33.420 --> 00:45:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:35.420 --> 00:45:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:37.420 --> 00:45:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:39.420 --> 00:45:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:41.420 --> 00:45:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:43.420 --> 00:45:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:45.420 --> 00:45:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:47.420 --> 00:45:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:49.420 --> 00:45:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:51.420 --> 00:45:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:53.420 --> 00:45:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:55.420 --> 00:45:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:57.420 --> 00:45:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:45:59.420 --> 00:46:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:01.420 --> 00:46:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:03.420 --> 00:46:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:05.420 --> 00:46:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:07.420 --> 00:46:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:09.420 --> 00:46:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:11.420 --> 00:46:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:13.420 --> 00:46:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:15.420 --> 00:46:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:17.420 --> 00:46:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:19.420 --> 00:46:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:21.420 --> 00:46:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:23.420 --> 00:46:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:25.420 --> 00:46:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:27.420 --> 00:46:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:29.420 --> 00:46:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:31.420 --> 00:46:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:33.420 --> 00:46:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:35.420 --> 00:46:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:37.420 --> 00:46:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:39.420 --> 00:46:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:41.420 --> 00:46:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:43.420 --> 00:46:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:45.420 --> 00:46:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:47.420 --> 00:46:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:49.420 --> 00:46:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:51.420 --> 00:46:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:53.420 --> 00:46:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:55.420 --> 00:46:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:57.420 --> 00:46:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:46:59.420 --> 00:47:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:01.420 --> 00:47:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:03.420 --> 00:47:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:05.420 --> 00:47:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:07.420 --> 00:47:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:09.420 --> 00:47:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:11.420 --> 00:47:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:13.420 --> 00:47:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:15.420 --> 00:47:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:17.420 --> 00:47:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:19.420 --> 00:47:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:21.420 --> 00:47:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:23.420 --> 00:47:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:25.420 --> 00:47:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:27.420 --> 00:47:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:29.420 --> 00:47:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:31.420 --> 00:47:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:33.420 --> 00:47:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:35.420 --> 00:47:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:37.420 --> 00:47:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:39.420 --> 00:47:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:41.420 --> 00:47:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:43.420 --> 00:47:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:45.420 --> 00:47:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:47.420 --> 00:47:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:49.420 --> 00:47:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:51.420 --> 00:47:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:53.420 --> 00:47:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:55.420 --> 00:47:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:57.420 --> 00:47:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:47:59.420 --> 00:48:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:01.420 --> 00:48:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:03.420 --> 00:48:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:05.420 --> 00:48:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:07.420 --> 00:48:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:09.420 --> 00:48:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:11.420 --> 00:48:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:13.420 --> 00:48:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:15.420 --> 00:48:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:17.420 --> 00:48:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:19.420 --> 00:48:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:21.420 --> 00:48:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:23.420 --> 00:48:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:25.420 --> 00:48:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:27.420 --> 00:48:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:29.420 --> 00:48:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:31.420 --> 00:48:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:33.420 --> 00:48:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:35.420 --> 00:48:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:37.420 --> 00:48:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:39.420 --> 00:48:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:41.420 --> 00:48:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:43.420 --> 00:48:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:45.420 --> 00:48:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:47.420 --> 00:48:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:49.420 --> 00:48:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:51.420 --> 00:48:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:53.420 --> 00:48:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:55.420 --> 00:48:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:57.420 --> 00:48:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:48:59.420 --> 00:49:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:01.420 --> 00:49:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:03.420 --> 00:49:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:05.420 --> 00:49:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:07.420 --> 00:49:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:09.420 --> 00:49:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:11.420 --> 00:49:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:13.420 --> 00:49:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:15.420 --> 00:49:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:17.420 --> 00:49:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:19.420 --> 00:49:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:21.420 --> 00:49:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:23.420 --> 00:49:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:25.420 --> 00:49:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:27.420 --> 00:49:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:29.420 --> 00:49:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:31.420 --> 00:49:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:33.420 --> 00:49:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:35.420 --> 00:49:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:37.420 --> 00:49:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:39.420 --> 00:49:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:41.420 --> 00:49:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:43.420 --> 00:49:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:45.420 --> 00:49:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:47.420 --> 00:49:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:49.420 --> 00:49:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:51.420 --> 00:49:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:53.420 --> 00:49:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:55.420 --> 00:49:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:57.420 --> 00:49:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:49:59.420 --> 00:50:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:01.420 --> 00:50:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:03.420 --> 00:50:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:05.420 --> 00:50:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:07.420 --> 00:50:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:09.420 --> 00:50:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:11.420 --> 00:50:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:13.420 --> 00:50:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:15.420 --> 00:50:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:17.420 --> 00:50:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:19.420 --> 00:50:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:21.420 --> 00:50:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:23.420 --> 00:50:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:25.420 --> 00:50:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:27.420 --> 00:50:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:29.420 --> 00:50:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:31.420 --> 00:50:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:33.420 --> 00:50:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:35.420 --> 00:50:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:37.420 --> 00:50:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:39.420 --> 00:50:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:41.420 --> 00:50:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:43.420 --> 00:50:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:45.420 --> 00:50:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:47.420 --> 00:50:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:49.420 --> 00:50:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:51.420 --> 00:50:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:53.420 --> 00:50:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:55.420 --> 00:50:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:57.420 --> 00:50:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:50:59.420 --> 00:51:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:01.420 --> 00:51:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:03.420 --> 00:51:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:05.420 --> 00:51:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:07.420 --> 00:51:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:09.420 --> 00:51:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:11.420 --> 00:51:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:13.420 --> 00:51:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:15.420 --> 00:51:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:17.420 --> 00:51:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:19.420 --> 00:51:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:21.420 --> 00:51:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:23.420 --> 00:51:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:25.420 --> 00:51:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:27.420 --> 00:51:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:29.420 --> 00:51:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:31.420 --> 00:51:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:33.420 --> 00:51:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:35.420 --> 00:51:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:37.420 --> 00:51:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:39.420 --> 00:51:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:41.420 --> 00:51:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:43.420 --> 00:51:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:45.420 --> 00:51:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:47.420 --> 00:51:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:49.420 --> 00:51:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:51.420 --> 00:51:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:53.420 --> 00:51:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:55.420 --> 00:51:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:57.420 --> 00:51:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:51:59.420 --> 00:52:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:01.420 --> 00:52:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:03.420 --> 00:52:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:05.420 --> 00:52:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:07.420 --> 00:52:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:09.420 --> 00:52:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:11.420 --> 00:52:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:13.420 --> 00:52:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:15.420 --> 00:52:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:17.420 --> 00:52:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:19.420 --> 00:52:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:21.420 --> 00:52:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:23.420 --> 00:52:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:25.420 --> 00:52:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:27.420 --> 00:52:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:29.420 --> 00:52:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:31.420 --> 00:52:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:33.420 --> 00:52:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:35.420 --> 00:52:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:37.420 --> 00:52:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:39.420 --> 00:52:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:41.420 --> 00:52:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:43.420 --> 00:52:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:45.420 --> 00:52:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:47.420 --> 00:52:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:49.420 --> 00:52:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:51.420 --> 00:52:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:53.420 --> 00:52:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:55.420 --> 00:52:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:57.420 --> 00:52:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:52:59.420 --> 00:53:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:01.420 --> 00:53:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:03.420 --> 00:53:05.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:05.420 --> 00:53:07.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:07.420 --> 00:53:09.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:09.420 --> 00:53:11.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:11.420 --> 00:53:13.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:13.420 --> 00:53:15.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:15.420 --> 00:53:17.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:17.420 --> 00:53:19.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:19.420 --> 00:53:21.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:21.420 --> 00:53:23.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:23.420 --> 00:53:25.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:25.420 --> 00:53:27.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:27.420 --> 00:53:29.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:29.420 --> 00:53:31.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:31.420 --> 00:53:33.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:33.420 --> 00:53:35.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:35.420 --> 00:53:37.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:37.420 --> 00:53:39.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:39.420 --> 00:53:41.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:41.420 --> 00:53:43.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:43.420 --> 00:53:45.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:45.420 --> 00:53:47.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:47.420 --> 00:53:49.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:49.420 --> 00:53:51.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:51.420 --> 00:53:53.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:53.420 --> 00:53:55.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:55.420 --> 00:53:57.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:57.420 --> 00:53:59.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:53:59.420 --> 00:54:01.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:54:01.420 --> 00:54:03.420]   You know, we are going to have outsized exposure to our comp performance.
+[00:54:03.420 --> 00:54:05.420]   You know, we are going to have outsized exposure to our comp performance.
+make[1]: *** [eval.mk:48: speech-datasets/earnings21/media/4320211.mp3.txt] Interrupt
+make: *** [Makefile:6: eval] Interrupt

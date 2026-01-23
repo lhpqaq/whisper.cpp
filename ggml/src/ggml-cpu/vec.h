@@ -1591,59 +1591,57 @@ inline static void ggml_vec_mad_q8_0(const int n, float * GGML_RESTRICT y, const
     const uint8_t * x = (const uint8_t *)vx;
     
 #if defined(__ARM_NEON) && defined(__aarch64__)
-    
     for (int i = 0; i < nb; ++i) {
-        // Read scale factor (first 2 bytes as fp16)
+         // Load d
         const uint16_t d_bits = *(const uint16_t *)(x + i * QK8_0_BLOCK_BYTES);
         const ggml_fp16_t d_fp16 = *(const ggml_fp16_t *)(&d_bits);
         const float d = GGML_CPU_FP16_TO_FP32(d_fp16);
-        const float dv = d * v;
-        const float32x4_t dvf = vdupq_n_f32(dv);
+        
+        const float32x4_t dvf = vdupq_n_f32(d * v);
         
         const int8_t * qs = (const int8_t *)(x + i * QK8_0_BLOCK_BYTES + 2);
-        float * y_ptr = y + i * QK8_0_SIZE;
         
-        // Process 32 elements in blocks of 16
-        for (int j = 0; j < 2; ++j) {
-            // Load 16 int8 values
-            const int8x16_t qi = vld1q_s8(qs + j * 16);
-            
-            // Split into two 8-element vectors and widen to int16
-            const int8x8_t qi_low = vget_low_s8(qi);
-            const int8x8_t qi_high = vget_high_s8(qi);
-            const int16x8_t qi16_low = vmovl_s8(qi_low);
-            const int16x8_t qi16_high = vmovl_s8(qi_high);
-            
-            // Widen to int32
-            const int32x4_t qi32_0 = vmovl_s16(vget_low_s16(qi16_low));
-            const int32x4_t qi32_1 = vmovl_s16(vget_high_s16(qi16_low));
-            const int32x4_t qi32_2 = vmovl_s16(vget_low_s16(qi16_high));
-            const int32x4_t qi32_3 = vmovl_s16(vget_high_s16(qi16_high));
-            
-            // Convert to float
-            const float32x4_t qf_0 = vcvtq_f32_s32(qi32_0);
-            const float32x4_t qf_1 = vcvtq_f32_s32(qi32_1);
-            const float32x4_t qf_2 = vcvtq_f32_s32(qi32_2);
-            const float32x4_t qf_3 = vcvtq_f32_s32(qi32_3);
-            
-            // Load y values
-            float32x4_t yv_0 = vld1q_f32(y_ptr + j * 16 + 0);
-            float32x4_t yv_1 = vld1q_f32(y_ptr + j * 16 + 4);
-            float32x4_t yv_2 = vld1q_f32(y_ptr + j * 16 + 8);
-            float32x4_t yv_3 = vld1q_f32(y_ptr + j * 16 + 12);
-            
-            // Multiply-add: y += dv * q
-            yv_0 = vfmaq_f32(yv_0, qf_0, dvf);
-            yv_1 = vfmaq_f32(yv_1, qf_1, dvf);
-            yv_2 = vfmaq_f32(yv_2, qf_2, dvf);
-            yv_3 = vfmaq_f32(yv_3, qf_3, dvf);
-            
-            // Store results
-            vst1q_f32(y_ptr + j * 16 + 0, yv_0);
-            vst1q_f32(y_ptr + j * 16 + 4, yv_1);
-            vst1q_f32(y_ptr + j * 16 + 8, yv_2);
-            vst1q_f32(y_ptr + j * 16 + 12, yv_3);
-        }
+        float * y_ptr = y + i * QK8_0_SIZE;
+
+        // Block 0 - Low 16
+        const int8x16_t q_0 = vld1q_s8(qs);
+        const int16x8_t q16_0_lo = vmovl_s8(vget_low_s8(q_0));
+        const int16x8_t q16_0_hi = vmovl_s8(vget_high_s8(q_0));
+        
+        float32x4_t y_0_0 = vld1q_f32(y_ptr);
+        float32x4_t y_0_1 = vld1q_f32(y_ptr + 4);
+        float32x4_t y_0_2 = vld1q_f32(y_ptr + 8);
+        float32x4_t y_0_3 = vld1q_f32(y_ptr + 12);
+
+        y_0_0 = vfmaq_f32(y_0_0, vcvtq_f32_s32(vmovl_s16(vget_low_s16(q16_0_lo))), dvf);
+        y_0_1 = vfmaq_f32(y_0_1, vcvtq_f32_s32(vmovl_s16(vget_high_s16(q16_0_lo))), dvf);
+        y_0_2 = vfmaq_f32(y_0_2, vcvtq_f32_s32(vmovl_s16(vget_low_s16(q16_0_hi))), dvf);
+        y_0_3 = vfmaq_f32(y_0_3, vcvtq_f32_s32(vmovl_s16(vget_high_s16(q16_0_hi))), dvf);
+
+        vst1q_f32(y_ptr, y_0_0);
+        vst1q_f32(y_ptr + 4, y_0_1);
+        vst1q_f32(y_ptr + 8, y_0_2);
+        vst1q_f32(y_ptr + 12, y_0_3);
+
+        // Block 0 - High 16
+        const int8x16_t q_1 = vld1q_s8(qs + 16);
+        const int16x8_t q16_1_lo = vmovl_s8(vget_low_s8(q_1));
+        const int16x8_t q16_1_hi = vmovl_s8(vget_high_s8(q_1));
+        
+        float32x4_t y_0_4 = vld1q_f32(y_ptr + 16);
+        float32x4_t y_0_5 = vld1q_f32(y_ptr + 20);
+        float32x4_t y_0_6 = vld1q_f32(y_ptr + 24);
+        float32x4_t y_0_7 = vld1q_f32(y_ptr + 28);
+
+        y_0_4 = vfmaq_f32(y_0_4, vcvtq_f32_s32(vmovl_s16(vget_low_s16(q16_1_lo))), dvf);
+        y_0_5 = vfmaq_f32(y_0_5, vcvtq_f32_s32(vmovl_s16(vget_high_s16(q16_1_lo))), dvf);
+        y_0_6 = vfmaq_f32(y_0_6, vcvtq_f32_s32(vmovl_s16(vget_low_s16(q16_1_hi))), dvf);
+        y_0_7 = vfmaq_f32(y_0_7, vcvtq_f32_s32(vmovl_s16(vget_high_s16(q16_1_hi))), dvf);
+
+        vst1q_f32(y_ptr + 16, y_0_4);
+        vst1q_f32(y_ptr + 20, y_0_5);
+        vst1q_f32(y_ptr + 24, y_0_6);
+        vst1q_f32(y_ptr + 28, y_0_7);
     }
 #elif defined(__AVX2__)
     for (int i = 0; i < nb; ++i) {
@@ -1712,99 +1710,57 @@ inline static void ggml_vec_mad_q4_0(const int n, float * GGML_RESTRICT y, const
     const int8x16_t s8x16_0x8 = vdupq_n_s8(0x8);
     
     for (int i = 0; i < nb; ++i) {
-        // Read scale factor (first 2 bytes as fp16)
         const uint16_t d_bits = *(const uint16_t *)(x + i * QK4_0_BLOCK_BYTES);
         const ggml_fp16_t d_fp16 = *(const ggml_fp16_t *)(&d_bits);
         const float d = GGML_CPU_FP16_TO_FP32(d_fp16);
-        const float dv = d * v;
-        const float32x4_t dvf = vdupq_n_f32(dv);
+        const float32x4_t dvf = vdupq_n_f32(d * v);
         
         const uint8_t * qs = x + i * QK4_0_BLOCK_BYTES + 2;
         float * y_ptr = y + i * QK4_0_SIZE;
         
-        // Load 16 bytes of packed 4-bit values (32 nibbles)
+        // Block 0
         const uint8x16_t qbytes = vld1q_u8(qs);
-        
-        // Unpack low nibbles (first 16 elements)
         const int8x16_t q_lo = vreinterpretq_s8_u8(vandq_u8(qbytes, vdupq_n_u8(0x0F)));
-        // Unpack high nibbles (next 16 elements)
         const int8x16_t q_hi = vreinterpretq_s8_u8(vshrq_n_u8(qbytes, 4));
         
-        // Subtract 8 to get signed values (Q4_0 stores unsigned 0-15, needs -8 offset)
         const int8x16_t q_lo_s = vsubq_s8(q_lo, s8x16_0x8);
         const int8x16_t q_hi_s = vsubq_s8(q_hi, s8x16_0x8);
         
-        // Process first 16 elements (low nibbles)
-        {
-            // Split into two 8-element vectors and widen to int16
-            const int8x8_t qi_low = vget_low_s8(q_lo_s);
-            const int8x8_t qi_high = vget_high_s8(q_lo_s);
-            const int16x8_t qi16_low = vmovl_s8(qi_low);
-            const int16x8_t qi16_high = vmovl_s8(qi_high);
-            
-            // Widen to int32
-            const int32x4_t qi32_0 = vmovl_s16(vget_low_s16(qi16_low));
-            const int32x4_t qi32_1 = vmovl_s16(vget_high_s16(qi16_low));
-            const int32x4_t qi32_2 = vmovl_s16(vget_low_s16(qi16_high));
-            const int32x4_t qi32_3 = vmovl_s16(vget_high_s16(qi16_high));
-            
-            // Convert to float
-            const float32x4_t qf_0 = vcvtq_f32_s32(qi32_0);
-            const float32x4_t qf_1 = vcvtq_f32_s32(qi32_1);
-            const float32x4_t qf_2 = vcvtq_f32_s32(qi32_2);
-            const float32x4_t qf_3 = vcvtq_f32_s32(qi32_3);
-            
-            // Load y values
-            float32x4_t yv_0 = vld1q_f32(y_ptr + 0);
-            float32x4_t yv_1 = vld1q_f32(y_ptr + 4);
-            float32x4_t yv_2 = vld1q_f32(y_ptr + 8);
-            float32x4_t yv_3 = vld1q_f32(y_ptr + 12);
-            
-            // Multiply-add: y += dv * q
-            yv_0 = vfmaq_f32(yv_0, qf_0, dvf);
-            yv_1 = vfmaq_f32(yv_1, qf_1, dvf);
-            yv_2 = vfmaq_f32(yv_2, qf_2, dvf);
-            yv_3 = vfmaq_f32(yv_3, qf_3, dvf);
-            
-            // Store results
-            vst1q_f32(y_ptr + 0, yv_0);
-            vst1q_f32(y_ptr + 4, yv_1);
-            vst1q_f32(y_ptr + 8, yv_2);
-            vst1q_f32(y_ptr + 12, yv_3);
-        }
+        const int16x8_t q16_lo = vmovl_s8(vget_low_s8(q_lo_s));
+        const int16x8_t q16_hi = vmovl_s8(vget_high_s8(q_lo_s));
         
-        // Process next 16 elements (high nibbles)
-        {
-            const int8x8_t qi_low = vget_low_s8(q_hi_s);
-            const int8x8_t qi_high = vget_high_s8(q_hi_s);
-            const int16x8_t qi16_low = vmovl_s8(qi_low);
-            const int16x8_t qi16_high = vmovl_s8(qi_high);
-            
-            const int32x4_t qi32_0 = vmovl_s16(vget_low_s16(qi16_low));
-            const int32x4_t qi32_1 = vmovl_s16(vget_high_s16(qi16_low));
-            const int32x4_t qi32_2 = vmovl_s16(vget_low_s16(qi16_high));
-            const int32x4_t qi32_3 = vmovl_s16(vget_high_s16(qi16_high));
-            
-            const float32x4_t qf_0 = vcvtq_f32_s32(qi32_0);
-            const float32x4_t qf_1 = vcvtq_f32_s32(qi32_1);
-            const float32x4_t qf_2 = vcvtq_f32_s32(qi32_2);
-            const float32x4_t qf_3 = vcvtq_f32_s32(qi32_3);
-            
-            float32x4_t yv_0 = vld1q_f32(y_ptr + 16 + 0);
-            float32x4_t yv_1 = vld1q_f32(y_ptr + 16 + 4);
-            float32x4_t yv_2 = vld1q_f32(y_ptr + 16 + 8);
-            float32x4_t yv_3 = vld1q_f32(y_ptr + 16 + 12);
-            
-            yv_0 = vfmaq_f32(yv_0, qf_0, dvf);
-            yv_1 = vfmaq_f32(yv_1, qf_1, dvf);
-            yv_2 = vfmaq_f32(yv_2, qf_2, dvf);
-            yv_3 = vfmaq_f32(yv_3, qf_3, dvf);
-            
-            vst1q_f32(y_ptr + 16 + 0, yv_0);
-            vst1q_f32(y_ptr + 16 + 4, yv_1);
-            vst1q_f32(y_ptr + 16 + 8, yv_2);
-            vst1q_f32(y_ptr + 16 + 12, yv_3);
-        }
+        float32x4_t y0 = vld1q_f32(y_ptr);
+        float32x4_t y1 = vld1q_f32(y_ptr + 4);
+        float32x4_t y2 = vld1q_f32(y_ptr + 8);
+        float32x4_t y3 = vld1q_f32(y_ptr + 12);
+        
+        y0 = vfmaq_f32(y0, vcvtq_f32_s32(vmovl_s16(vget_low_s16(q16_lo))), dvf);
+        y1 = vfmaq_f32(y1, vcvtq_f32_s32(vmovl_s16(vget_high_s16(q16_lo))), dvf);
+        y2 = vfmaq_f32(y2, vcvtq_f32_s32(vmovl_s16(vget_low_s16(q16_hi))), dvf);
+        y3 = vfmaq_f32(y3, vcvtq_f32_s32(vmovl_s16(vget_high_s16(q16_hi))), dvf);
+        
+        vst1q_f32(y_ptr, y0);
+        vst1q_f32(y_ptr + 4, y1);
+        vst1q_f32(y_ptr + 8, y2);
+        vst1q_f32(y_ptr + 12, y3);
+
+        const int16x8_t q16_lo_2 = vmovl_s8(vget_low_s8(q_hi_s));
+        const int16x8_t q16_hi_2 = vmovl_s8(vget_high_s8(q_hi_s));
+        
+        float32x4_t y4 = vld1q_f32(y_ptr + 16);
+        float32x4_t y5 = vld1q_f32(y_ptr + 20);
+        float32x4_t y6 = vld1q_f32(y_ptr + 24);
+        float32x4_t y7 = vld1q_f32(y_ptr + 28);
+        
+        y4 = vfmaq_f32(y4, vcvtq_f32_s32(vmovl_s16(vget_low_s16(q16_lo_2))), dvf);
+        y5 = vfmaq_f32(y5, vcvtq_f32_s32(vmovl_s16(vget_high_s16(q16_lo_2))), dvf);
+        y6 = vfmaq_f32(y6, vcvtq_f32_s32(vmovl_s16(vget_low_s16(q16_hi_2))), dvf);
+        y7 = vfmaq_f32(y7, vcvtq_f32_s32(vmovl_s16(vget_high_s16(q16_hi_2))), dvf);
+        
+        vst1q_f32(y_ptr + 16, y4);
+        vst1q_f32(y_ptr + 20, y5);
+        vst1q_f32(y_ptr + 24, y6);
+        vst1q_f32(y_ptr + 28, y7);
     }
 #elif defined(__AVX2__)
     for (int i = 0; i < nb; ++i) {

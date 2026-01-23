@@ -110,3 +110,9 @@ target_compile_definitions(${VAD_TEST} PRIVATE
     SAMPLE_PATH="${PROJECT_SOURCE_DIR}/samples/jfk.wav")
 add_test(NAME ${VAD_TEST} COMMAND ${VAD_TEST})
 set_tests_properties(${VAD_TEST} PROPERTIES LABELS "base;en")
+
+set(TEST_TARGET bench_vec_mad)
+add_executable(${TEST_TARGET} bench_vec_mad.cpp)
+target_include_directories(${TEST_TARGET} PRIVATE ../include ../ggml/include ../ggml/src ../ggml/src/ggml-cpu) 
+target_link_libraries(${TEST_TARGET} PRIVATE ggml)
+

@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # 模型列表
-MODELS=("small-q50" "small-q6k" "small-q2k-1" "small-q2k-2" "small-q2k-3" "small-q2k-4" "small-q2k-5" "small-q2k-6" "small-q2k-7" "small-q2k-r1" "small-q2k-r2" "small-q2k-r3" "small-q2k-r4" "small-q2k-r5" "small-q2k-r6" "small-q2k-r7")
+# MODELS=("l3t-a9b1" "l3t-a1b9" "large-v3-turbo" "large-v3-turbo-q40" "large-v3-turbo-q80" "large-v3-turbo-q50" "large-v3-turbo-q2k")
+MODELS=("large-v3-turbo-q2k")
 
 # 结果存储目录
-RESULT_DIR="../../result/b8t2"
+RESULT_DIR="../../result/mix/l3t"
 
 # 确保结果目录存在
 mkdir -p "$RESULT_DIR"
@@ -15,7 +16,6 @@ for model_name in "${MODELS[@]}"; do
 
     # 1. 执行 make clean
     make clean
-
     # 2. 修改 eval.conf 中的 WHISPER_MODEL
     sed -i "s/^WHISPER_MODEL = .*/WHISPER_MODEL = $model_name/" eval.conf
 

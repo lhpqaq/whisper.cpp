@@ -1,0 +1,678 @@
+make -f eval.mk
+make[1]: Entering directory '/home/aim/project/whisper.cpp/tests/librispeech'
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac.tmp
+
+[00:00:00.000 --> 00:00:01.740]   He hope with his two,
+[00:00:01.740 --> 00:00:04.280]   who was in turn
+[00:00:04.280 --> 00:00:05.580]   who was in
+[00:00:05.580 --> 00:00:35.560]   In the back of the night, the night of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0001.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0001.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the night, the night of the night of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0001.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0001.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0001.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0002.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0002.flac.tmp
+
+[00:00:00.000 --> 00:00:12.980]   after early
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0002.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0002.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0002.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0003.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0003.flac.tmp
+
+[00:00:00.000 --> 00:00:02.340]   I'm going to make it?
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0003.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0003.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0003.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0004.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0004.flac.tmp
+
+[00:00:00.000 --> 00:00:04.200]   It's
+[00:00:04.200 --> 00:00:08.440]   It's
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0004.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0004.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0004.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0005.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0005.flac.tmp
+
+[00:00:00.000 --> 00:00:16.900]   the music
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0005.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0005.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0005.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0006.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0006.flac.tmp
+
+[00:00:00.000 --> 00:00:12.940]   It's the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0006.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0006.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0006.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0007.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0007.flac.tmp
+
+[00:00:00.000 --> 00:00:03.860]   A colchid in difference, right in his soul?
+[00:00:03.860 --> 00:00:33.840]   It's not like that.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0007.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0007.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0007.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0008.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0008.flac.tmp
+
+[00:00:00.000 --> 00:00:04.660]   He said
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0008.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0008.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0008.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0009.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0009.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0009.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0009.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0009.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0010.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0010.flac.tmp
+
+[00:00:00.000 --> 00:00:00.840]   No no.
+[00:00:00.840 --> 00:00:02.640]   You have a head
+[00:00:02.640 --> 00:00:03.380]   No
+[00:00:03.380 --> 00:00:03.880]   No
+[00:00:03.880 --> 00:00:03.880]   It's
+[00:00:03.880 --> 00:00:04.200]   It's
+[00:00:04.200 --> 00:00:17.380]   It's
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0010.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0010.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0010.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0011.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0011.flac.tmp
+
+[00:00:00.000 --> 00:00:15.960]   On Saturday morning, when the school of the school of the school of the school of the school of the school of the school of.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0011.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0011.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0011.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0012.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0012.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   It is in the back of the night of the night of the night of the night of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0012.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0012.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0012.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0013.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0013.flac.tmp
+
+[00:00:00.000 --> 00:00:03.660]   If I'd like to
+[00:00:03.660 --> 00:00:05.840]   speak to
+[00:00:05.840 --> 00:00:08.020]   speak to
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0013.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0013.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0013.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0014.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0014.flac.tmp
+
+[00:00:00.000 --> 00:00:02.340]   He tried to think how it could be,
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0014.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0014.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0014.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0015.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0015.flac.tmp
+
+[00:00:00.000 --> 00:00:02.560]   but the dust, deepening in the schoolroom,
+[00:00:02.560 --> 00:00:05.780]   covered over his thoughts, the bell ring,
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0015.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0015.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0015.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0016.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0016.flac.tmp
+
+[00:00:00.000 --> 00:00:16.000]   Then you can ask him, in the back of the night I was in the back of the night I was in the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0016.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0016.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0016.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0017.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0017.flac.tmp
+
+[00:00:00.000 --> 00:00:04.600]   It's
+[00:00:04.600 --> 00:00:06.520]   It's
+[00:00:06.520 --> 00:00:08.780]   It's
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0017.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0017.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0017.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0018.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0018.flac.tmp
+
+[00:00:00.000 --> 00:00:04.200]   ...
+[00:00:04.200 --> 00:00:18.100]   ...
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0018.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0018.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0018.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0019.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0019.flac.tmp
+
+[00:00:00.000 --> 00:00:03.000]   5.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0019.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0019.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0019.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0020.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0020.flac.tmp
+
+[00:00:00.000 --> 00:00:16.500]   It is
+[00:00:16.500 --> 00:00:18.540]   It is
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0020.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0020.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0020.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0021.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0021.flac.tmp
+
+[00:00:00.000 --> 00:00:15.700]   If I'm giving back, I'm giving back, I'm giving back, I'm going to the right now.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0021.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0021.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0021.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0022.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0022.flac.tmp
+
+[00:00:00.000 --> 00:00:03.520]   In the
+[00:00:03.520 --> 00:00:04.220]   the
+[00:00:04.220 --> 00:00:06.560]   into the poor of heart, the second,
+[00:00:06.560 --> 00:00:24.660]   But this is also in the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0022.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0022.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0022.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0023.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0023.flac.tmp
+
+[00:00:00.000 --> 00:00:16.260]   It was the fact that I was in the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0023.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0023.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0023.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0024.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0024.flac.tmp
+
+[00:00:00.000 --> 00:00:25.240]   if I'm in the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0024.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0024.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0024.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0025.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0025.flac.tmp
+
+[00:00:00.000 --> 00:00:11.620]   In the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0025.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0025.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0025.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0026.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0026.flac.tmp
+
+[00:00:00.000 --> 00:00:02.780]   the rector did not ask for a catikism to
+[00:00:02.780 --> 00:00:04.160]   here the lesson from the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0026.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0026.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0026.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0027.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0027.flac.tmp
+
+[00:00:00.000 --> 00:00:02.340]   He's by the best.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0027.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0027.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0027.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0028.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0028.flac.tmp
+
+[00:00:00.000 --> 00:00:04.700]   the retreat
+[00:00:04.700 --> 00:00:05.880]   was
+[00:00:05.880 --> 00:00:08.220]   It's the day is Saturday.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0028.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0028.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0028.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0029.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0029.flac.tmp
+
+[00:00:00.000 --> 00:00:16.360]   On Friday, confession, will be heard all the afternoon after a little bit of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0029.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0029.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0029.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0030.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0030.flac.tmp
+
+[00:00:00.000 --> 00:00:02.380]   beware of making that mistake,
+[00:00:02.380 --> 00:00:18.020]   ...is like the Lord's...
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0030.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0030.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0030.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0031.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0031.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the night, the night of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0031.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0031.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0031.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0032.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0032.flac.tmp
+
+[00:00:00.000 --> 00:00:04.160]   He is, call all I know, the apostle of the Gnys, the...
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0032.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0032.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0032.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0033.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0033.flac.tmp
+
+[00:00:00.000 --> 00:00:15.060]   St. Francis
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0033.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0033.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0033.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0034.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0034.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the back of the night of the night of the night of the night of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0034.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0034.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0034.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0035.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0035.flac.tmp
+
+[00:00:00.000 --> 00:00:02.360]   He has the faith in him that move
+[00:00:02.360 --> 00:00:32.340]   It is now in the back of the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0035.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0035.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0035.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0036.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0036.flac.tmp
+
+[00:00:00.000 --> 00:00:30.000]   A great, St. St. St. St. St. St. St. St.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0036.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0036.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0036.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134686/1089-134686-0037.flac --output-file LibriSpeech/test-clean/1089/134686/1089-134686-0037.flac.tmp
+
+[00:00:00.000 --> 00:00:02.340]   In the silence, the dark fire,
+[00:00:02.340 --> 00:00:04.140]   the dusk into what
+[00:00:04.140 --> 00:00:06.520]   Tornic, no?
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134686/1089-134686-0037.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134686/1089-134686-0037.flac.tmp.txt LibriSpeech/test-clean/1089/134686/1089-134686-0037.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0000.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0000.flac.tmp
+
+[00:00:00.000 --> 00:00:01.740]   He could wait no longer,
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0000.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0000.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0000.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0001.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0001.flac.tmp
+
+[00:00:00.000 --> 00:00:04.700]   For a full hour he had, based up in down, but he could wait no longer.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0001.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0001.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0001.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0002.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0002.flac.tmp
+
+[00:00:00.000 --> 00:00:03.620]   He said,
+[00:00:03.620 --> 00:00:04.140]   He said,
+[00:00:04.140 --> 00:00:05.960]   He said,
+[00:00:05.960 --> 00:00:07.760]   He said,
+[00:00:07.760 --> 00:00:08.760]   He said,
+[00:00:08.760 --> 00:00:09.760]   He said,
+[00:00:09.760 --> 00:00:11.760]   He said,
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0002.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0002.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0002.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0003.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0003.flac.tmp
+
+[00:00:00.000 --> 00:00:02.380]   The University
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0003.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0003.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0003.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0004.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0004.flac.tmp
+
+[00:00:00.000 --> 00:00:30.000]   Right, I, I, I, I,
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0004.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0004.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0004.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0005.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0005.flac.tmp
+
+[00:00:00.000 --> 00:00:05.040]   who is the
+[00:00:05.040 --> 00:00:11.380]   who is the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0005.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0005.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0005.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0006.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0006.flac.tmp
+
+[00:00:00.000 --> 00:00:02.360]   The Pryor, the Pryor, the Pryor, the Pryor, the Pryor, the Pryor.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0006.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0006.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0006.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0007.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0007.flac.tmp
+
+[00:00:00.000 --> 00:00:03.200]   In the
+[00:00:03.200 --> 00:00:33.180]   It's not like that.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0007.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0007.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0007.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0008.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0008.flac.tmp
+
+[00:00:00.000 --> 00:00:16.100]   164, 166, 169.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0008.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0008.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0008.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0009.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0009.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the night of the night of the night of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0009.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0009.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0009.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0010.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0010.flac.tmp
+
+[00:00:00.000 --> 00:00:02.820]   brother, McHale, brother, keioff,
+[00:00:02.820 --> 00:00:32.800]   It's not like that.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0010.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0010.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0010.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0011.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0011.flac.tmp
+
+[00:00:00.000 --> 00:00:04.120]   It was
+[00:00:04.120 --> 00:00:12.120]   It was
+[00:00:12.120 --> 00:00:17.020]   It was
+[00:00:17.020 --> 00:00:19.760]   It was
+[00:00:19.760 --> 00:00:35.860]   ...
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0011.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0011.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0011.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0012.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0012.flac.tmp
+
+[00:00:00.000 --> 00:00:16.200]   It was I was in the middle of the school of the school of the school of the school of the school of.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0012.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0012.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0012.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0013.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0013.flac.tmp
+
+[00:00:00.000 --> 00:00:03.940]   now
+[00:00:03.940 --> 00:00:05.640]   now
+[00:00:05.640 --> 00:00:06.720]   now
+[00:00:06.720 --> 00:00:08.480]   now
+[00:00:08.480 --> 00:00:12.680]   now
+[00:00:12.680 --> 00:00:15.640]   now
+[00:00:15.640 --> 00:00:15.660]   now
+[00:00:15.660 --> 00:00:16.060]   now
+[00:00:16.060 --> 00:00:19.660]   It's
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0013.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0013.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0013.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0014.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0014.flac.tmp
+
+[00:00:00.000 --> 00:00:02.340]   the phrase and the day, and the
+[00:00:02.340 --> 00:00:02.820]   the sea, the
+[00:00:02.820 --> 00:00:03.100]   the
+[00:00:03.100 --> 00:00:03.860]   the
+[00:00:03.860 --> 00:00:04.660]   the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0014.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0014.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0014.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0015.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0015.flac.tmp
+
+[00:00:00.000 --> 00:00:02.340]   words, what's it?
+[00:00:02.340 --> 00:00:03.160]   colors?
+[00:00:03.160 --> 00:00:04.160]   what's it?
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0015.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0015.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0015.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0016.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0016.flac.tmp
+
+[00:00:00.000 --> 00:00:03.540]   you know what?
+[00:00:03.540 --> 00:00:04.480]   you know it.
+[00:00:04.480 --> 00:00:05.400]   It's on the march.
+[00:00:05.400 --> 00:00:07.740]   ...were€ërowl...
+[00:00:07.740 --> 00:00:08.960]   ...were€ërowl...
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0016.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0016.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0016.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0017.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0017.flac.tmp
+
+[00:00:00.000 --> 00:00:02.740]   you know
+[00:00:02.740 --> 00:00:19.260]   beyond the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0017.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0017.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0017.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0018.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0018.flac.tmp
+
+[00:00:00.000 --> 00:00:03.560]   again? again? again?
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0018.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0018.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0018.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0019.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0019.flac.tmp
+
+[00:00:00.000 --> 00:00:02.680]   A voice from the world was calling
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0019.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0019.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0019.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0020.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0020.flac.tmp
+
+[00:00:00.000 --> 00:00:01.740]   Hello, Stavros?
+[00:00:01.740 --> 00:00:04.080]   Here comes the devil's?
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0020.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0020.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0020.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0021.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0021.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the night, I will see you in the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0021.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0021.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0021.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0022.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0022.flac.tmp
+
+[00:00:00.000 --> 00:00:16.020]   He's still in the back of the back of the back of the back of the back of the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0022.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0022.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0022.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0023.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0023.flac.tmp
+
+[00:00:00.000 --> 00:00:15.080]   It was a pain
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0023.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0023.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0023.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0024.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0024.flac.tmp
+
+[00:00:00.000 --> 00:00:05.060]   -
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0024.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0024.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0024.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1089/134691/1089-134691-0025.flac --output-file LibriSpeech/test-clean/1089/134691/1089-134691-0025.flac.tmp
+
+[00:00:00.000 --> 00:00:04.200]   the most
+[00:00:04.200 --> 00:00:05.020]   the
+[00:00:05.020 --> 00:00:05.860]   the
+[00:00:05.860 --> 00:00:06.520]   the
+[00:00:06.520 --> 00:00:08.780]   the
+output_txt: saving output to 'LibriSpeech/test-clean/1089/134691/1089-134691-0025.flac.tmp.txt'
+mv LibriSpeech/test-clean/1089/134691/1089-134691-0025.flac.tmp.txt LibriSpeech/test-clean/1089/134691/1089-134691-0025.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0000.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0000.flac.tmp
+
+[00:00:00.000 --> 00:00:02.440]   You were like,
+[00:00:02.480 --> 00:00:32.460]   I'm in the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0000.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0000.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0000.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0001.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0001.flac.tmp
+
+[00:00:00.000 --> 00:00:04.140]   you know, everyé ‚th, and sometimes you will find you,
+[00:00:04.140 --> 00:00:06.520]   you were in the next?
+[00:00:06.520 --> 00:00:08.300]   sometimes, you know, the...
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0001.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0001.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0001.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0002.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0002.flac.tmp
+
+[00:00:00.000 --> 00:00:18.100]   In the back of the night, I will see you in the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0002.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0002.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0002.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0003.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0003.flac.tmp
+
+[00:00:00.000 --> 00:00:16.200]   My first, in the school of the school of the school of the school of the school of the school of.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0003.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0003.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0003.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0004.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0004.flac.tmp
+
+[00:00:00.000 --> 00:00:21.800]   some of the
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0004.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0004.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0004.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0005.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0005.flac.tmp
+
+[00:00:00.000 --> 00:00:16.240]   is the head of the
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0005.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0005.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0005.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0006.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0006.flac.tmp
+
+[00:00:00.000 --> 00:00:04.540]   ...
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0006.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0006.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0006.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0007.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0007.flac.tmp
+
+[00:00:00.000 --> 00:00:30.000]   the ground ground in the
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0007.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0007.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0007.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0008.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0008.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0008.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0008.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0008.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0009.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0009.flac.tmp
+
+[00:00:00.000 --> 00:00:01.820]   Now you listen.
+[00:00:01.820 --> 00:00:04.420]   It's
+[00:00:04.420 --> 00:00:16.220]   It's
+[00:00:16.220 --> 00:00:18.640]   It's
+[00:00:18.640 --> 00:00:20.420]   It's
+[00:00:20.420 --> 00:00:24.520]   It's
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0009.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0009.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0009.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0010.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0010.flac.tmp
+
+[00:00:00.000 --> 00:00:05.000]   In this
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0010.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0010.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0010.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0011.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0011.flac.tmp
+
+[00:00:00.000 --> 00:00:15.640]   In the middle of the church, the Lord of the Lord of the Lord of the Lord of the Lord of the Lord.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0011.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0011.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0011.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0012.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0012.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0012.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0012.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0012.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0013.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0013.flac.tmp
+
+[00:00:00.000 --> 00:00:02.820]   It must remember, you know, the other?
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0013.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0013.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0013.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0014.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0014.flac.tmp
+
+[00:00:00.000 --> 00:00:03.860]   ... do not, therefore, think that the gothic school was in the same way, the the...
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0014.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0014.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0014.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0015.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0015.flac.tmp
+
+[00:00:00.000 --> 00:00:30.000]   the law that school was in the
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0015.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0015.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0015.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0016.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0016.flac.tmp
+
+[00:00:00.000 --> 00:00:15.980]   In the back of the night of the night of the night of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0016.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0016.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0016.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0017.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0017.flac.tmp
+
+[00:00:00.000 --> 00:00:04.160]   It's not the same, it's not the same, it's not the same.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0017.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0017.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0017.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0018.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0018.flac.tmp
+
+[00:00:00.000 --> 00:00:15.860]   I I I I I I I I I I I I I I I I I I I I I I I I I I I T
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0018.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0018.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0018.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0019.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0019.flac.tmp
+
+[00:00:00.000 --> 00:00:28.600]   It is
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0019.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0019.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0019.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0020.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0020.flac.tmp
+
+[00:00:00.000 --> 00:00:03.860]   In the
+[00:00:03.860 --> 00:00:07.820]   that I was driving also to create in reality, the beauty that you see in the
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0020.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0020.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0020.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0021.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0021.flac.tmp
+
+[00:00:00.000 --> 00:00:15.960]   It will be howling, howling, howling, howling, howling, howling, howling, howling, what?
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0021.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0021.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0021.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0022.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0022.flac.tmp
+
+[00:00:00.000 --> 00:00:04.620]   You
+[00:00:04.620 --> 00:00:06.280]   ...
+[00:00:06.280 --> 00:00:08.520]   ...
+[00:00:08.520 --> 00:00:12.580]   ...
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0022.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0022.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0022.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0023.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0023.flac.tmp
+
+[00:00:00.000 --> 00:00:01.000]   -
+[00:00:01.000 --> 00:00:02.000]   -
+[00:00:02.000 --> 00:00:03.000]   -
+[00:00:03.000 --> 00:00:03.000]   -
+[00:00:03.000 --> 00:00:04.000]   -
+[00:00:04.000 --> 00:00:04.000]   -
+[00:00:04.000 --> 00:00:05.000]   -
+[00:00:05.000 --> 00:00:05.000]   -
+[00:00:05.000 --> 00:00:05.000]   -
+[00:00:05.000 --> 00:00:09.100]   It's
+[00:00:09.100 --> 00:00:10.580]   It's
+[00:00:10.580 --> 00:00:13.020]   It's
+[00:00:13.020 --> 00:00:16.480]   It's
+[00:00:16.480 --> 00:00:20.540]   It's
+[00:00:20.540 --> 00:00:22.380]   It's
+[00:00:22.380 --> 00:00:23.380]   It's
+[00:00:23.380 --> 00:00:24.580]   It's
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0023.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0023.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0023.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0024.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0024.flac.tmp
+
+[00:00:00.000 --> 00:00:03.860]   In the world's in the world's?
+[00:00:03.860 --> 00:00:33.860]   In the world's?
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0024.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0024.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0024.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0025.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0025.flac.tmp
+
+[00:00:00.000 --> 00:00:16.280]   You know I just been telling you how to school with the school of the school of the school was in the
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0025.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0025.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0025.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0026.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0026.flac.tmp
+
+[00:00:00.000 --> 00:00:04.200]   It is
+[00:00:04.200 --> 00:00:15.700]   It is
+[00:00:15.700 --> 00:00:16.700]   It is
+[00:00:16.700 --> 00:00:17.700]   It is
+[00:00:17.700 --> 00:00:18.200]   It is
+[00:00:18.200 --> 00:00:19.260]   It is
+[00:00:19.260 --> 00:00:20.300]   It is
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0026.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0026.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0026.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0027.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0027.flac.tmp
+
+[00:00:00.000 --> 00:00:02.280]   Now you know
+[00:00:02.280 --> 00:00:03.840]   It is
+[00:00:03.840 --> 00:00:04.660]   It is
+[00:00:04.660 --> 00:00:06.520]   It is
+[00:00:06.520 --> 00:00:07.480]   It is
+[00:00:07.480 --> 00:00:08.540]   It is
+[00:00:08.540 --> 00:00:13.000]   It is
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0027.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0027.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0027.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0028.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0028.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   you know,
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0028.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0028.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0028.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0029.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0029.flac.tmp
+
+[00:00:00.000 --> 00:00:04.440]   only
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0029.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0029.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0029.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0030.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0030.flac.tmp
+
+[00:00:00.000 --> 00:00:02.360]   He was in the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0030.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0030.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0030.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0031.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0031.flac.tmp
+
+[00:00:00.000 --> 00:00:03.860]   There's one and there's another, the Dudley, and the Flint, the...
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0031.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0031.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0031.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0032.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0032.flac.tmp
+
+[00:00:00.000 --> 00:00:30.000]   It is only the
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0032.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0032.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0032.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0033.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0033.flac.tmp
+
+[00:00:00.000 --> 00:00:02.540]   Every plant in the grass is set for more,,
+[00:00:02.540 --> 00:00:04.560]   I'm going to make it?
+[00:00:04.560 --> 00:00:06.140]   I'm going to make it?
+[00:00:06.140 --> 00:00:32.520]   I'm going to make it?
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0033.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0033.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0033.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0034.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0034.flac.tmp
+
+[00:00:00.000 --> 00:00:04.200]   It's
+[00:00:04.200 --> 00:00:04.620]   It's
+[00:00:04.620 --> 00:00:18.380]   It's
+[00:00:18.380 --> 00:00:20.620]   It's
+[00:00:20.620 --> 00:00:20.620]   It's
+[00:00:20.620 --> 00:00:22.380]   It's
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0034.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0034.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0034.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0035.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0035.flac.tmp
+
+[00:00:00.000 --> 00:00:18.100]   that's in Chalch's dream, that's in Chalch's dream, that's in Chalch's?
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0035.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0035.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0035.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0036.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0036.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   In the back of the night, the night of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0036.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0036.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0036.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0037.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0037.flac.tmp
+
+[00:00:00.000 --> 00:00:29.980]   It's the last night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0037.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0037.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0037.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0038.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0038.flac.tmp
+
+[00:00:00.000 --> 00:00:03.100]   But now you are the subject of which you will want
+[00:00:03.100 --> 00:00:05.440]   It's what I turn I do in the law.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0038.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0038.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0038.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0039.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0039.flac.tmp
+
+[00:00:00.000 --> 00:00:00.920]   It has no beauty
+[00:00:00.920 --> 00:00:03.740]   What's the love, no?
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0039.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0039.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0039.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0040.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0040.flac.tmp
+
+[00:00:00.000 --> 00:00:15.980]   the Pockets in the Pockets in the Pockets in the Pockets in the Pockets.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0040.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0040.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0040.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0041.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0041.flac.tmp
+
+[00:00:00.000 --> 00:00:17.260]   It is a glee
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0041.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0041.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0041.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0042.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0042.flac.tmp
+
+[00:00:00.000 --> 00:00:15.700]   It's in his absolute, like, you know, the Lord's...
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0042.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0042.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0042.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0043.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0043.flac.tmp
+
+[00:00:00.000 --> 00:00:02.380]   See that your last bit of the night?
+[00:00:02.380 --> 00:00:04.740]   the boy's climbing for his in the middle of the night?
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0043.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0043.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0043.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/1188/133604/1188-133604-0044.flac --output-file LibriSpeech/test-clean/1188/133604/1188-133604-0044.flac.tmp
+
+[00:00:00.000 --> 00:00:03.320]   It will be
+[00:00:03.320 --> 00:00:14.880]   In this
+[00:00:14.880 --> 00:00:17.620]   the world's in the G.E.G.E.
+[00:00:17.620 --> 00:00:47.600]   In the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/1188/133604/1188-133604-0044.flac.tmp.txt'
+mv LibriSpeech/test-clean/1188/133604/1188-133604-0044.flac.tmp.txt LibriSpeech/test-clean/1188/133604/1188-133604-0044.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/121/121726/121-121726-0000.flac --output-file LibriSpeech/test-clean/121/121726/121-121726-0000.flac.tmp
+
+[00:00:00.000 --> 00:00:24.500]   Also, I
+output_txt: saving output to 'LibriSpeech/test-clean/121/121726/121-121726-0000.flac.tmp.txt'
+mv LibriSpeech/test-clean/121/121726/121-121726-0000.flac.tmp.txt LibriSpeech/test-clean/121/121726/121-121726-0000.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/121/121726/121-121726-0001.flac --output-file LibriSpeech/test-clean/121/121726/121-121726-0001.flac.tmp
+
+[00:00:00.000 --> 00:00:02.360]   her in the back of the night.
+output_txt: saving output to 'LibriSpeech/test-clean/121/121726/121-121726-0001.flac.tmp.txt'
+mv LibriSpeech/test-clean/121/121726/121-121726-0001.flac.tmp.txt LibriSpeech/test-clean/121/121726/121-121726-0001.flac.txt
+../../build/bin/whisper-cli --no-prints --threads 8 --language en --output-txt --model ../../models/ggml-large-v3-turbo-q2k.bin --file LibriSpeech/test-clean/121/121726/121-121726-0002.flac --output-file LibriSpeech/test-clean/121/121726/121-121726-0002.flac.tmp

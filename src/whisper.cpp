@@ -2378,7 +2378,7 @@ static struct ggml_cgraph * whisper_build_graph_cross(
         const size_t kv_k_row_size = ggml_row_size(wstate.kv_cross.k->type, n_state);
         const size_t kv_v_row_size = ggml_row_size(wstate.kv_cross.v->type, n_state);
 
-        if (wctx.params.flash_attn) {
+        if (wctx.params.flash_attn && !wctx.params.dtw_token_timestamps) {
             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
                     kv_k_row_size*(il*n_ctx_pad));
 
@@ -2762,7 +2762,7 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
             const size_t cross_k_head_size = ggml_row_size(wstate.kv_cross.k->type, n_state_head);
             const size_t cross_v_head_size = ggml_row_size(wstate.kv_cross.v->type, n_state_head);
 
-            if (wctx.params.flash_attn) {
+            if (wctx.params.flash_attn && !wctx.params.dtw_token_timestamps) {
                 struct ggml_tensor * Kcross =
                     ggml_view_3d(ctx0, wstate.kv_cross.k,
                             n_state_head, n_audio_ctx_pad, n_head,

@@ -202,6 +202,7 @@ static bool whisper_params_parse(int argc, char ** argv, whisper_params & params
         else if (arg == "-f"    || arg == "--file")                 { params.fname_inp.emplace_back(ARGV_NEXT); }
         else if (arg == "-oved" || arg == "--ov-e-device")          { params.openvino_encode_device = ARGV_NEXT; }
         else if (arg == "-dtw"  || arg == "--dtw")                  { params.dtw             = ARGV_NEXT; }
+        else if (                  arg == "--dtw-norm-top")          { params.dtw_norm_top_k  = std::stoi(ARGV_NEXT); }
         else if (arg == "-ls"   || arg == "--log-score")            { params.log_score       = true; }
         else if (arg == "-ng"   || arg == "--no-gpu")               { params.use_gpu         = false; }
         else if (arg == "-fa"   || arg == "--flash-attn")           { params.flash_attn      = true; }
@@ -289,6 +290,7 @@ static void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params
     fprintf(stderr, "  -f FNAME,  --file FNAME           [%-7s] input audio file path\n",                          "");
     fprintf(stderr, "  -oved D,   --ov-e-device DNAME    [%-7s] the OpenVINO device used for encode inference\n",  params.openvino_encode_device.c_str());
     fprintf(stderr, "  -dtw MODEL --dtw MODEL            [%-7s] compute token-level timestamps\n",                 params.dtw.c_str());
+    fprintf(stderr, "             --dtw-norm-top N       [%-7d] L2 norm head filtering: keep top N heads (use with -dtw top-N)\n", params.dtw_norm_top_k);
     fprintf(stderr, "  -ls,       --log-score            [%-7s] log best decoder scores of tokens\n",              params.log_score?"true":"false");
     fprintf(stderr, "  -ng,       --no-gpu               [%-7s] disable GPU\n",                                    params.use_gpu ? "false" : "true");
     fprintf(stderr, "  -fa,       --flash-attn           [%-7s] enable flash attention\n",                         params.flash_attn ? "true" : "false");

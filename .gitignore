@@ -66,3 +66,7 @@ local.properties
 .log
 .exe
 test.flac
+
+output
+
+openvino_cache/

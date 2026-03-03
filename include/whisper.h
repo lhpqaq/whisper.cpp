@@ -146,6 +146,9 @@ extern "C" {
         // KV cache types for kv_pad (encoder flash-attention padding buffer)
         enum ggml_type type_k_pad;    // K cache type for kv_pad (default: F16)
         enum ggml_type type_v_pad;    // V cache type for kv_pad (default: F16)
+        // Core ML support (macOS only)
+        // When true and Core ML is available, uses Apple Neural Engine for encoder
+        bool  use_coreml;
 
         // [EXPERIMENTAL] Token-level timestamps with DTW
         bool dtw_token_timestamps;
@@ -724,6 +727,20 @@ extern "C" {
             struct whisper_vad_context * vctx,
                            const float * samples,
                                    int   n_samples);
+
+    // Streaming VAD API - processes a single frame without resetting LSTM state
+    // Returns speech probability [0.0, 1.0] or -1.0 on error
+    // Call whisper_vad_reset_state() to reset the LSTM state when starting a new audio stream
+    WHISPER_API float whisper_vad_detect_speech_single_frame(
+            struct whisper_vad_context * vctx,
+                           const float * samples,
+                                   int   n_samples);
+
+    // Reset the LSTM hidden/cell states (call when starting a new audio stream)
+    WHISPER_API void whisper_vad_reset_state(struct whisper_vad_context * vctx);
+
+    // Get the window size (number of samples per frame, typically 512 at 16kHz)
+    WHISPER_API int whisper_vad_n_window(struct whisper_vad_context * vctx);
 
     WHISPER_API int     whisper_vad_n_probs(struct whisper_vad_context * vctx);
     WHISPER_API float * whisper_vad_probs  (struct whisper_vad_context * vctx);

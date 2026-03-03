@@ -1,0 +1,31 @@
+{
+  "name": "@whisper-cpp-node/win32-x64",
+  "version": "0.2.4",
+  "description": "whisper.cpp native addon for Windows x64 with Vulkan and OpenVINO acceleration",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/predict-woo/whisper.cpp",
+    "directory": "npm/packages/win32-x64"
+  },
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "whisper.node",
+  "files": [
+    "whisper.node",
+    "openvino.dll",
+    "openvino_intel_cpu_plugin.dll",
+    "openvino_intel_gpu_plugin.dll",
+    "openvino_auto_plugin.dll",
+    "openvino_ir_frontend.dll",
+    "tbb12.dll",
+    "pugixml.dll"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

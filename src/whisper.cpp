@@ -3552,20 +3552,23 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
     }
 
 #ifdef WHISPER_USE_COREML
-    const auto path_coreml = whisper_get_coreml_path_encoder(ctx->path_model);
+    // Only load Core ML model if use_coreml is enabled at runtime
+    if (ctx->params.use_coreml) {
+        const auto path_coreml = whisper_get_coreml_path_encoder(ctx->path_model);
 
-    WHISPER_LOG_INFO("%s: loading Core ML model from '%s'\n", __func__, path_coreml.c_str());
-    WHISPER_LOG_INFO("%s: first run on a device may take a while ...\n", __func__);
+        WHISPER_LOG_INFO("%s: loading Core ML model from '%s'\n", __func__, path_coreml.c_str());
+        WHISPER_LOG_INFO("%s: first run on a device may take a while ...\n", __func__);
 
-    state->ctx_coreml = whisper_coreml_init(path_coreml.c_str());
-    if (!state->ctx_coreml) {
-        WHISPER_LOG_ERROR("%s: failed to load Core ML model from '%s'\n", __func__, path_coreml.c_str());
+        state->ctx_coreml = whisper_coreml_init(path_coreml.c_str());
+        if (!state->ctx_coreml) {
+            WHISPER_LOG_ERROR("%s: failed to load Core ML model from '%s'\n", __func__, path_coreml.c_str());
 #ifndef WHISPER_COREML_ALLOW_FALLBACK
-        whisper_free_state(state);
-        return nullptr;
+            whisper_free_state(state);
+            return nullptr;
 #endif
-    } else {
-        WHISPER_LOG_INFO("%s: Core ML model loaded\n", __func__);
+        } else {
+            WHISPER_LOG_INFO("%s: Core ML model loaded\n", __func__);
+        }
     }
 #endif
 
@@ -3729,6 +3732,7 @@ struct whisper_context_params whisper_context_default_params() {
         /*.type_v_cross         =*/ GGML_TYPE_F16,
         /*.type_k_pad           =*/ GGML_TYPE_F16,
         /*.type_v_pad           =*/ GGML_TYPE_F16,
+        /*.use_coreml           =*/ false,
 
         /*.dtw_token_timestamps =*/ false,
         /*.dtw_aheads_preset    =*/ WHISPER_AHEADS_NONE,
@@ -5284,6 +5288,63 @@ bool whisper_vad_detect_speech(
     ggml_backend_sched_reset(sched);
 
     return true;
+}
+
+void whisper_vad_reset_state(struct whisper_vad_context * vctx) {
+    if (vctx && vctx->buffer) {
+        ggml_backend_buffer_clear(vctx->buffer, 0);
+    }
+}
+
+float whisper_vad_detect_speech_single_frame(
+        struct whisper_vad_context * vctx,
+        const float * samples,
+        int n_samples) {
+    // This function processes a single frame (n_window samples) without resetting LSTM state.
+    // Useful for real-time streaming VAD where state needs to persist across calls.
+
+    if (!vctx || !samples || n_samples <= 0) {
+        return -1.0f;
+    }
+
+    auto & sched = vctx->sched.sched;
+
+    ggml_cgraph * gf = whisper_vad_build_graph(*vctx);
+
+    if (!ggml_backend_sched_alloc_graph(sched, gf)) {
+        WHISPER_LOG_ERROR("%s: failed to allocate the compute buffer\n", __func__);
+        return -1.0f;
+    }
+
+    struct ggml_tensor * frame = ggml_graph_get_tensor(gf, "frame");
+    struct ggml_tensor * prob  = ggml_graph_get_tensor(gf, "prob");
+
+    // Prepare the window - pad with zeros if needed
+    std::vector<float> window(vctx->n_window, 0.0f);
+    const int samples_to_copy = std::min(n_samples, vctx->n_window);
+    std::copy(samples, samples + samples_to_copy, window.begin());
+
+    // Set the frame tensor data
+    ggml_backend_tensor_set(frame, window.data(), 0, ggml_nelements(frame) * sizeof(float));
+
+    // Compute without resetting scheduler
+    if (!ggml_graph_compute_helper(sched, gf, vctx->n_threads, false)) {
+        WHISPER_LOG_ERROR("%s: failed to compute VAD graph\n", __func__);
+        ggml_backend_sched_reset(sched);
+        return -1.0f;
+    }
+
+    // Get the probability
+    float speech_prob = 0.0f;
+    ggml_backend_tensor_get(prob, &speech_prob, 0, sizeof(float));
+
+    ggml_backend_sched_reset(sched);
+
+    return speech_prob;
+}
+
+int whisper_vad_n_window(struct whisper_vad_context * vctx) {
+    return vctx ? vctx->n_window : 0;
 }
 
 int whisper_vad_segments_n_segments(struct whisper_vad_segments * segments) {

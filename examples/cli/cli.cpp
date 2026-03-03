@@ -77,6 +77,7 @@ struct whisper_params {
     bool log_score       = false;
     bool use_gpu         = true;
     bool flash_attn      = true;
+    int32_t gpu_device   = 0;
     bool suppress_nst    = false;
     bool carry_initial_prompt = false;
 
@@ -138,6 +139,10 @@ static char * requires_value_error(const std::string & arg) {
 }
 
 static bool whisper_params_parse(int argc, char ** argv, whisper_params & params) {
+    if (const char * env_device = std::getenv("WHISPER_ARG_DEVICE")) {
+        params.gpu_device = std::stoi(env_device);
+    }
+
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
 
@@ -202,9 +207,10 @@ static bool whisper_params_parse(int argc, char ** argv, whisper_params & params
         else if (arg == "-f"    || arg == "--file")                 { params.fname_inp.emplace_back(ARGV_NEXT); }
         else if (arg == "-oved" || arg == "--ov-e-device")          { params.openvino_encode_device = ARGV_NEXT; }
         else if (arg == "-dtw"  || arg == "--dtw")                  { params.dtw             = ARGV_NEXT; }
-        else if (                  arg == "--dtw-norm-top")          { params.dtw_norm_top_k  = std::stoi(ARGV_NEXT); }
+        else if (                  arg == "--dtw-norm-top")        { params.dtw_norm_top_k  = std::stoi(ARGV_NEXT); }
         else if (arg == "-ls"   || arg == "--log-score")            { params.log_score       = true; }
         else if (arg == "-ng"   || arg == "--no-gpu")               { params.use_gpu         = false; }
+        else if (arg == "-dev"  || arg == "--device")               { params.gpu_device      = std::stoi(ARGV_NEXT); }
         else if (arg == "-fa"   || arg == "--flash-attn")           { params.flash_attn      = true; }
         else if (arg == "-nfa"  || arg == "--no-flash-attn")        { params.flash_attn      = false; }
         else if (                  arg == "--kv-type-k")            { params.kv_type_k       = ARGV_NEXT; }
@@ -293,6 +299,7 @@ static void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params
     fprintf(stderr, "             --dtw-norm-top N       [%-7d] L2 norm head filtering: keep top N heads (use with -dtw top-N)\n", params.dtw_norm_top_k);
     fprintf(stderr, "  -ls,       --log-score            [%-7s] log best decoder scores of tokens\n",              params.log_score?"true":"false");
     fprintf(stderr, "  -ng,       --no-gpu               [%-7s] disable GPU\n",                                    params.use_gpu ? "false" : "true");
+    fprintf(stderr, "  -dev N,    --device N             [%-7d] GPU device ID (default: 0)\n",                     params.gpu_device);
     fprintf(stderr, "  -fa,       --flash-attn           [%-7s] enable flash attention\n",                         params.flash_attn ? "true" : "false");
     fprintf(stderr, "  -nfa,      --no-flash-attn        [%-7s] disable flash attention\n",                        params.flash_attn ? "false" : "true");
     fprintf(stderr, "\n");
@@ -1030,6 +1037,7 @@ int main(int argc, char ** argv) {
     struct whisper_context_params cparams = whisper_context_default_params();
 
     cparams.use_gpu    = params.use_gpu;
+    cparams.gpu_device = params.gpu_device;
     cparams.flash_attn = params.flash_attn;
 
     // Parse KV cache types

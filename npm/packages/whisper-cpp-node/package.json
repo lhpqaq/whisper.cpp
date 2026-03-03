@@ -1,0 +1,57 @@
+{
+  "name": "whisper-cpp-node",
+  "version": "0.2.5",
+  "description": "Node.js bindings for whisper.cpp - fast speech-to-text with GPU acceleration",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/predict-woo/whisper.cpp",
+    "directory": "npm/packages/whisper-cpp-node"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build"
+  },
+  "optionalDependencies": {
+    "@whisper-cpp-node/darwin-arm64": "workspace:*",
+    "@whisper-cpp-node/win32-x64": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "whisper",
+    "whisper.cpp",
+    "speech-to-text",
+    "transcription",
+    "audio",
+    "asr",
+    "apple-silicon",
+    "coreml",
+    "metal",
+    "windows",
+    "vulkan",
+    "openvino",
+    "gpu",
+    "intel"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

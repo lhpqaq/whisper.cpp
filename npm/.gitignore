@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+packages/*/dist/
+
+# Native binaries (downloaded/copied, not checked in)
+packages/darwin-arm64/whisper.node
+packages/darwin-x64/whisper.node
+packages/linux-x64/whisper.node
+packages/win32-x64/whisper.node
+packages/win32-x64/openvino.dll
+packages/win32-x64/openvino_intel_cpu_plugin.dll
+packages/win32-x64/openvino_intel_gpu_plugin.dll
+packages/win32-x64/openvino_auto_plugin.dll
+packages/win32-x64/openvino_ir_frontend.dll
+packages/win32-x64/tbb12.dll
+packages/win32-x64/pugixml.dll
+# Logs
+*.log
+npm-debug.log*
+
+# Test artifacts
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

@@ -87,7 +87,8 @@ extern "C" {
 
     enum whisper_alignment_heads_preset {
         WHISPER_AHEADS_NONE,
-        WHISPER_AHEADS_N_TOP_MOST,  // All heads from the N-top-most text-layers
+        WHISPER_AHEADS_N_TOP_MOST,       // All heads from the N-top-most text-layers
+        WHISPER_AHEADS_N_TOP_MOST_NORM,  // All heads from top-N layers, then dynamically select top-K by L2 norm
         WHISPER_AHEADS_CUSTOM,
         WHISPER_AHEADS_TINY_EN,
         WHISPER_AHEADS_TINY,
@@ -151,6 +152,7 @@ extern "C" {
         enum whisper_alignment_heads_preset dtw_aheads_preset;
 
         int dtw_n_top;
+        int dtw_norm_top_k;  // number of heads to keep after L2 norm filtering (default 10)
         struct whisper_aheads dtw_aheads;
 
         size_t dtw_mem_size; // TODO: remove

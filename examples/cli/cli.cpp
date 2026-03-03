@@ -104,6 +104,7 @@ struct whisper_params {
     std::string openvino_encode_device = "CPU";
 
     std::string dtw = "";
+    int         dtw_norm_top_k = 10;
 
     std::vector<std::string> fname_inp = {};
     std::vector<std::string> fname_out = {};
@@ -1066,9 +1067,30 @@ int main(int argc, char ** argv) {
         if (params.dtw == "large.v3")  cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V3;
         if (params.dtw == "large.v3.turbo")  cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V3_TURBO;
 
+        // --dtw top-N: use all heads from top N layers (plain averaging)
+        // --dtw top-N-norm: use top N layers + L2 norm filtering (keeps --dtw-norm-top heads)
+        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE && params.dtw.rfind("top-", 0) == 0) {
+            std::string val = params.dtw.substr(4);
+            bool use_norm = false;
+            auto norm_pos = val.find("-norm");
+            if (norm_pos != std::string::npos) {
+                use_norm = true;
+                val = val.substr(0, norm_pos);
+            }
+            int n_top = std::stoi(val);
+            cparams.dtw_n_top = n_top;
+            cparams.dtw_norm_top_k = params.dtw_norm_top_k;
+            cparams.dtw_aheads_preset = use_norm ? WHISPER_AHEADS_N_TOP_MOST_NORM : WHISPER_AHEADS_N_TOP_MOST;
+        }
+
         if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE) {
             fprintf(stderr, "error: unknown DTW preset '%s'\n", params.dtw.c_str());
             return 3;
+        }
+
+        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST ||
+            cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
+            cparams.dtw_mem_size = 1024*1024*512;
         }
     }
 

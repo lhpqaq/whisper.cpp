@@ -1,0 +1,19 @@
+diff a/src/whisper.cpp b/src/whisper.cpp	(rejected hunks)
+@@ -2317,7 +2322,7 @@ static struct ggml_cgraph * whisper_build_graph_cross(
+         struct ggml_tensor * k;
+         struct ggml_tensor * v;
+ 
+-        if (wctx.params.flash_attn) {
++        if (wctx.params.flash_attn && !wctx.params.dtw_token_timestamps) {
+             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
+                     (ggml_element_size(wstate.kv_cross.k)*n_state)*(il*n_ctx_pad));
+ 
+@@ -2677,7 +2682,7 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
+                         ggml_reshape_3d(ctx0, Qcur, n_state_head, n_head, n_tokens),
+                         0, 2, 1, 3);
+ 
+-            if (wctx.params.flash_attn) {
++            if (wctx.params.flash_attn && !wctx.params.dtw_token_timestamps) {
+                 struct ggml_tensor * Kcross =
+                     ggml_view_3d(ctx0, wstate.kv_cross.k,
+                             n_state_head, n_audio_ctx_pad, n_head,

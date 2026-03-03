@@ -1183,9 +1183,14 @@ static bool aheads_masks_init(
     if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE) {
         WHISPER_LOG_ERROR("%s: dtw_aheads_preset should be != DTW_AHEADS_NONE\n", __func__);
         return false;
-    } else if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST) {
+    } else if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST ||
+               cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
         if (cparams.dtw_n_top > n_text_layer || cparams.dtw_n_top <= 0) {
             WHISPER_LOG_ERROR("%s: dtw_n_top must be between %d and %d for this model.", __func__, 1, n_text_layer);
+            return false;
+        }
+        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM && cparams.dtw_norm_top_k <= 0) {
+            WHISPER_LOG_ERROR("%s: dtw_norm_top_k must be > 0 for N_TOP_MOST_NORM preset.", __func__);
             return false;
         }
     } else {
@@ -3728,6 +3733,7 @@ struct whisper_context_params whisper_context_default_params() {
         /*.dtw_token_timestamps =*/ false,
         /*.dtw_aheads_preset    =*/ WHISPER_AHEADS_NONE,
         /*.dtw_n_top            =*/ -1,
+        /*.dtw_norm_top_k       =*/ 10,
         /*.dtw_aheads           =*/ {
             /*.n_heads          =*/ 0,
             /*.heads            =*/ NULL,
@@ -3822,8 +3828,7 @@ struct whisper_context * whisper_init_with_params_no_state(struct whisper_model_
     ggml_time_init();
 
     if (params.flash_attn && params.dtw_token_timestamps) {
-        WHISPER_LOG_WARN("%s: dtw_token_timestamps is not supported with flash_attn - disabling\n", __func__);
-        params.dtw_token_timestamps = false;
+        WHISPER_LOG_INFO("%s: flash_attn + dtw: decoder cross-attention will use non-flash path for alignment heads\n", __func__);
     }
 
     WHISPER_LOG_INFO("%s: use gpu    = %d\n", __func__, params.use_gpu);
@@ -8784,7 +8789,8 @@ static std::vector<uint32_t> get_alignment_heads_by_layer(const whisper_context_
     std::vector<uint32_t> ret;
     if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE) {
         return ret;
-    } else if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST) {
+    } else if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST ||
+               cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
         if (il >= n_text_layer - cparams.dtw_n_top) {
             for (int32_t i = 0; i < n_head; ++i) {
                 ret.push_back(i);
@@ -9015,6 +9021,72 @@ static void whisper_exp_compute_token_level_timestamps_dtw(
         }
     }
 
+    // L2 norm head filtering (arXiv:2509.09987 Eq. 3)
+    // Score each head by sum of L2 norms of rows + columns, keep top-K.
+    // Heads with concentrated, alignment-like attention score higher.
+    if (ctx->params.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
+        const int top_k = std::min((int)ctx->params.dtw_norm_top_k, (int)n_heads);
+
+        std::vector<std::pair<float, int>> head_scores(n_heads);
+        for (int k = 0; k < n_heads; ++k) {
+            float score = 0.0f;
+            const float * head_data = (const float *)((char *) w->data + k * w->nb[2]);
+
+            // Sum of L2 norms of rows (one per token)
+            for (int i = 0; i < n_tokens; ++i) {
+                float row_sq_sum = 0.0f;
+                for (int j = 0; j < n_audio_tokens; ++j) {
+                    float v = head_data[j * n_tokens + i];
+                    row_sq_sum += v * v;
+                }
+                score += sqrtf(row_sq_sum);
+            }
+
+            // Sum of L2 norms of columns (one per audio frame)
+            for (int j = 0; j < n_audio_tokens; ++j) {
+                float col_sq_sum = 0.0f;
+                for (int i = 0; i < n_tokens; ++i) {
+                    float v = head_data[j * n_tokens + i];
+                    col_sq_sum += v * v;
+                }
+                score += sqrtf(col_sq_sum);
+            }
+
+            head_scores[k] = {score, k};
+        }
+
+        std::partial_sort(head_scores.begin(), head_scores.begin() + top_k, head_scores.end(),
+            [](const std::pair<float, int> & a, const std::pair<float, int> & b) {
+                return a.first > b.first;
+            });
+
+        std::vector<bool> keep(n_heads, false);
+        for (int i = 0; i < top_k; ++i) {
+            keep[head_scores[i].second] = true;
+        }
+
+        // Zero out non-selected heads so ggml_mean effectively averages only selected ones.
+        // Then scale by n_heads/top_k to compensate for the mean including zeroed heads.
+        for (int k = 0; k < n_heads; ++k) {
+            if (!keep[k]) {
+                memset((char *) w->data + k * w->nb[2], 0, n_tokens * n_audio_tokens * sizeof(float));
+            }
+        }
+
+        // Rescale kept heads: mean over n_heads would divide by n_heads, but we want mean over top_k
+        const float scale = (float)n_heads / (float)top_k;
+        for (int k = 0; k < n_heads; ++k) {
+            if (keep[k]) {
+                float * head_ptr = (float *)((char *) w->data + k * w->nb[2]);
+                for (int idx = 0; idx < n_tokens * n_audio_tokens; ++idx) {
+                    head_ptr[idx] *= scale;
+                }
+            }
+        }
+
+        WHISPER_LOG_DEBUG("%s: L2 norm filtering: kept %d/%d heads\n", __func__, top_k, (int)n_heads);
+    }
+
     // Normalize - in original OpenAI code, this is done over dim=-2. In this case,
     // we already permuted N_TOKENS dimension to columns on last loop, becase ggml_norm
     // operates over columns. Afterwards, permute to a shape that facilitates mean
@@ -9027,8 +9099,21 @@ static void whisper_exp_compute_token_level_timestamps_dtw(
     // Pass median filter - this is done over AUDIO_TOKENS dimension.
     // IN: Tensor with N_ALIGNMENT_HEADS*N_TOKENS*N_AUDIO_TOKENS dims
     // OUT: Same dims
-    median_filter_user_data mf_user_data = {medfilt_width};
-    w = ggml_map_custom1(gctx, w, median_filter, 1, &mf_user_data);
+    int effective_medfilt = medfilt_width;
+    if (n_audio_tokens <= effective_medfilt) {
+        // Largest odd number strictly less than n_audio_tokens
+        effective_medfilt = n_audio_tokens >= 3 ? ((n_audio_tokens - 2) | 1) : 0;
+    }
+
+    if (effective_medfilt != medfilt_width) {
+        WHISPER_LOG_INFO("%s: DTW short chunk: n_audio_tokens=%d, medfilt adjusted %d -> %d\n",
+                __func__, n_audio_tokens, medfilt_width, effective_medfilt);
+    }
+
+    median_filter_user_data mf_user_data = {effective_medfilt};
+    if (effective_medfilt >= 1) {
+        w = ggml_map_custom1(gctx, w, median_filter, 1, &mf_user_data);
+    }
 
     // Take mean over columns, scale by -1, reshape to 2D tensor, remove SOT sequence and EOT
     // IN: Tensor with N_ALIGNMENT_HEADS*N_TOKENS*N_AUDIO_TOKENS dims

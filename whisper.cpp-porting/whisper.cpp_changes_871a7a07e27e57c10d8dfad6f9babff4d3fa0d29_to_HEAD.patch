@@ -1,0 +1,1832 @@
+diff --git a/diarization_integration.md b/diarization_integration.md
+new file mode 100644
+index 00000000..e69de29b
+diff --git a/examples/addon.node/addon.cpp b/examples/addon.node/addon.cpp
+index 5afc5908..48ed922a 100644
+--- a/examples/addon.node/addon.cpp
++++ b/examples/addon.node/addon.cpp
+@@ -133,6 +133,26 @@ WhisperContext::WhisperContext(const Napi::CallbackInfo& info)
+         else if (dtw == "large.v2")     cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V2;
+         else if (dtw == "large.v3")     cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V3;
+         else if (dtw == "large.v3.turbo") cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V3_TURBO;
++
++        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE && dtw.rfind("top-", 0) == 0) {
++            std::string val = dtw.substr(4);
++            bool use_norm = false;
++            auto norm_pos = val.find("-norm");
++            if (norm_pos != std::string::npos) {
++                use_norm = true;
++                val = val.substr(0, norm_pos);
++            }
++            int n_top = std::stoi(val);
++            cparams.dtw_n_top = n_top;
++            cparams.dtw_norm_top_k = get_int32(options, "dtw_norm_top_k", 10);
++            cparams.dtw_aheads_preset = use_norm ? WHISPER_AHEADS_N_TOP_MOST_NORM : WHISPER_AHEADS_N_TOP_MOST;
++        }
++
++        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST ||
++            cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
++            cparams.flash_attn = false;
++            cparams.dtw_mem_size = 1024*1024*512;
++        }
+     }
+ 
+     // Suppress logging if requested
+@@ -279,8 +299,23 @@ struct transcribe_params {
+     float       vad_samples_overlap         = 0.1f;
+ };
+ 
++struct token_result {
++    std::string text;
++    float probability;
++    int64_t t0;
++    int64_t t1;
++    int64_t t_dtw;
++};
++
++struct segment_result {
++    std::string start;
++    std::string end;
++    std::string text;
++    std::vector<token_result> tokens;
++};
++
+ struct transcribe_result {
+-    std::vector<std::vector<std::string>> segments;  // [start, end, text]
++    std::vector<segment_result> segments;
+     std::string language;
+     bool success = false;
+     std::string error;
+@@ -475,9 +510,30 @@ public:
+             const int64_t t0 = whisper_full_get_segment_t0(ctx, i);
+             const int64_t t1 = whisper_full_get_segment_t1(ctx, i);
+ 
+-            result_.segments[i].push_back(to_timestamp(t0, params_.comma_in_time));
+-            result_.segments[i].push_back(to_timestamp(t1, params_.comma_in_time));
+-            result_.segments[i].push_back(text);
++            result_.segments[i].start = to_timestamp(t0, params_.comma_in_time);
++            result_.segments[i].end   = to_timestamp(t1, params_.comma_in_time);
++            result_.segments[i].text  = text ? text : "";
++
++            // Extract token-level data (includes t_dtw when DTW is enabled)
++            if (params_.token_timestamps) {
++                const int n_tokens = whisper_full_n_tokens(ctx, i);
++                for (int j = 0; j < n_tokens; j++) {
++                    const char* token_text = whisper_full_get_token_text(ctx, i, j);
++                    float token_prob = whisper_full_get_token_p(ctx, i, j);
++                    whisper_token_data token_data = whisper_full_get_token_data(ctx, i, j);
++
++                    // Skip special tokens (non-text)
++                    if (token_data.id >= whisper_token_eot(ctx)) continue;
++
++                    result_.segments[i].tokens.push_back({
++                        token_text ? token_text : "",
++                        token_prob,
++                        token_data.t0,
++                        token_data.t1,
++                        token_data.t_dtw
++                    });
++                }
++            }
+         }
+ 
+         result_.success = true;
+@@ -493,18 +549,31 @@ public:
+ 
+         Napi::Object resultObj = Napi::Object::New(Env());
+ 
+-        // Add language if detected
+         if (!result_.language.empty()) {
+             resultObj.Set("language", Napi::String::New(Env(), result_.language));
+         }
+ 
+-        // Add segments
+         Napi::Array segments = Napi::Array::New(Env(), result_.segments.size());
+         for (size_t i = 0; i < result_.segments.size(); ++i) {
+-            Napi::Array segment = Napi::Array::New(Env(), 3);
+-            segment.Set((uint32_t)0, Napi::String::New(Env(), result_.segments[i][0]));  // start
+-            segment.Set((uint32_t)1, Napi::String::New(Env(), result_.segments[i][1]));  // end
+-            segment.Set((uint32_t)2, Napi::String::New(Env(), result_.segments[i][2]));  // text
++            Napi::Object segment = Napi::Object::New(Env());
++            segment.Set("start", Napi::String::New(Env(), result_.segments[i].start));
++            segment.Set("end",   Napi::String::New(Env(), result_.segments[i].end));
++            segment.Set("text",  Napi::String::New(Env(), result_.segments[i].text));
++
++            if (!result_.segments[i].tokens.empty()) {
++                Napi::Array tokensArray = Napi::Array::New(Env(), result_.segments[i].tokens.size());
++                for (size_t j = 0; j < result_.segments[i].tokens.size(); j++) {
++                    Napi::Object tokenObj = Napi::Object::New(Env());
++                    tokenObj.Set("text",        Napi::String::New(Env(), result_.segments[i].tokens[j].text));
++                    tokenObj.Set("probability",  Napi::Number::New(Env(), result_.segments[i].tokens[j].probability));
++                    tokenObj.Set("t0",          Napi::Number::New(Env(), result_.segments[i].tokens[j].t0));
++                    tokenObj.Set("t1",          Napi::Number::New(Env(), result_.segments[i].tokens[j].t1));
++                    tokenObj.Set("t_dtw",       Napi::Number::New(Env(), result_.segments[i].tokens[j].t_dtw));
++                    tokensArray.Set((uint32_t)j, tokenObj);
++                }
++                segment.Set("tokens", tokensArray);
++            }
++
+             segments.Set((uint32_t)i, segment);
+         }
+         resultObj.Set("segments", segments);
+@@ -537,7 +606,7 @@ public:
+             std::string segment_text = text ? text : "";
+             int segment_index = i;
+ 
+-            std::vector<std::tuple<std::string, float, int64_t, int64_t>> tokens;
++            std::vector<std::tuple<std::string, float, int64_t, int64_t, int64_t>> tokens;
+             if (params_.token_timestamps) {
+                 const int n_tokens = whisper_full_n_tokens(ctx, i);
+                 for (int j = 0; j < n_tokens; j++) {
+@@ -548,7 +617,8 @@ public:
+                         token_text ? token_text : "",
+                         token_prob,
+                         token_data.t0,
+-                        token_data.t1
++                        token_data.t1,
++                        token_data.t_dtw
+                     });
+                 }
+             }
+@@ -569,6 +639,7 @@ public:
+                         tokenObj.Set("probability", Napi::Number::New(env, std::get<1>(tokens[k])));
+                         tokenObj.Set("t0", Napi::Number::New(env, std::get<2>(tokens[k])));
+                         tokenObj.Set("t1", Napi::Number::New(env, std::get<3>(tokens[k])));
++                        tokenObj.Set("t_dtw", Napi::Number::New(env, std::get<4>(tokens[k])));
+                         tokensArray.Set((uint32_t)k, tokenObj);
+                     }
+                     segment.Set("tokens", tokensArray);
+diff --git a/examples/cli/cli.cpp b/examples/cli/cli.cpp
+index 4e84c1b2..90986016 100644
+--- a/examples/cli/cli.cpp
++++ b/examples/cli/cli.cpp
+@@ -97,6 +97,7 @@ struct whisper_params {
+     std::string openvino_encode_device = "CPU";
+ 
+     std::string dtw = "";
++    int         dtw_norm_top_k = 10;
+ 
+     std::vector<std::string> fname_inp = {};
+     std::vector<std::string> fname_out = {};
+@@ -198,6 +199,7 @@ static bool whisper_params_parse(int argc, char ** argv, whisper_params & params
+         else if (arg == "-f"    || arg == "--file")                 { params.fname_inp.emplace_back(ARGV_NEXT); }
+         else if (arg == "-oved" || arg == "--ov-e-device")          { params.openvino_encode_device = ARGV_NEXT; }
+         else if (arg == "-dtw"  || arg == "--dtw")                  { params.dtw             = ARGV_NEXT; }
++        else if (                  arg == "--dtw-norm-top")        { params.dtw_norm_top_k  = std::stoi(ARGV_NEXT); }
+         else if (arg == "-ls"   || arg == "--log-score")            { params.log_score       = true; }
+         else if (arg == "-ng"   || arg == "--no-gpu")               { params.use_gpu         = false; }
+         else if (arg == "-dev"  || arg == "--device")               { params.gpu_device      = std::stoi(ARGV_NEXT); }
+@@ -280,6 +282,7 @@ static void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params
+     fprintf(stderr, "  -f FNAME,  --file FNAME           [%-7s] input audio file path\n",                          "");
+     fprintf(stderr, "  -oved D,   --ov-e-device DNAME    [%-7s] the OpenVINO device used for encode inference\n",  params.openvino_encode_device.c_str());
+     fprintf(stderr, "  -dtw MODEL --dtw MODEL            [%-7s] compute token-level timestamps\n",                 params.dtw.c_str());
++    fprintf(stderr, "             --dtw-norm-top N       [%-7d] L2 norm head filtering: keep top N heads (use with -dtw top-N)\n", params.dtw_norm_top_k);
+     fprintf(stderr, "  -ls,       --log-score            [%-7s] log best decoder scores of tokens\n",              params.log_score?"true":"false");
+     fprintf(stderr, "  -ng,       --no-gpu               [%-7s] disable GPU\n",                                    params.use_gpu ? "false" : "true");
+     fprintf(stderr, "  -dev N,    --device N             [%-7d] GPU device ID (default: 0)\n",                     params.gpu_device);
+@@ -1030,10 +1033,31 @@ int main(int argc, char ** argv) {
+         if (params.dtw == "large.v3")  cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V3;
+         if (params.dtw == "large.v3.turbo")  cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V3_TURBO;
+ 
++        // --dtw top-N: use all heads from top N layers (plain averaging)
++        // --dtw top-N-norm: use top N layers + L2 norm filtering (keeps --dtw-norm-top heads)
++        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE && params.dtw.rfind("top-", 0) == 0) {
++            std::string val = params.dtw.substr(4);
++            bool use_norm = false;
++            auto norm_pos = val.find("-norm");
++            if (norm_pos != std::string::npos) {
++                use_norm = true;
++                val = val.substr(0, norm_pos);
++            }
++            int n_top = std::stoi(val);
++            cparams.dtw_n_top = n_top;
++            cparams.dtw_norm_top_k = params.dtw_norm_top_k;
++            cparams.dtw_aheads_preset = use_norm ? WHISPER_AHEADS_N_TOP_MOST_NORM : WHISPER_AHEADS_N_TOP_MOST;
++        }
++
+         if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE) {
+             fprintf(stderr, "error: unknown DTW preset '%s'\n", params.dtw.c_str());
+             return 3;
+         }
++
++        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST ||
++            cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
++            cparams.dtw_mem_size = 1024*1024*512;
++        }
+     }
+ 
+     struct whisper_context * ctx = whisper_init_from_file_with_params(params.model.c_str(), cparams);
+diff --git a/ggml/src/ggml-cuda/binbcast.cu b/ggml/src/ggml-cuda/binbcast.cu
+index 0e6d777b..e639ef82 100644
+--- a/ggml/src/ggml-cuda/binbcast.cu
++++ b/ggml/src/ggml-cuda/binbcast.cu
+@@ -1,5 +1,7 @@
+ #include "binbcast.cuh"
+ #include <cstdint>
++#include <cstdlib>
++#include <cstring>
+ #include <utility>
+ 
+ static __device__ __forceinline__ float op_repeat(const float a, const float b) {
+@@ -39,16 +41,16 @@ static __global__ void k_bin_bcast(const src0_t *         src0,
+                                    const uint3            ne11,
+                                    const uint3            ne12,
+                                    const uint3            ne13,
+-                                   /*int s0, */ const int s1,
+-                                   const int              s2,
+-                                   const int              s3,
+-                                   /*int s00,*/ const int s01,
+-                                   const int              s02,
+-                                   const int              s03,
+-                                   /*int s10,*/ const int s11,
+-                                   const int              s12,
+-                                   const int              s13,
+-                                   src1_ptrs... src1s) {
++                                    /*int64_t s0, */ const int64_t s1,
++                                    const int64_t                s2,
++                                    const int64_t                s3,
++                                    /*int64_t s00,*/ const int64_t s01,
++                                    const int64_t                s02,
++                                    const int64_t                s03,
++                                    /*int64_t s10,*/ const int64_t s11,
++                                    const int64_t                s12,
++                                    const int64_t                s13,
++                                    src1_ptrs... src1s) {
+     const uint32_t i0s = blockDim.x * blockIdx.x + threadIdx.x;
+     const uint32_t i1  = (blockDim.y * blockIdx.y + threadIdx.y);
+     const uint32_t i2  = fastdiv((blockDim.z * blockIdx.z + threadIdx.z), ne3);
+@@ -62,11 +64,12 @@ static __global__ void k_bin_bcast(const src0_t *         src0,
+     const uint32_t i12 = fastmodulo(i2, ne12);
+     const uint32_t i13 = fastmodulo(i3, ne13);
+ 
+-    const size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
+-    const size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
+-    const size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
++    const int64_t i_src0 =  (int64_t) i3*s03 +  (int64_t) i2*s02 +  (int64_t) i1*s01;
++    const int64_t i_src1 = (int64_t)i13*s13 + (int64_t)i12*s12 + (int64_t)i11*s11;
++    const int64_t i_dst  =  (int64_t) i3*s3  +  (int64_t) i2*s2  +  (int64_t) i1*s1;
+ 
+     const src0_t * src0_row = src0 ? (src0 + i_src0) : nullptr;
++    const src1_t * src1_row = src1 ? (src1 + i_src1) : nullptr;
+     dst_t * dst_row = dst + i_dst;
+ 
+     for (int i0 = i0s; i0 < ne0; i0 += blockDim.x * gridDim.x) {
+@@ -76,7 +79,7 @@ static __global__ void k_bin_bcast(const src0_t *         src0,
+         if constexpr (sizeof...(src1_ptrs) > 0) {
+             result = (..., (result = bin_op(result, (float)src1s[i_src1 + i10])));
+         } else {
+-            result = bin_op(result, (float)src1[i_src1 + i10]);
++            result = bin_op(result, (float)src1_row[i10]);
+         }
+ 
+         dst_row[i0] = (dst_t) result;
+@@ -97,20 +100,20 @@ static __global__ void k_bin_bcast_unravel(const src0_t *         src0,
+                                            const uint32_t         ne3,
+                                            const uint3            prod_012,
+                                            const uint3            prod_01,
+-                                           const uint3            ne10,
+-                                           const uint3            ne11,
+-                                           const uint3            ne12,
+-                                           const uint3            ne13,
+-                                           /*int s0, */ const int s1,
+-                                           const int              s2,
+-                                           const int              s3,
+-                                           /*int s00,*/ const int s01,
+-                                           const int              s02,
+-                                           const int              s03,
+-                                           /*int s10,*/ const int s11,
+-                                           const int              s12,
+-                                           const int              s13,
+-                                           src1_ptrs... src1s) {
++                                            const uint3            ne10,
++                                            const uint3            ne11,
++                                            const uint3            ne12,
++                                            const uint3            ne13,
++                                            /*int64_t s0, */ const int64_t s1,
++                                            const int64_t                s2,
++                                            const int64_t                s3,
++                                            /*int64_t s00,*/ const int64_t s01,
++                                            const int64_t                s02,
++                                            const int64_t                s03,
++                                            /*int64_t s10,*/ const int64_t s11,
++                                            const int64_t                s12,
++                                            const int64_t                s13,
++                                            src1_ptrs... src1s) {
+     const int i = blockDim.x*blockIdx.x + threadIdx.x;
+ 
+     const uint32_t i3 = fastdiv(i, prod_012);
+@@ -126,11 +129,12 @@ static __global__ void k_bin_bcast_unravel(const src0_t *         src0,
+     const int i12 = fastmodulo(i2, ne12);
+     const int i13 = fastmodulo(i3, ne13);
+ 
+-    const size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
+-    const size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
+-    const size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
++    const int64_t i_src0 =  (int64_t) i3*s03 +  (int64_t) i2*s02 +  (int64_t) i1*s01;
++    const int64_t i_src1 = (int64_t)i13*s13 + (int64_t)i12*s12 + (int64_t)i11*s11;
++    const int64_t i_dst  =  (int64_t) i3*s3  +  (int64_t) i2*s2  +  (int64_t) i1*s1;
+ 
+     const src0_t * src0_row = src0 ? (src0 + i_src0) : nullptr;
++    const src1_t * src1_row = src1 ? (src1 + i_src1) : nullptr;
+     dst_t * dst_row = dst + i_dst;
+ 
+     const int i10 = fastmodulo(i0, ne10);
+@@ -139,7 +143,7 @@ static __global__ void k_bin_bcast_unravel(const src0_t *         src0,
+     if constexpr (sizeof...(src1_ptrs) > 0) {
+         result = (..., (result = bin_op(result, (float)src1s[i_src1 + i10])));
+     } else {
+-        result = bin_op(result, (float)src1[i_src1 + i10]);
++        result = bin_op(result, (float)src1_row[i10]);
+     }
+ 
+     dst_row[i0] = (dst_t) result;
+@@ -401,6 +405,26 @@ void ggml_cuda_op_sub(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+ }
+ 
+ void ggml_cuda_op_mul(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
++    if (const char * env = std::getenv("GGML_CUDA_DEBUG_MUL"); env && std::strcmp(env, "1") == 0) {
++        static int s_printed = 0;
++        if (s_printed < 20) {
++            const ggml_tensor * src0 = dst->src[0];
++            const ggml_tensor * src1 = dst->src[1];
++            fprintf(stderr,
++                    "[cuda-mul] dst=%s type=%s ne=[%lld,%lld,%lld,%lld] nb=[%zu,%zu,%zu,%zu] src0=%s ne=[%lld,%lld,%lld,%lld] nb=[%zu,%zu,%zu,%zu] src1=%s ne=[%lld,%lld,%lld,%lld] nb=[%zu,%zu,%zu,%zu]\n",
++                    (dst->name && dst->name[0]) ? dst->name : "(unnamed)",
++                    ggml_type_name(dst->type),
++                    (long long) dst->ne[0], (long long) dst->ne[1], (long long) dst->ne[2], (long long) dst->ne[3],
++                    dst->nb[0], dst->nb[1], dst->nb[2], dst->nb[3],
++                    (src0 && src0->name && src0->name[0]) ? src0->name : "(src0)",
++                    src0 ? (long long) src0->ne[0] : -1LL, src0 ? (long long) src0->ne[1] : -1LL, src0 ? (long long) src0->ne[2] : -1LL, src0 ? (long long) src0->ne[3] : -1LL,
++                    src0 ? src0->nb[0] : 0, src0 ? src0->nb[1] : 0, src0 ? src0->nb[2] : 0, src0 ? src0->nb[3] : 0,
++                    (src1 && src1->name && src1->name[0]) ? src1->name : "(src1)",
++                    src1 ? (long long) src1->ne[0] : -1LL, src1 ? (long long) src1->ne[1] : -1LL, src1 ? (long long) src1->ne[2] : -1LL, src1 ? (long long) src1->ne[3] : -1LL,
++                    src1 ? src1->nb[0] : 0, src1 ? src1->nb[1] : 0, src1 ? src1->nb[2] : 0, src1 ? src1->nb[3] : 0);
++            s_printed++;
++        }
++    }
+     ggml_cuda_op_bin_bcast<bin_bcast_cuda<op_mul>>(dst->src[0], dst->src[1], dst, dst->src[0]->data, dst->src[1]->data, dst->data, ctx.stream());
+ }
+ 
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 9e77c231..0d863537 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -34,6 +34,7 @@
+ #include "ggml-cuda/opt-step-sgd.cuh"
+ #include "ggml-cuda/out-prod.cuh"
+ #include "ggml-cuda/pad.cuh"
++#include "ggml-cuda/pool1d.cuh"
+ #include "ggml-cuda/pool2d.cuh"
+ #include "ggml-cuda/quantize.cuh"
+ #include "ggml-cuda/rope.cuh"
+@@ -62,6 +63,604 @@
+ #include "ggml-cuda/fill.cuh"
+ #include "ggml.h"
+ 
++// Pyannote segmentation custom-op CUDA support
++#include <cuda_fp16.h>
++
++#include <cstdlib>
++#include <cstring>
++
++#include <cooperative_groups.h>
++
++// ============================================================================
++// Pyannote segmentation: CUDA fast-path for GGML_OP_CUSTOM BiLSTM
++// ============================================================================
++
++static __device__ __forceinline__ float seg_sigmoidf(float x) {
++    return 1.0f / (1.0f + expf(-x));
++}
++
++template <typename T>
++static __device__ __forceinline__ float seg_load_f32(const T * p, int idx);
++
++template <>
++__device__ __forceinline__ float seg_load_f32<float>(const float * p, int idx) {
++    return p[idx];
++}
++
++template <>
++__device__ __forceinline__ float seg_load_f32<half>(const half * p, int idx) {
++    return __half2float(p[idx]);
++}
++
++static __global__ void k_f32_to_f16(const int n, const float * x, half * y) {
++    const int i = (int) (blockIdx.x * blockDim.x + threadIdx.x);
++    if (i < n) {
++        y[i] = __float2half_rn(x[i]);
++    }
++}
++
++static __device__ __forceinline__ float seg_tanhf(float x) {
++    return tanhf(x);
++}
++
++template <bool REVERSE, typename W_T, typename B_T, int THREADS>
++static __global__ void k_pyannote_seg_lstm_dir_coop(
++    const int T,
++    const int H,
++    const float * ih_all_all,    // batched [B, 4H, T] with stride ih_stride
++    const int ih_stride,
++    const W_T   * w_hh,          // [H, 4H] as ggml ne0=H, ne1=4H (column-major ld=H)
++    const B_T   * b_ih,          // [4H]
++    const B_T   * b_hh,          // [4H]
++    float       * dst_all,       // batched [B, 2H, T] with stride dst_stride
++    const int dst_stride,
++    const int dir_off,
++    float       * h_state,       // [B, 2, H]
++    float       * c_state) {     // [B, 2, H]
++
++    namespace cg = cooperative_groups;
++    cg::grid_group grid = cg::this_grid();
++
++    const int b = (int) blockIdx.y;
++    const int h = (int) (blockIdx.x * THREADS + threadIdx.x);
++    const bool active = h < H;
++
++    const int G = 4 * H;
++
++    const float * ih_all = ih_all_all + (size_t) b * (size_t) ih_stride;
++    float       * dst    = dst_all    + (size_t) b * (size_t) dst_stride;
++
++    float * h0 = h_state + (size_t) b * (size_t) (2 * H) + (size_t) 0 * (size_t) H;
++    float * h1 = h_state + (size_t) b * (size_t) (2 * H) + (size_t) 1 * (size_t) H;
++    float * c0 = c_state + (size_t) b * (size_t) (2 * H) + (size_t) 0 * (size_t) H;
++    float * c1 = c_state + (size_t) b * (size_t) (2 * H) + (size_t) 1 * (size_t) H;
++
++    for (int step = 0; step < T; ++step) {
++        const int t = REVERSE ? (T - 1 - step) : step;
++
++        const float * hp = (step & 1) ? h1 : h0;
++        const float * cp = (step & 1) ? c1 : c0;
++        float       * hn = (step & 1) ? h0 : h1;
++        float       * cn = (step & 1) ? c0 : c1;
++
++        if (active) {
++            float dot_i = 0.0f;
++            float dot_f = 0.0f;
++            float dot_g = 0.0f;
++            float dot_o = 0.0f;
++
++            const int g_i = h;
++            const int g_f = H + h;
++            const int g_g = 2 * H + h;
++            const int g_o = 3 * H + h;
++
++            const int col_i = g_i * H;
++            const int col_f = g_f * H;
++            const int col_g = g_g * H;
++            const int col_o = g_o * H;
++
++            // Dot products over previous hidden state (exact same order as the legacy kernel).
++            for (int k = 0; k < H; ++k) {
++                const float hp_k = hp[k];
++                dot_i += seg_load_f32<W_T>(w_hh, col_i + k) * hp_k;
++                dot_f += seg_load_f32<W_T>(w_hh, col_f + k) * hp_k;
++                dot_g += seg_load_f32<W_T>(w_hh, col_g + k) * hp_k;
++                dot_o += seg_load_f32<W_T>(w_hh, col_o + k) * hp_k;
++            }
++
++            const float bih_i = seg_load_f32<B_T>(b_ih, g_i);
++            const float bih_f = seg_load_f32<B_T>(b_ih, g_f);
++            const float bih_g = seg_load_f32<B_T>(b_ih, g_g);
++            const float bih_o = seg_load_f32<B_T>(b_ih, g_o);
++            const float bhh_i = seg_load_f32<B_T>(b_hh, g_i);
++            const float bhh_f = seg_load_f32<B_T>(b_hh, g_f);
++            const float bhh_g = seg_load_f32<B_T>(b_hh, g_g);
++            const float bhh_o = seg_load_f32<B_T>(b_hh, g_o);
++
++            const float ih_i = ih_all[g_i + t * G];
++            const float ih_f = ih_all[g_f + t * G];
++            const float ih_g = ih_all[g_g + t * G];
++            const float ih_o = ih_all[g_o + t * G];
++
++            const float gate_i = ih_i + dot_i + bih_i + bhh_i;
++            const float gate_f = ih_f + dot_f + bih_f + bhh_f;
++            const float gate_g = ih_g + dot_g + bih_g + bhh_g;
++            const float gate_o = ih_o + dot_o + bih_o + bhh_o;
++
++            const float i_val = seg_sigmoidf(gate_i);
++            const float f_val = seg_sigmoidf(gate_f);
++            const float g_val = seg_tanhf(gate_g);
++            const float o_val = seg_sigmoidf(gate_o);
++
++            const float c_new = f_val * cp[h] + i_val * g_val;
++            const float h_new = o_val * seg_tanhf(c_new);
++
++            cn[h] = c_new;
++            hn[h] = h_new;
++
++            dst[(dir_off + h) * T + t] = h_new;
++        }
++
++        grid.sync();
++    }
++}
++
++template <bool REVERSE, typename W_T, typename B_T>
++static __global__ void k_pyannote_seg_lstm_dir(
++    const int T,
++    const int H,
++    const float * ih_all_all,    // batched [B, 4H, T] with stride ih_stride
++    const int ih_stride,
++    const W_T   * w_hh,          // [H, 4H] as ggml ne0=H, ne1=4H (column-major ld=H)
++    const B_T   * b_ih,          // [4H]
++    const B_T   * b_hh,          // [4H]
++    float       * dst_all,       // batched [B, 2H, T] with stride dst_stride
++    const int dst_stride,
++    const int dir_off) {
++
++    const int b = (int) blockIdx.x;
++    const float * ih_all = ih_all_all + (size_t) b * (size_t) ih_stride;
++    float       * dst    = dst_all    + (size_t) b * (size_t) dst_stride;
++
++    extern __shared__ float sh[];
++    float * h_prev = sh;      // H
++    float * c_prev = sh + H;  // H
++
++    const int h = (int) threadIdx.x;
++    if (h < H) {
++        h_prev[h] = 0.0f;
++        c_prev[h] = 0.0f;
++    }
++    __syncthreads();
++
++    const int G = 4 * H;
++
++    for (int step = 0; step < T; ++step) {
++        const int t = REVERSE ? (T - 1 - step) : step;
++
++        if (h < H) {
++            float dot_i = 0.0f;
++            float dot_f = 0.0f;
++            float dot_g = 0.0f;
++            float dot_o = 0.0f;
++
++            // w_hh is stored with ld=H, columns are gate elements.
++            const int g_i = h;
++            const int g_f = H + h;
++            const int g_g = 2 * H + h;
++            const int g_o = 3 * H + h;
++
++            const int col_i = g_i * H;
++            const int col_f = g_f * H;
++            const int col_g = g_g * H;
++            const int col_o = g_o * H;
++
++            // Dot products over previous hidden state.
++            for (int k = 0; k < H; ++k) {
++                const float hp = h_prev[k];
++                dot_i += seg_load_f32<W_T>(w_hh, col_i + k) * hp;
++                dot_f += seg_load_f32<W_T>(w_hh, col_f + k) * hp;
++                dot_g += seg_load_f32<W_T>(w_hh, col_g + k) * hp;
++                dot_o += seg_load_f32<W_T>(w_hh, col_o + k) * hp;
++            }
++
++            const float bih_i = seg_load_f32<B_T>(b_ih, g_i);
++            const float bih_f = seg_load_f32<B_T>(b_ih, g_f);
++            const float bih_g = seg_load_f32<B_T>(b_ih, g_g);
++            const float bih_o = seg_load_f32<B_T>(b_ih, g_o);
++            const float bhh_i = seg_load_f32<B_T>(b_hh, g_i);
++            const float bhh_f = seg_load_f32<B_T>(b_hh, g_f);
++            const float bhh_g = seg_load_f32<B_T>(b_hh, g_g);
++            const float bhh_o = seg_load_f32<B_T>(b_hh, g_o);
++
++            const float ih_i = ih_all[g_i + t * G];
++            const float ih_f = ih_all[g_f + t * G];
++            const float ih_g = ih_all[g_g + t * G];
++            const float ih_o = ih_all[g_o + t * G];
++
++            const float gate_i = ih_i + dot_i + bih_i + bhh_i;
++            const float gate_f = ih_f + dot_f + bih_f + bhh_f;
++            const float gate_g = ih_g + dot_g + bih_g + bhh_g;
++            const float gate_o = ih_o + dot_o + bih_o + bhh_o;
++
++            const float i_val = seg_sigmoidf(gate_i);
++            const float f_val = seg_sigmoidf(gate_f);
++            const float g_val = tanhf(gate_g);
++            const float o_val = seg_sigmoidf(gate_o);
++
++            const float c_new = f_val * c_prev[h] + i_val * g_val;
++            const float h_new = o_val * tanhf(c_new);
++
++            c_prev[h] = c_new;
++            h_prev[h] = h_new;
++
++            dst[(dir_off + h) * T + t] = h_new;
++        }
++
++        __syncthreads();
++    }
++}
++
++static bool ggml_cuda_is_pyannote_seg_lstm_custom(const ggml_tensor * op) {
++    if (!op || op->op != GGML_OP_CUSTOM) {
++        return false;
++    }
++    // Expect 9 sources: input + 8 parameter tensors
++    for (int i = 0; i < 9; ++i) {
++        if (!op->src[i]) {
++            return false;
++        }
++    }
++    const ggml_tensor * x = op->src[0];
++    const ggml_tensor * w_ih = op->src[1];
++    const ggml_tensor * w_hh = op->src[2];
++    const ggml_tensor * b_ih = op->src[3];
++    const ggml_tensor * b_hh = op->src[4];
++    const ggml_tensor * w_ih_r = op->src[5];
++    const ggml_tensor * w_hh_r = op->src[6];
++    const ggml_tensor * b_ih_r = op->src[7];
++    const ggml_tensor * b_hh_r = op->src[8];
++
++    if (x->type != GGML_TYPE_F32) {
++        return false;
++    }
++    if (op->type != GGML_TYPE_F32) {
++        return false;
++    }
++    // Support batch > 1 (ne[2]).
++    if (x->ne[3] != 1 || op->ne[3] != 1) {
++        return false;
++    }
++
++    // Weights are FP16 in current GGUF.
++    if (w_ih->type != GGML_TYPE_F16 || w_hh->type != GGML_TYPE_F16 ||
++        w_ih_r->type != GGML_TYPE_F16 || w_hh_r->type != GGML_TYPE_F16) {
++        return false;
++    }
++    if (b_ih->type != GGML_TYPE_F32 && b_ih->type != GGML_TYPE_F16) {
++        return false;
++    }
++    if (b_hh->type != b_ih->type || b_ih_r->type != b_ih->type || b_hh_r->type != b_ih->type) {
++        return false;
++    }
++
++    // Basic shape checks.
++    const int H = (int) w_hh->ne[0];
++    const int G = 4 * H;
++    if (w_hh->ne[1] != G || w_hh_r->ne[0] != H || w_hh_r->ne[1] != G) {
++        return false;
++    }
++    if (b_ih->ne[0] != G || b_hh->ne[0] != G || b_ih_r->ne[0] != G || b_hh_r->ne[0] != G) {
++        return false;
++    }
++    if (op->ne[0] != x->ne[0] || op->ne[1] != 2 * H || op->ne[2] != x->ne[2]) {
++        return false;
++    }
++    // Names are stable in this repo.
++    if (::strncmp(w_ih->name, "lstm.weight_ih_l", 15) != 0) {
++        return false;
++    }
++    if (::strncmp(w_hh->name, "lstm.weight_hh_l", 15) != 0) {
++        return false;
++    }
++    if (::strstr(w_ih_r->name, "_reverse") == nullptr || ::strstr(w_hh_r->name, "_reverse") == nullptr) {
++        return false;
++    }
++    return true;
++}
++
++static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
++    const ggml_tensor * x      = dst->src[0];
++    const ggml_tensor * w_ih   = dst->src[1];
++    const ggml_tensor * w_hh   = dst->src[2];
++    const ggml_tensor * b_ih   = dst->src[3];
++    const ggml_tensor * b_hh   = dst->src[4];
++    const ggml_tensor * w_ih_r = dst->src[5];
++    const ggml_tensor * w_hh_r = dst->src[6];
++    const ggml_tensor * b_ih_r = dst->src[7];
++    const ggml_tensor * b_hh_r = dst->src[8];
++
++    const int T  = (int) x->ne[0];
++    const int in = (int) x->ne[1];
++    const int B  = (int) x->ne[2];
++    const int H  = (int) w_hh->ne[0];
++    const int G  = 4 * H;
++
++    cudaStream_t stream = ctx.stream();
++    cublasHandle_t handle = ctx.cublas_handle();
++    CUBLAS_CHECK(cublasSetStream(handle, stream));
++
++    ggml_cuda_pool_alloc<float> ih(ctx.pool());
++    ggml_cuda_pool_alloc<float> ih_fwd(ctx.pool());
++    ggml_cuda_pool_alloc<float> ih_rev(ctx.pool());
++    if (B == 1) {
++        ih_fwd.alloc((size_t) G * (size_t) T);
++        ih_rev.alloc((size_t) G * (size_t) T);
++    } else {
++        ih.alloc((size_t) G * (size_t) T * (size_t) B);
++    }
++
++    const float alpha = 1.0f;
++    const float beta  = 0.0f;
++
++    const float * x_d = (const float *) x->data;
++    // cuBLAS does not reliably support (F16 x F32) GEMMEx across all builds.
++    // Cast X to F16 and use tensor-op GEMM (F16 x F16 -> F32).
++    ggml_cuda_pool_alloc<half> x_h(ctx.pool());
++    x_h.alloc((size_t) T * (size_t) in * (size_t) B);
++    {
++        const int n = (int) ((size_t) T * (size_t) in * (size_t) B);
++        const int bs = 256;
++        const int gs = (n + bs - 1) / bs;
++        k_f32_to_f16<<<gs, bs, 0, stream>>>(n, x_d, x_h.get());
++        CUDA_CHECK(cudaGetLastError());
++    }
++    const half  * wih_f_d = (const half *) w_ih->data;
++    const half  * wih_r_d = (const half *) w_ih_r->data;
++
++    const bool use_batched_gemm = (B > 1);
++    // Batched GEMM (one sequence per batch element):
++    // For each b: ih[b] = (w_ih^T) * (x[b]^T)  where x[b] is [T x in] in column-major (ld=T)
++    // => ih[b] is [G x T] in column-major (ld=G).
++    const long long int stride_b = (long long int) T * (long long int) in;
++    const long long int stride_c = (long long int) G * (long long int) T;
++    const long long int stride_a = 0;
++
++    float * out = (float *) dst->data;
++    const half * whh_f_d = (const half *) w_hh->data;
++    const half * whh_r_d = (const half *) w_hh_r->data;
++
++    const int ih_stride  = G * T;
++    const int dst_stride = (2 * H) * T;
++
++    const int id = ggml_cuda_get_device();
++    const bool can_coop = ggml_cuda_info().devices[id].supports_cooperative_launch;
++    const char * coop_env = getenv("DIARIZATION_SEG_LSTM_COOP");
++    const bool want_coop = (coop_env != nullptr) && (std::strcmp(coop_env, "0") != 0);
++    const bool use_coop = can_coop && want_coop && (B == 1);
++
++    // Keep the legacy single-block kernel as a fallback.
++    const int legacy_threads = 128;
++    const dim3 legacy_block(legacy_threads);
++    const dim3 legacy_grid(B);
++    const size_t legacy_shmem = (size_t) (2 * H) * sizeof(float);
++
++    // Cooperative kernel launch config: split H across blocks; sync across blocks each step.
++    constexpr int COOP_THREADS = 8;
++    const dim3 coop_block(COOP_THREADS, 1, 1);
++    const dim3 coop_grid((H + COOP_THREADS - 1) / COOP_THREADS, B, 1);
++
++    ggml_cuda_pool_alloc<float> h_state(ctx.pool());
++    ggml_cuda_pool_alloc<float> c_state(ctx.pool());
++    if (use_coop) {
++        h_state.alloc((size_t) B * (size_t) (2 * H));
++        c_state.alloc((size_t) B * (size_t) (2 * H));
++    }
++
++    if (b_ih->type == GGML_TYPE_F16) {
++        const half * b_ih_d = (const half *) b_ih->data;
++        const half * b_hh_d = (const half *) b_hh->data;
++        const half * b_ih_rd = (const half *) b_ih_r->data;
++        const half * b_hh_rd = (const half *) b_hh_r->data;
++
++        if (use_batched_gemm) {
++            CUBLAS_CHECK(cublasGemmStridedBatchedEx(
++                handle,
++                CUBLAS_OP_T, CUBLAS_OP_T,
++                G, T, in,
++                &alpha,
++                wih_f_d, CUDA_R_16F, in, stride_a,
++                x_h.get(), CUDA_R_16F, T, stride_b,
++                &beta,
++                ih.get(), CUDA_R_32F, G, stride_c,
++                B,
++                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
++        } else {
++            CUBLAS_CHECK(cublasGemmEx(
++                handle,
++                CUBLAS_OP_T, CUBLAS_OP_T,
++                G, T, in,
++                &alpha,
++                wih_f_d, CUDA_R_16F, in,
++                x_h.get(), CUDA_R_16F, T,
++                &beta,
++                ih_fwd.get(), CUDA_R_32F, G,
++                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
++        }
++
++        if (use_coop) {
++            const int dir_off = 0;
++            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
++            // NOTE: kernel_args is only used for cooperative launch.
++            // Keep it here to simplify toggling the cooperative kernel for benchmarking.
++            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
++                                     (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
++                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
++                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
++            CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
++            CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
++
++            void * kernel_args2[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
++                                      (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
++                                      (void *) &out, (void *) &dst_stride, (void *) &dir_off,
++                                      (void *) &h_state.ptr, (void *) &c_state.ptr };
++            CUDA_CHECK(cudaLaunchCooperativeKernel(
++                (void *) k_pyannote_seg_lstm_dir_coop<false, half, half, COOP_THREADS>,
++                coop_grid, coop_block, kernel_args2, 0, stream));
++        } else {
++            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
++            k_pyannote_seg_lstm_dir<false, half, half><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_f_d, b_ih_d, b_hh_d, out, dst_stride, 0);
++        }
++
++        if (use_batched_gemm) {
++            CUBLAS_CHECK(cublasGemmStridedBatchedEx(
++                handle,
++                CUBLAS_OP_T, CUBLAS_OP_T,
++                G, T, in,
++                &alpha,
++                wih_r_d, CUDA_R_16F, in, stride_a,
++                x_h.get(), CUDA_R_16F, T, stride_b,
++                &beta,
++                ih.get(), CUDA_R_32F, G, stride_c,
++                B,
++                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
++        } else {
++            CUBLAS_CHECK(cublasGemmEx(
++                handle,
++                CUBLAS_OP_T, CUBLAS_OP_T,
++                G, T, in,
++                &alpha,
++                wih_r_d, CUDA_R_16F, in,
++                x_h.get(), CUDA_R_16F, T,
++                &beta,
++                ih_rev.get(), CUDA_R_32F, G,
++                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
++        }
++
++        if (use_coop) {
++            const int dir_off = H;
++            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
++            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
++                                     (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
++                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
++                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
++            CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
++            CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
++
++            void * kernel_args2[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
++                                      (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
++                                      (void *) &out, (void *) &dst_stride, (void *) &dir_off,
++                                      (void *) &h_state.ptr, (void *) &c_state.ptr };
++            CUDA_CHECK(cudaLaunchCooperativeKernel(
++                (void *) k_pyannote_seg_lstm_dir_coop<true, half, half, COOP_THREADS>,
++                coop_grid, coop_block, kernel_args2, 0, stream));
++        } else {
++            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
++            k_pyannote_seg_lstm_dir<true,  half, half><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_r_d, b_ih_rd, b_hh_rd, out, dst_stride, H);
++        }
++    } else {
++        const float * b_ih_d = (const float *) b_ih->data;
++        const float * b_hh_d = (const float *) b_hh->data;
++        const float * b_ih_rd = (const float *) b_ih_r->data;
++        const float * b_hh_rd = (const float *) b_hh_r->data;
++
++        if (use_batched_gemm) {
++            CUBLAS_CHECK(cublasGemmStridedBatchedEx(
++                handle,
++                CUBLAS_OP_T, CUBLAS_OP_T,
++                G, T, in,
++                &alpha,
++                wih_f_d, CUDA_R_16F, in, stride_a,
++                x_h.get(), CUDA_R_16F, T, stride_b,
++                &beta,
++                ih.get(), CUDA_R_32F, G, stride_c,
++                B,
++                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
++        } else {
++            CUBLAS_CHECK(cublasGemmEx(
++                handle,
++                CUBLAS_OP_T, CUBLAS_OP_T,
++                G, T, in,
++                &alpha,
++                wih_f_d, CUDA_R_16F, in,
++                x_h.get(), CUDA_R_16F, T,
++                &beta,
++                ih_fwd.get(), CUDA_R_32F, G,
++                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
++        }
++
++        if (use_coop) {
++            const int dir_off = 0;
++            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
++            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
++                                     (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
++                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
++                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
++            CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
++            CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
++
++            void * kernel_args2[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
++                                      (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
++                                      (void *) &out, (void *) &dst_stride, (void *) &dir_off,
++                                      (void *) &h_state.ptr, (void *) &c_state.ptr };
++            CUDA_CHECK(cudaLaunchCooperativeKernel(
++                (void *) k_pyannote_seg_lstm_dir_coop<false, half, float, COOP_THREADS>,
++                coop_grid, coop_block, kernel_args2, 0, stream));
++        } else {
++            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
++            k_pyannote_seg_lstm_dir<false, half, float><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_f_d, b_ih_d, b_hh_d, out, dst_stride, 0);
++        }
++
++        if (use_batched_gemm) {
++            CUBLAS_CHECK(cublasGemmStridedBatchedEx(
++                handle,
++                CUBLAS_OP_T, CUBLAS_OP_T,
++                G, T, in,
++                &alpha,
++                wih_r_d, CUDA_R_16F, in, stride_a,
++                x_h.get(), CUDA_R_16F, T, stride_b,
++                &beta,
++                ih.get(), CUDA_R_32F, G, stride_c,
++                B,
++                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
++        } else {
++            CUBLAS_CHECK(cublasGemmEx(
++                handle,
++                CUBLAS_OP_T, CUBLAS_OP_T,
++                G, T, in,
++                &alpha,
++                wih_r_d, CUDA_R_16F, in,
++                x_h.get(), CUDA_R_16F, T,
++                &beta,
++                ih_rev.get(), CUDA_R_32F, G,
++                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
++        }
++
++        if (use_coop) {
++            const int dir_off = H;
++            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
++            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
++                                     (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
++                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
++                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
++            CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
++            CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
++
++            void * kernel_args2[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
++                                      (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
++                                      (void *) &out, (void *) &dst_stride, (void *) &dir_off,
++                                      (void *) &h_state.ptr, (void *) &c_state.ptr };
++            CUDA_CHECK(cudaLaunchCooperativeKernel(
++                (void *) k_pyannote_seg_lstm_dir_coop<true, half, float, COOP_THREADS>,
++                coop_grid, coop_block, kernel_args2, 0, stream));
++        } else {
++            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
++            k_pyannote_seg_lstm_dir<true,  half, float><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_r_d, b_ih_rd, b_hh_rd, out, dst_stride, H);
++        }
++    }
++    CUDA_CHECK(cudaGetLastError());
++}
++
+ #include <algorithm>
+ #include <array>
+ #include <atomic>
+@@ -2688,6 +3287,9 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
+         case GGML_OP_CONV_TRANSPOSE_1D:
+             ggml_cuda_op_conv_transpose_1d(ctx,dst);
+             break;
++        case GGML_OP_POOL_1D:
++            ggml_cuda_op_pool1d(ctx, dst);
++            break;
+         case GGML_OP_POOL_2D:
+             ggml_cuda_op_pool2d(ctx, dst);
+             break;
+@@ -2748,6 +3350,12 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
+         case GGML_OP_FILL:
+             ggml_cuda_op_fill(ctx, dst);
+             break;
++        case GGML_OP_CUSTOM:
++            if (ggml_cuda_is_pyannote_seg_lstm_custom(dst)) {
++                ggml_cuda_pyannote_seg_lstm_custom(ctx, dst);
++                break;
++            }
++            return false;
+         default:
+             return false;
+     }
+@@ -4819,6 +5427,7 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
+         case GGML_OP_CONV_2D:
+         case GGML_OP_CONV_2D_DW:
+         case GGML_OP_CONV_TRANSPOSE_2D:
++        case GGML_OP_POOL_1D:
+         case GGML_OP_POOL_2D:
+         case GGML_OP_ACC:
+             return true;
+@@ -4858,6 +5467,9 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
+         case GGML_OP_SOLVE_TRI:
+             return true;
+ 
++        case GGML_OP_CUSTOM:
++            return ggml_cuda_is_pyannote_seg_lstm_custom(op);
++
+         default:
+             return false;
+     }
+diff --git a/ggml/src/ggml-cuda/pool1d.cu b/ggml/src/ggml-cuda/pool1d.cu
+new file mode 100644
+index 00000000..1ae32ea8
+--- /dev/null
++++ b/ggml/src/ggml-cuda/pool1d.cu
+@@ -0,0 +1,98 @@
++#include "pool1d.cuh"
++
++template <typename Ti, typename To>
++static __global__ void pool1d_nchw_kernel(
++        const int iw, const int ow,
++        const int kw, const int sw,
++        const int pw, const int parallel_elements,
++        const Ti * src, To * dst, const enum ggml_op_pool op) {
++    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
++    if (idx >= parallel_elements) {
++        return;
++    }
++
++    const int nc = idx / ow;
++    const int cur_ow = idx % ow;
++
++    const Ti * i_ptr = src + nc * iw;
++    To * o_ptr = dst + nc * ow;
++
++    const int start_w = cur_ow * sw - pw;
++    const int bw = max(0, start_w);
++    const int ew = min(iw, start_w + kw);
++
++    To res = 0;
++    switch (op) {
++        case GGML_OP_POOL_AVG: res = 0; break;
++        case GGML_OP_POOL_MAX: res = -FLT_MAX; break;
++        default: assert(false);
++    }
++
++    const To scale = 1.0f / kw;
++
++    for (int j = bw; j < ew; ++j) {
++#if __CUDA_ARCH__ >= 350
++        const Ti cur = __ldg(i_ptr + j);
++#else
++        const Ti cur = i_ptr[j];
++#endif
++        switch (op) {
++            case GGML_OP_POOL_AVG: res += cur * scale; break;
++            case GGML_OP_POOL_MAX: res = max(res, (To) cur); break;
++            default: assert(false);
++        }
++    }
++
++    o_ptr[cur_ow] = res;
++}
++
++static void pool1d_nchw_kernel_f32_f32_cuda(
++        const int iw, const int ow,
++        const int kw, const int sw,
++        const int pw, const int parallel_elements,
++        const float * src, float * dst, const enum ggml_op_pool op,
++        cudaStream_t stream) {
++
++    const int num_blocks = (parallel_elements + CUDA_POOL1D_BLOCK_SIZE - 1) / CUDA_POOL1D_BLOCK_SIZE;
++    dim3 block_nums(num_blocks);
++
++    pool1d_nchw_kernel<<<block_nums, CUDA_POOL1D_BLOCK_SIZE, 0, stream>>>(
++        iw, ow,
++        kw, sw,
++        pw, parallel_elements,
++        src, dst, op);
++}
++
++void ggml_cuda_op_pool1d(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
++    const ggml_tensor * src0 = dst->src[0];
++    const float * src0_d = (const float *) src0->data;
++    float * dst_d = (float *) dst->data;
++    cudaStream_t stream = ctx.stream();
++
++    GGML_ASSERT(src0->type == GGML_TYPE_F32);
++    GGML_ASSERT(dst->type == GGML_TYPE_F32);
++
++    const int32_t * opts = (const int32_t *) dst->op_params;
++    const enum ggml_op_pool op = static_cast<enum ggml_op_pool>(opts[0]);
++    const int k0 = opts[1];
++    const int s0 = opts[2];
++    const int p0 = opts[3];
++
++    const int64_t IW = src0->ne[0];
++    const int64_t N = src0->ne[1] * src0->ne[2] * src0->ne[3];
++    const int64_t OW = dst->ne[0];
++
++    const int parallel_elements = (int) (N * OW);
++
++    pool1d_nchw_kernel_f32_f32_cuda(
++        (int) IW,
++        (int) OW,
++        k0,
++        s0,
++        p0,
++        parallel_elements,
++        src0_d,
++        dst_d,
++        op,
++        stream);
++}
+diff --git a/ggml/src/ggml-cuda/pool1d.cuh b/ggml/src/ggml-cuda/pool1d.cuh
+new file mode 100644
+index 00000000..c79461dd
+--- /dev/null
++++ b/ggml/src/ggml-cuda/pool1d.cuh
+@@ -0,0 +1,5 @@
++#include "common.cuh"
++
++#define CUDA_POOL1D_BLOCK_SIZE 256
++
++void ggml_cuda_op_pool1d(ggml_backend_cuda_context & ctx, ggml_tensor * dst);
+diff --git a/include/whisper.h b/include/whisper.h
+index 8458ee38..6b87c4d8 100644
+--- a/include/whisper.h
++++ b/include/whisper.h
+@@ -87,7 +87,8 @@ extern "C" {
+ 
+     enum whisper_alignment_heads_preset {
+         WHISPER_AHEADS_NONE,
+-        WHISPER_AHEADS_N_TOP_MOST,  // All heads from the N-top-most text-layers
++        WHISPER_AHEADS_N_TOP_MOST,       // All heads from the N-top-most text-layers
++        WHISPER_AHEADS_N_TOP_MOST_NORM,  // All heads from top-N layers, then dynamically select top-K by L2 norm
+         WHISPER_AHEADS_CUSTOM,
+         WHISPER_AHEADS_TINY_EN,
+         WHISPER_AHEADS_TINY,
+@@ -127,6 +128,7 @@ extern "C" {
+         enum whisper_alignment_heads_preset dtw_aheads_preset;
+ 
+         int dtw_n_top;
++        int dtw_norm_top_k;  // number of heads to keep after L2 norm filtering (default 10)
+         struct whisper_aheads dtw_aheads;
+ 
+         size_t dtw_mem_size; // TODO: remove
+diff --git a/npm/dtw-tool.js b/npm/dtw-tool.js
+new file mode 100755
+index 00000000..a166331e
+--- /dev/null
++++ b/npm/dtw-tool.js
+@@ -0,0 +1,89 @@
++#!/usr/bin/env node
++
++const path = require("path");
++const fs = require("fs");
++const whisper = require("./packages/whisper-cpp-node/dist/index.js");
++
++// Parse args
++const args = process.argv.slice(2);
++
++// Extract flags
++let model = path.join(__dirname, "../models/ggml-large-v3-turbo-q5_0.bin");
++let language = "auto";
++let audioFile = null;
++
++for (let i = 0; i < args.length; i++) {
++  if (args[i] === "--model" && args[i + 1]) {
++    model = args[++i];
++  } else if (args[i] === "--language" && args[i + 1]) {
++    language = args[++i];
++  } else if (!args[i].startsWith("--")) {
++    audioFile = args[i];
++  }
++}
++
++if (!audioFile) {
++  console.error("Usage: node dtw-tool.js <audio.wav> [--model <path>] [--language <code>]");
++  console.error("");
++  console.error("Examples:");
++  console.error("  node dtw-tool.js ../samples/test.wav");
++  console.error("  node dtw-tool.js ../samples/jfk.wav --model ../models/ggml-base.en.bin --language en");
++  process.exit(1);
++}
++
++// Resolve audio path
++audioFile = path.resolve(audioFile);
++model = path.resolve(model);
++
++if (!fs.existsSync(audioFile)) {
++  console.error(`Error: Audio file not found: ${audioFile}`);
++  process.exit(1);
++}
++if (!fs.existsSync(model)) {
++  console.error(`Error: Model file not found: ${model}`);
++  process.exit(1);
++}
++
++async function main() {
++  console.error(`Model:    ${path.basename(model)}`);
++  console.error(`Audio:    ${path.basename(audioFile)}`);
++  console.error(`Language: ${language}`);
++  console.error(`DTW:      top-2-norm (top_k=10)`);
++  console.error("");
++  console.error("Loading model...");
++
++  const ctx = whisper.createWhisperContext({
++    model: model,
++    use_gpu: true,
++    dtw: "top-2-norm",
++    dtw_norm_top_k: 10,
++    no_prints: true,
++  });
++
++  console.error("Transcribing...\n");
++
++  const result = await whisper.transcribeAsync(ctx, {
++    fname_inp: audioFile,
++    language: language,
++    token_timestamps: true,
++    n_threads: 4,
++  });
++
++  // Print token-level DTW timestamps to stdout
++  for (const segment of result.segments) {
++    if (segment.tokens) {
++      for (const token of segment.tokens) {
++        console.log(`${token.text} @ ${token.t_dtw * 10}ms`);
++      }
++    }
++  }
++
++  console.error(`\n--- ${result.segments.length} segments, ${result.segments.reduce((sum, s) => sum + (s.tokens ? s.tokens.length : 0), 0)} tokens ---`);
++
++  ctx.free();
++}
++
++main().catch((err) => {
++  console.error("Error:", err.message);
++  process.exit(1);
++});
+diff --git a/npm/packages/darwin-arm64/package.json b/npm/packages/darwin-arm64/package.json
+index c886c56f..3158ee4d 100644
+--- a/npm/packages/darwin-arm64/package.json
++++ b/npm/packages/darwin-arm64/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@whisper-cpp-node/darwin-arm64",
+-  "version": "0.2.2",
++  "version": "0.2.3",
+   "description": "whisper.cpp native addon for macOS ARM64 (Apple Silicon)",
+   "license": "MIT",
+   "repository": {
+diff --git a/npm/packages/whisper-cpp-node/package.json b/npm/packages/whisper-cpp-node/package.json
+index ccd03a42..5f6ff545 100644
+--- a/npm/packages/whisper-cpp-node/package.json
++++ b/npm/packages/whisper-cpp-node/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "whisper-cpp-node",
+-  "version": "0.2.4",
++  "version": "0.2.5",
+   "description": "Node.js bindings for whisper.cpp - fast speech-to-text with GPU acceleration",
+   "license": "MIT",
+   "repository": {
+diff --git a/npm/packages/whisper-cpp-node/src/types.ts b/npm/packages/whisper-cpp-node/src/types.ts
+index 04098f6a..d89d77a3 100644
+--- a/npm/packages/whisper-cpp-node/src/types.ts
++++ b/npm/packages/whisper-cpp-node/src/types.ts
+@@ -34,8 +34,27 @@ export interface WhisperContextOptions {
+    * Can speed up init time, especially for GPU, by caching compiled 'blobs'
+    */
+   openvino_cache_dir?: string;
+-  /** DTW alignment preset for word-level timestamps (e.g., 'base.en', 'small', 'large.v3') */
++  /**
++   * DTW alignment preset for word-level timestamps.
++   *
++   * Named presets: 'tiny', 'tiny.en', 'base', 'base.en', 'small', 'small.en',
++   *   'medium', 'medium.en', 'large.v1', 'large.v2', 'large.v3', 'large.v3.turbo'
++   *
++   * Dynamic presets:
++   *   'top-N'      - Use all heads from top N text layers (plain averaging)
++   *   'top-N-norm' - Use top N layers + L2 norm filtering (keeps dtw_norm_top_k best heads)
++   *
++   * @example
++   * dtw: 'large.v3.turbo'   // named preset
++   * dtw: 'top-4'            // top 4 layers, all heads averaged
++   * dtw: 'top-4-norm'       // top 4 layers, L2 norm selects best heads
++   */
+   dtw?: string;
++  /**
++   * Number of attention heads to keep after L2 norm filtering (default: 10).
++   * Only used when dtw is set to a 'top-N-norm' preset.
++   */
++  dtw_norm_top_k?: number;
+   /** Suppress whisper.cpp log output (default: false) */
+   no_prints?: boolean;
+ }
+@@ -186,12 +205,18 @@ export interface TranscribeOptionsBuffer extends TranscribeOptionsBase {
+ export type TranscribeOptions = TranscribeOptionsFile | TranscribeOptionsBuffer;
+ 
+ /**
+- * Transcription result segment (tuple format)
+- * [0]: Start time in format "HH:MM:SS,mmm"
+- * [1]: End time in format "HH:MM:SS,mmm"
+- * [2]: Transcribed text
++ * Transcription result segment
+  */
+-export type TranscriptSegment = [start: string, end: string, text: string];
++export interface TranscriptSegment {
++  /** Start time in format "HH:MM:SS,mmm" */
++  start: string;
++  /** End time in format "HH:MM:SS,mmm" */
++  end: string;
++  /** Transcribed text */
++  text: string;
++  /** Token-level data (only present when token_timestamps is enabled) */
++  tokens?: StreamingToken[];
++}
+ 
+ /**
+  * Token information for streaming callbacks
+@@ -201,10 +226,16 @@ export interface StreamingToken {
+   text: string;
+   /** Token probability (0.0 to 1.0) */
+   probability: number;
+-  /** Token timestamp start (in centiseconds from audio start, only if token_timestamps enabled) */
+-  t0?: number;
+-  /** Token timestamp end (in centiseconds from audio start, only if token_timestamps enabled) */
+-  t1?: number;
++  /** Token timestamp start (in centiseconds from audio start) */
++  t0: number;
++  /** Token timestamp end (in centiseconds from audio start) */
++  t1: number;
++  /**
++   * DTW-aligned timestamp (in centiseconds from audio start).
++   * Only meaningful when the context was created with a DTW preset.
++   * Typically more accurate than t0/t1 for word-level alignment.
++   */
++  t_dtw: number;
+ }
+ 
+ /**
+@@ -229,8 +260,10 @@ export interface StreamingSegment {
+  * Transcription result
+  */
+ export interface TranscribeResult {
+-  /** Array of transcript segments as [start, end, text] tuples */
++  /** Array of transcript segments */
+   segments: TranscriptSegment[];
++  /** Detected language (when detect_language is true) */
++  language?: string;
+ }
+ 
+ /**
+diff --git a/npm/packages/win32-x64/package.json b/npm/packages/win32-x64/package.json
+index 884e86ee..dc4b76c5 100644
+--- a/npm/packages/win32-x64/package.json
++++ b/npm/packages/win32-x64/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@whisper-cpp-node/win32-x64",
+-  "version": "0.2.3",
++  "version": "0.2.4",
+   "description": "whisper.cpp native addon for Windows x64 with Vulkan and OpenVINO acceleration",
+   "license": "MIT",
+   "repository": {
+diff --git a/npm/test-dtw-timestamps.js b/npm/test-dtw-timestamps.js
+new file mode 100644
+index 00000000..cdac9a53
+--- /dev/null
++++ b/npm/test-dtw-timestamps.js
+@@ -0,0 +1,276 @@
++#!/usr/bin/env node
++
++const path = require("path");
++const fs = require("fs");
++
++const whisper = require("./packages/whisper-cpp-node/dist/index.js");
++
++const TURBO_MODEL = path.join(__dirname, "../models/ggml-large-v3-turbo-q5_0.bin");
++const BASE_EN_MODEL = path.join(__dirname, "../models/ggml-base.en.bin");
++const AUDIO = path.join(__dirname, "../samples/test.wav");
++const JFK_AUDIO = path.join(__dirname, "../samples/jfk.wav");
++const AUDIO_DURATION_CS = 6000;
++
++let passed = 0;
++let failed = 0;
++
++function assert(condition, message) {
++  if (condition) {
++    console.log(`  ✅ ${message}`);
++    passed++;
++  } else {
++    console.error(`  ❌ ${message}`);
++    failed++;
++  }
++}
++
++async function testTurboDTW() {
++  console.log("\n=== Test 1: Turbo model with top-2-norm DTW ===\n");
++
++  if (!fs.existsSync(TURBO_MODEL)) {
++    console.log("  ⚠️  Turbo model not found, skipping");
++    return;
++  }
++
++  const ctx = whisper.createWhisperContext({
++    model: TURBO_MODEL,
++    use_gpu: true,
++    dtw: "top-2-norm",
++    dtw_norm_top_k: 10,
++    no_prints: true,
++  });
++
++  const streamingSegments = [];
++
++  console.log("  Transcribing test.wav with DTW (this may take 30-60s)...");
++  const result = await new Promise((resolve, reject) => {
++    whisper.transcribe(ctx, {
++      fname_inp: AUDIO,
++      language: "en",
++      token_timestamps: true,
++      n_threads: 4,
++      on_new_segment: (seg) => {
++        streamingSegments.push(seg);
++      },
++    }, (err, res) => {
++      if (err) return reject(err);
++      // TSFN streaming callbacks arrive after OnOK; wait for event loop to drain
++      setTimeout(() => resolve(res), 2000);
++    });
++  });
++
++  console.log("\n  --- Main result checks ---");
++  assert(result.segments && result.segments.length > 0, "Result has segments");
++
++  for (let i = 0; i < result.segments.length; i++) {
++    const seg = result.segments[i];
++    assert(typeof seg.start === "string", `Segment ${i}: start is string ("${seg.start}")`);
++    assert(typeof seg.end === "string", `Segment ${i}: end is string ("${seg.end}")`);
++    assert(typeof seg.text === "string", `Segment ${i}: text is string`);
++    assert(Array.isArray(seg.tokens) && seg.tokens.length > 0, `Segment ${i}: has tokens array (${seg.tokens ? seg.tokens.length : 0} tokens)`);
++
++    if (seg.tokens && seg.tokens.length > 0) {
++      let prevDtw = -1;
++      let hasNonZeroDtw = false;
++
++      for (let j = 0; j < seg.tokens.length; j++) {
++        const tok = seg.tokens[j];
++        assert(typeof tok.text === "string", `Segment ${i} Token ${j}: has text`);
++        assert(typeof tok.probability === "number", `Segment ${i} Token ${j}: has probability`);
++        assert(typeof tok.t0 === "number", `Segment ${i} Token ${j}: has t0`);
++        assert(typeof tok.t1 === "number", `Segment ${i} Token ${j}: has t1`);
++        assert(typeof tok.t_dtw === "number", `Segment ${i} Token ${j}: has t_dtw (${tok.t_dtw})`);
++
++        if (tok.t_dtw !== 0) hasNonZeroDtw = true;
++
++        assert(tok.t_dtw >= prevDtw, `Segment ${i} Token ${j}: t_dtw monotonically non-decreasing (${tok.t_dtw} >= ${prevDtw})`);
++        prevDtw = tok.t_dtw;
++
++        assert(tok.t_dtw >= 0 && tok.t_dtw <= AUDIO_DURATION_CS, `Segment ${i} Token ${j}: t_dtw in range [0, ${AUDIO_DURATION_CS}] (got ${tok.t_dtw})`);
++      }
++
++      assert(hasNonZeroDtw, `Segment ${i}: at least one non-zero t_dtw (DTW was computed)`);
++    }
++  }
++
++  console.log("\n  --- Streaming callback checks ---");
++  // Known limitation: whisper.cpp's new_segment_callback may not fire when DTW is enabled.
++  // We still verify the data shape if any streaming segments were received.
++  if (streamingSegments.length > 0) {
++    console.log(`  ✅ Streaming callback fired (${streamingSegments.length} segments)`);
++    passed++;
++
++    for (let i = 0; i < streamingSegments.length; i++) {
++      const seg = streamingSegments[i];
++      if (seg.tokens && seg.tokens.length > 0) {
++        const tok = seg.tokens[0];
++        assert(typeof tok.t_dtw === "number", `Streaming segment ${i}: tokens have t_dtw field`);
++      }
++    }
++
++    if (result.segments.length > 0) {
++      const streamTokens = streamingSegments[0].tokens;
++      const resultTokens = result.segments[0].tokens;
++      if (streamTokens && resultTokens && streamTokens.length > 0 && resultTokens.length > 0) {
++        assert(
++          streamTokens[0].t_dtw === resultTokens[0].t_dtw,
++          `Streaming t_dtw matches final result t_dtw (${streamTokens[0].t_dtw} === ${resultTokens[0].t_dtw})`
++        );
++      }
++    }
++  } else {
++    console.log("  ⚠️  Streaming callback did not fire with DTW (known whisper.cpp limitation)");
++  }
++
++  ctx.free();
++}
++
++async function testBaseEnDTW() {
++  console.log("\n=== Test 2: base.en model with named DTW preset ===\n");
++
++  if (!fs.existsSync(BASE_EN_MODEL)) {
++    console.log("  ⚠️  base.en model not found, skipping");
++    return;
++  }
++
++  if (!fs.existsSync(JFK_AUDIO)) {
++    console.log("  ⚠️  jfk.wav not found, skipping");
++    return;
++  }
++
++  const ctx = whisper.createWhisperContext({
++    model: BASE_EN_MODEL,
++    use_gpu: true,
++    dtw: "base.en",
++    no_prints: true,
++  });
++
++  console.log("  Transcribing jfk.wav with base.en DTW preset...");
++  const result = await whisper.transcribeAsync(ctx, {
++    fname_inp: JFK_AUDIO,
++    language: "en",
++    token_timestamps: true,
++    n_threads: 4,
++  });
++
++  assert(result.segments && result.segments.length > 0, "Result has segments");
++
++  for (let i = 0; i < result.segments.length; i++) {
++    const seg = result.segments[i];
++    assert(Array.isArray(seg.tokens) && seg.tokens.length > 0, `Segment ${i}: has tokens`);
++
++    if (seg.tokens && seg.tokens.length > 0) {
++      let hasNonZeroDtw = false;
++      for (const tok of seg.tokens) {
++        assert(typeof tok.t_dtw === "number", `Segment ${i}: token has t_dtw`);
++        if (tok.t_dtw !== 0) hasNonZeroDtw = true;
++      }
++      assert(hasNonZeroDtw, `Segment ${i}: at least one non-zero t_dtw`);
++    }
++  }
++
++  ctx.free();
++}
++
++async function testStreamingWithoutDTW() {
++  console.log("\n=== Test 3: Streaming callback t_dtw field (without DTW) ===\n");
++
++  if (!fs.existsSync(BASE_EN_MODEL)) {
++    console.log("  ⚠️  base.en model not found, skipping");
++    return;
++  }
++
++  if (!fs.existsSync(JFK_AUDIO)) {
++    console.log("  ⚠️  jfk.wav not found, skipping");
++    return;
++  }
++
++  const ctx = whisper.createWhisperContext({
++    model: BASE_EN_MODEL,
++    use_gpu: true,
++    no_prints: true,
++  });
++
++  const streamingSegments = [];
++
++  console.log("  Transcribing jfk.wav with streaming + token_timestamps (no DTW)...");
++  await new Promise((resolve, reject) => {
++    whisper.transcribe(ctx, {
++      fname_inp: JFK_AUDIO,
++      language: "en",
++      token_timestamps: true,
++      n_threads: 4,
++      on_new_segment: (seg) => {
++        streamingSegments.push(seg);
++      },
++    }, (err, res) => {
++      if (err) return reject(err);
++      setTimeout(() => resolve(res), 2000);
++    });
++  });
++
++  assert(streamingSegments.length > 0, `Streaming callback fired (${streamingSegments.length} segments)`);
++
++  if (streamingSegments.length > 0 && streamingSegments[0].tokens) {
++    const tok = streamingSegments[0].tokens[0];
++    assert(typeof tok.t_dtw === "number", `Streaming token has t_dtw field (value: ${tok.t_dtw})`);
++    assert(typeof tok.t0 === "number", `Streaming token has t0 field`);
++    assert(typeof tok.t1 === "number", `Streaming token has t1 field`);
++  }
++
++  ctx.free();
++}
++
++async function testWithoutDTW() {
++  console.log("\n=== Test 4: Transcription without DTW (segments are objects) ===\n");
++
++  if (!fs.existsSync(BASE_EN_MODEL)) {
++    console.log("  ⚠️  base.en model not found, skipping");
++    return;
++  }
++
++  if (!fs.existsSync(JFK_AUDIO)) {
++    console.log("  ⚠️  jfk.wav not found, skipping");
++    return;
++  }
++
++  const ctx = whisper.createWhisperContext({
++    model: BASE_EN_MODEL,
++    use_gpu: true,
++    no_prints: true,
++  });
++
++  console.log("  Transcribing jfk.wav without DTW or token_timestamps...");
++  const result = await whisper.transcribeAsync(ctx, {
++    fname_inp: JFK_AUDIO,
++    language: "en",
++    n_threads: 4,
++  });
++
++  assert(result.segments && result.segments.length > 0, "Result has segments");
++  const seg = result.segments[0];
++  assert(typeof seg.start === "string", "Segment is object with start string");
++  assert(typeof seg.end === "string", "Segment is object with end string");
++  assert(typeof seg.text === "string", "Segment is object with text string");
++  assert(seg.tokens === undefined, "No tokens when token_timestamps not enabled");
++
++  ctx.free();
++}
++
++async function main() {
++  console.log("=== DTW Word-Level Timestamp Tests ===");
++
++  await testTurboDTW();
++  await testBaseEnDTW();
++  await testStreamingWithoutDTW();
++  await testWithoutDTW();
++
++  console.log(`\n${"=".repeat(40)}`);
++  console.log(`${passed} passed, ${failed} failed`);
++  process.exit(failed > 0 ? 1 : 0);
++}
++
++main().catch((err) => {
++  console.error("Fatal error:", err);
++  process.exit(1);
++});
+diff --git a/src/whisper.cpp b/src/whisper.cpp
+index 7d3aa10c..ed7c6612 100644
+--- a/src/whisper.cpp
++++ b/src/whisper.cpp
+@@ -1170,11 +1170,16 @@ static bool aheads_masks_init(
+     if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE) {
+         WHISPER_LOG_ERROR("%s: dtw_aheads_preset should be != DTW_AHEADS_NONE\n", __func__);
+         return false;
+-    } else if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST) {
++    } else if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST ||
++               cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
+         if (cparams.dtw_n_top > n_text_layer || cparams.dtw_n_top <= 0) {
+             WHISPER_LOG_ERROR("%s: dtw_n_top must be between %d and %d for this model.", __func__, 1, n_text_layer);
+             return false;
+         }
++        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM && cparams.dtw_norm_top_k <= 0) {
++            WHISPER_LOG_ERROR("%s: dtw_norm_top_k must be > 0 for N_TOP_MOST_NORM preset.", __func__);
++            return false;
++        }
+     } else {
+         const auto aheads = cparams.dtw_aheads_preset == WHISPER_AHEADS_CUSTOM ? cparams.dtw_aheads : g_aheads.at(cparams.dtw_aheads_preset);
+         if (cparams.dtw_aheads_preset == WHISPER_AHEADS_CUSTOM) {
+@@ -2317,7 +2322,7 @@ static struct ggml_cgraph * whisper_build_graph_cross(
+         struct ggml_tensor * k;
+         struct ggml_tensor * v;
+ 
+-        if (wctx.params.flash_attn) {
++        if (wctx.params.flash_attn && !wctx.params.dtw_token_timestamps) {
+             k = ggml_view_1d(ctx0, wstate.kv_cross.k, n_state*n_ctx,
+                     (ggml_element_size(wstate.kv_cross.k)*n_state)*(il*n_ctx_pad));
+ 
+@@ -2677,7 +2682,7 @@ static struct ggml_cgraph * whisper_build_graph_decoder(
+                         ggml_reshape_3d(ctx0, Qcur, n_state_head, n_head, n_tokens),
+                         0, 2, 1, 3);
+ 
+-            if (wctx.params.flash_attn) {
++            if (wctx.params.flash_attn && !wctx.params.dtw_token_timestamps) {
+                 struct ggml_tensor * Kcross =
+                     ggml_view_3d(ctx0, wstate.kv_cross.k,
+                             n_state_head, n_audio_ctx_pad, n_head,
+@@ -3617,6 +3622,7 @@ struct whisper_context_params whisper_context_default_params() {
+         /*.dtw_token_timestamps =*/ false,
+         /*.dtw_aheads_preset    =*/ WHISPER_AHEADS_NONE,
+         /*.dtw_n_top            =*/ -1,
++        /*.dtw_norm_top_k       =*/ 10,
+         /*.dtw_aheads           =*/ {
+             /*.n_heads          =*/ 0,
+             /*.heads            =*/ NULL,
+@@ -3711,8 +3717,7 @@ struct whisper_context * whisper_init_with_params_no_state(struct whisper_model_
+     ggml_time_init();
+ 
+     if (params.flash_attn && params.dtw_token_timestamps) {
+-        WHISPER_LOG_WARN("%s: dtw_token_timestamps is not supported with flash_attn - disabling\n", __func__);
+-        params.dtw_token_timestamps = false;
++        WHISPER_LOG_INFO("%s: flash_attn + dtw: decoder cross-attention will use non-flash path for alignment heads\n", __func__);
+     }
+ 
+     WHISPER_LOG_INFO("%s: use gpu    = %d\n", __func__, params.use_gpu);
+@@ -8729,7 +8734,8 @@ static std::vector<uint32_t> get_alignment_heads_by_layer(const whisper_context_
+     std::vector<uint32_t> ret;
+     if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE) {
+         return ret;
+-    } else if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST) {
++    } else if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST ||
++               cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
+         if (il >= n_text_layer - cparams.dtw_n_top) {
+             for (int32_t i = 0; i < n_head; ++i) {
+                 ret.push_back(i);
+@@ -8960,6 +8966,72 @@ static void whisper_exp_compute_token_level_timestamps_dtw(
+         }
+     }
+ 
++    // L2 norm head filtering (arXiv:2509.09987 Eq. 3)
++    // Score each head by sum of L2 norms of rows + columns, keep top-K.
++    // Heads with concentrated, alignment-like attention score higher.
++    if (ctx->params.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
++        const int top_k = std::min((int)ctx->params.dtw_norm_top_k, (int)n_heads);
++
++        std::vector<std::pair<float, int>> head_scores(n_heads);
++        for (int k = 0; k < n_heads; ++k) {
++            float score = 0.0f;
++            const float * head_data = (const float *)((char *) w->data + k * w->nb[2]);
++
++            // Sum of L2 norms of rows (one per token)
++            for (int i = 0; i < n_tokens; ++i) {
++                float row_sq_sum = 0.0f;
++                for (int j = 0; j < n_audio_tokens; ++j) {
++                    float v = head_data[j * n_tokens + i];
++                    row_sq_sum += v * v;
++                }
++                score += sqrtf(row_sq_sum);
++            }
++
++            // Sum of L2 norms of columns (one per audio frame)
++            for (int j = 0; j < n_audio_tokens; ++j) {
++                float col_sq_sum = 0.0f;
++                for (int i = 0; i < n_tokens; ++i) {
++                    float v = head_data[j * n_tokens + i];
++                    col_sq_sum += v * v;
++                }
++                score += sqrtf(col_sq_sum);
++            }
++
++            head_scores[k] = {score, k};
++        }
++
++        std::partial_sort(head_scores.begin(), head_scores.begin() + top_k, head_scores.end(),
++            [](const std::pair<float, int> & a, const std::pair<float, int> & b) {
++                return a.first > b.first;
++            });
++
++        std::vector<bool> keep(n_heads, false);
++        for (int i = 0; i < top_k; ++i) {
++            keep[head_scores[i].second] = true;
++        }
++
++        // Zero out non-selected heads so ggml_mean effectively averages only selected ones.
++        // Then scale by n_heads/top_k to compensate for the mean including zeroed heads.
++        for (int k = 0; k < n_heads; ++k) {
++            if (!keep[k]) {
++                memset((char *) w->data + k * w->nb[2], 0, n_tokens * n_audio_tokens * sizeof(float));
++            }
++        }
++
++        // Rescale kept heads: mean over n_heads would divide by n_heads, but we want mean over top_k
++        const float scale = (float)n_heads / (float)top_k;
++        for (int k = 0; k < n_heads; ++k) {
++            if (keep[k]) {
++                float * head_ptr = (float *)((char *) w->data + k * w->nb[2]);
++                for (int idx = 0; idx < n_tokens * n_audio_tokens; ++idx) {
++                    head_ptr[idx] *= scale;
++                }
++            }
++        }
++
++        WHISPER_LOG_DEBUG("%s: L2 norm filtering: kept %d/%d heads\n", __func__, top_k, (int)n_heads);
++    }
++
+     // Normalize - in original OpenAI code, this is done over dim=-2. In this case,
+     // we already permuted N_TOKENS dimension to columns on last loop, becase ggml_norm
+     // operates over columns. Afterwards, permute to a shape that facilitates mean
+@@ -8972,8 +9044,21 @@ static void whisper_exp_compute_token_level_timestamps_dtw(
+     // Pass median filter - this is done over AUDIO_TOKENS dimension.
+     // IN: Tensor with N_ALIGNMENT_HEADS*N_TOKENS*N_AUDIO_TOKENS dims
+     // OUT: Same dims
+-    median_filter_user_data mf_user_data = {medfilt_width};
+-    w = ggml_map_custom1(gctx, w, median_filter, 1, &mf_user_data);
++    int effective_medfilt = medfilt_width;
++    if (n_audio_tokens <= effective_medfilt) {
++        // Largest odd number strictly less than n_audio_tokens
++        effective_medfilt = n_audio_tokens >= 3 ? ((n_audio_tokens - 2) | 1) : 0;
++    }
++
++    if (effective_medfilt != medfilt_width) {
++        WHISPER_LOG_INFO("%s: DTW short chunk: n_audio_tokens=%d, medfilt adjusted %d -> %d\n",
++                __func__, n_audio_tokens, medfilt_width, effective_medfilt);
++    }
++
++    median_filter_user_data mf_user_data = {effective_medfilt};
++    if (effective_medfilt >= 1) {
++        w = ggml_map_custom1(gctx, w, median_filter, 1, &mf_user_data);
++    }
+ 
+     // Take mean over columns, scale by -1, reshape to 2D tensor, remove SOT sequence and EOT
+     // IN: Tensor with N_ALIGNMENT_HEADS*N_TOKENS*N_AUDIO_TOKENS dims

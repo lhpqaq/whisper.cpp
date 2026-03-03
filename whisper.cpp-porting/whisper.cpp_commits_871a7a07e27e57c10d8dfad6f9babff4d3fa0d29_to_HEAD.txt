@@ -1,0 +1,7 @@
+d0a8fa4a (HEAD) 加入了并行
+da86b8e4 custom-op CUDA support
+e56168c5 1
+9c807c80 (origin/master, origin/HEAD, tmp/pyannote-patch-9c807c80, master) feat: enable DTW and flash attention coexistence
+4b8b237a docs: add diarization integration notes
+3a472ad3 chore: bump version
+b12de5dd feat: Add DTW token timestamps support for word-level timing

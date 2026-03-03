@@ -34,6 +34,7 @@
 #include "ggml-cuda/opt-step-sgd.cuh"
 #include "ggml-cuda/out-prod.cuh"
 #include "ggml-cuda/pad.cuh"
+#include "ggml-cuda/pool1d.cuh"
 #include "ggml-cuda/pool2d.cuh"
 #include "ggml-cuda/quantize.cuh"
 #include "ggml-cuda/rope.cuh"
@@ -61,6 +62,604 @@
 #include "ggml-cuda/cumsum.cuh"
 #include "ggml-cuda/fill.cuh"
 #include "ggml.h"
+
+// Pyannote segmentation custom-op CUDA support
+#include <cuda_fp16.h>
+
+#include <cstdlib>
+#include <cstring>
+
+#include <cooperative_groups.h>
+
+// ============================================================================
+// Pyannote segmentation: CUDA fast-path for GGML_OP_CUSTOM BiLSTM
+// ============================================================================
+
+static __device__ __forceinline__ float seg_sigmoidf(float x) {
+    return 1.0f / (1.0f + expf(-x));
+}
+
+template <typename T>
+static __device__ __forceinline__ float seg_load_f32(const T * p, int idx);
+
+template <>
+__device__ __forceinline__ float seg_load_f32<float>(const float * p, int idx) {
+    return p[idx];
+}
+
+template <>
+__device__ __forceinline__ float seg_load_f32<half>(const half * p, int idx) {
+    return __half2float(p[idx]);
+}
+
+static __global__ void k_f32_to_f16(const int n, const float * x, half * y) {
+    const int i = (int) (blockIdx.x * blockDim.x + threadIdx.x);
+    if (i < n) {
+        y[i] = __float2half_rn(x[i]);
+    }
+}
+
+static __device__ __forceinline__ float seg_tanhf(float x) {
+    return tanhf(x);
+}
+
+template <bool REVERSE, typename W_T, typename B_T, int THREADS>
+static __global__ void k_pyannote_seg_lstm_dir_coop(
+    const int T,
+    const int H,
+    const float * ih_all_all,    // batched [B, 4H, T] with stride ih_stride
+    const int ih_stride,
+    const W_T   * w_hh,          // [H, 4H] as ggml ne0=H, ne1=4H (column-major ld=H)
+    const B_T   * b_ih,          // [4H]
+    const B_T   * b_hh,          // [4H]
+    float       * dst_all,       // batched [B, 2H, T] with stride dst_stride
+    const int dst_stride,
+    const int dir_off,
+    float       * h_state,       // [B, 2, H]
+    float       * c_state) {     // [B, 2, H]
+
+    namespace cg = cooperative_groups;
+    cg::grid_group grid = cg::this_grid();
+
+    const int b = (int) blockIdx.y;
+    const int h = (int) (blockIdx.x * THREADS + threadIdx.x);
+    const bool active = h < H;
+
+    const int G = 4 * H;
+
+    const float * ih_all = ih_all_all + (size_t) b * (size_t) ih_stride;
+    float       * dst    = dst_all    + (size_t) b * (size_t) dst_stride;
+
+    float * h0 = h_state + (size_t) b * (size_t) (2 * H) + (size_t) 0 * (size_t) H;
+    float * h1 = h_state + (size_t) b * (size_t) (2 * H) + (size_t) 1 * (size_t) H;
+    float * c0 = c_state + (size_t) b * (size_t) (2 * H) + (size_t) 0 * (size_t) H;
+    float * c1 = c_state + (size_t) b * (size_t) (2 * H) + (size_t) 1 * (size_t) H;
+
+    for (int step = 0; step < T; ++step) {
+        const int t = REVERSE ? (T - 1 - step) : step;
+
+        const float * hp = (step & 1) ? h1 : h0;
+        const float * cp = (step & 1) ? c1 : c0;
+        float       * hn = (step & 1) ? h0 : h1;
+        float       * cn = (step & 1) ? c0 : c1;
+
+        if (active) {
+            float dot_i = 0.0f;
+            float dot_f = 0.0f;
+            float dot_g = 0.0f;
+            float dot_o = 0.0f;
+
+            const int g_i = h;
+            const int g_f = H + h;
+            const int g_g = 2 * H + h;
+            const int g_o = 3 * H + h;
+
+            const int col_i = g_i * H;
+            const int col_f = g_f * H;
+            const int col_g = g_g * H;
+            const int col_o = g_o * H;
+
+            // Dot products over previous hidden state (exact same order as the legacy kernel).
+            for (int k = 0; k < H; ++k) {
+                const float hp_k = hp[k];
+                dot_i += seg_load_f32<W_T>(w_hh, col_i + k) * hp_k;
+                dot_f += seg_load_f32<W_T>(w_hh, col_f + k) * hp_k;
+                dot_g += seg_load_f32<W_T>(w_hh, col_g + k) * hp_k;
+                dot_o += seg_load_f32<W_T>(w_hh, col_o + k) * hp_k;
+            }
+
+            const float bih_i = seg_load_f32<B_T>(b_ih, g_i);
+            const float bih_f = seg_load_f32<B_T>(b_ih, g_f);
+            const float bih_g = seg_load_f32<B_T>(b_ih, g_g);
+            const float bih_o = seg_load_f32<B_T>(b_ih, g_o);
+            const float bhh_i = seg_load_f32<B_T>(b_hh, g_i);
+            const float bhh_f = seg_load_f32<B_T>(b_hh, g_f);
+            const float bhh_g = seg_load_f32<B_T>(b_hh, g_g);
+            const float bhh_o = seg_load_f32<B_T>(b_hh, g_o);
+
+            const float ih_i = ih_all[g_i + t * G];
+            const float ih_f = ih_all[g_f + t * G];
+            const float ih_g = ih_all[g_g + t * G];
+            const float ih_o = ih_all[g_o + t * G];
+
+            const float gate_i = ih_i + dot_i + bih_i + bhh_i;
+            const float gate_f = ih_f + dot_f + bih_f + bhh_f;
+            const float gate_g = ih_g + dot_g + bih_g + bhh_g;
+            const float gate_o = ih_o + dot_o + bih_o + bhh_o;
+
+            const float i_val = seg_sigmoidf(gate_i);
+            const float f_val = seg_sigmoidf(gate_f);
+            const float g_val = seg_tanhf(gate_g);
+            const float o_val = seg_sigmoidf(gate_o);
+
+            const float c_new = f_val * cp[h] + i_val * g_val;
+            const float h_new = o_val * seg_tanhf(c_new);
+
+            cn[h] = c_new;
+            hn[h] = h_new;
+
+            dst[(dir_off + h) * T + t] = h_new;
+        }
+
+        grid.sync();
+    }
+}
+
+template <bool REVERSE, typename W_T, typename B_T>
+static __global__ void k_pyannote_seg_lstm_dir(
+    const int T,
+    const int H,
+    const float * ih_all_all,    // batched [B, 4H, T] with stride ih_stride
+    const int ih_stride,
+    const W_T   * w_hh,          // [H, 4H] as ggml ne0=H, ne1=4H (column-major ld=H)
+    const B_T   * b_ih,          // [4H]
+    const B_T   * b_hh,          // [4H]
+    float       * dst_all,       // batched [B, 2H, T] with stride dst_stride
+    const int dst_stride,
+    const int dir_off) {
+
+    const int b = (int) blockIdx.x;
+    const float * ih_all = ih_all_all + (size_t) b * (size_t) ih_stride;
+    float       * dst    = dst_all    + (size_t) b * (size_t) dst_stride;
+
+    extern __shared__ float sh[];
+    float * h_prev = sh;      // H
+    float * c_prev = sh + H;  // H
+
+    const int h = (int) threadIdx.x;
+    if (h < H) {
+        h_prev[h] = 0.0f;
+        c_prev[h] = 0.0f;
+    }
+    __syncthreads();
+
+    const int G = 4 * H;
+
+    for (int step = 0; step < T; ++step) {
+        const int t = REVERSE ? (T - 1 - step) : step;
+
+        if (h < H) {
+            float dot_i = 0.0f;
+            float dot_f = 0.0f;
+            float dot_g = 0.0f;
+            float dot_o = 0.0f;
+
+            // w_hh is stored with ld=H, columns are gate elements.
+            const int g_i = h;
+            const int g_f = H + h;
+            const int g_g = 2 * H + h;
+            const int g_o = 3 * H + h;
+
+            const int col_i = g_i * H;
+            const int col_f = g_f * H;
+            const int col_g = g_g * H;
+            const int col_o = g_o * H;
+
+            // Dot products over previous hidden state.
+            for (int k = 0; k < H; ++k) {
+                const float hp = h_prev[k];
+                dot_i += seg_load_f32<W_T>(w_hh, col_i + k) * hp;
+                dot_f += seg_load_f32<W_T>(w_hh, col_f + k) * hp;
+                dot_g += seg_load_f32<W_T>(w_hh, col_g + k) * hp;
+                dot_o += seg_load_f32<W_T>(w_hh, col_o + k) * hp;
+            }
+
+            const float bih_i = seg_load_f32<B_T>(b_ih, g_i);
+            const float bih_f = seg_load_f32<B_T>(b_ih, g_f);
+            const float bih_g = seg_load_f32<B_T>(b_ih, g_g);
+            const float bih_o = seg_load_f32<B_T>(b_ih, g_o);
+            const float bhh_i = seg_load_f32<B_T>(b_hh, g_i);
+            const float bhh_f = seg_load_f32<B_T>(b_hh, g_f);
+            const float bhh_g = seg_load_f32<B_T>(b_hh, g_g);
+            const float bhh_o = seg_load_f32<B_T>(b_hh, g_o);
+
+            const float ih_i = ih_all[g_i + t * G];
+            const float ih_f = ih_all[g_f + t * G];
+            const float ih_g = ih_all[g_g + t * G];
+            const float ih_o = ih_all[g_o + t * G];
+
+            const float gate_i = ih_i + dot_i + bih_i + bhh_i;
+            const float gate_f = ih_f + dot_f + bih_f + bhh_f;
+            const float gate_g = ih_g + dot_g + bih_g + bhh_g;
+            const float gate_o = ih_o + dot_o + bih_o + bhh_o;
+
+            const float i_val = seg_sigmoidf(gate_i);
+            const float f_val = seg_sigmoidf(gate_f);
+            const float g_val = tanhf(gate_g);
+            const float o_val = seg_sigmoidf(gate_o);
+
+            const float c_new = f_val * c_prev[h] + i_val * g_val;
+            const float h_new = o_val * tanhf(c_new);
+
+            c_prev[h] = c_new;
+            h_prev[h] = h_new;
+
+            dst[(dir_off + h) * T + t] = h_new;
+        }
+
+        __syncthreads();
+    }
+}
+
+static bool ggml_cuda_is_pyannote_seg_lstm_custom(const ggml_tensor * op) {
+    if (!op || op->op != GGML_OP_CUSTOM) {
+        return false;
+    }
+    // Expect 9 sources: input + 8 parameter tensors
+    for (int i = 0; i < 9; ++i) {
+        if (!op->src[i]) {
+            return false;
+        }
+    }
+    const ggml_tensor * x = op->src[0];
+    const ggml_tensor * w_ih = op->src[1];
+    const ggml_tensor * w_hh = op->src[2];
+    const ggml_tensor * b_ih = op->src[3];
+    const ggml_tensor * b_hh = op->src[4];
+    const ggml_tensor * w_ih_r = op->src[5];
+    const ggml_tensor * w_hh_r = op->src[6];
+    const ggml_tensor * b_ih_r = op->src[7];
+    const ggml_tensor * b_hh_r = op->src[8];
+
+    if (x->type != GGML_TYPE_F32) {
+        return false;
+    }
+    if (op->type != GGML_TYPE_F32) {
+        return false;
+    }
+    // Support batch > 1 (ne[2]).
+    if (x->ne[3] != 1 || op->ne[3] != 1) {
+        return false;
+    }
+
+    // Weights are FP16 in current GGUF.
+    if (w_ih->type != GGML_TYPE_F16 || w_hh->type != GGML_TYPE_F16 ||
+        w_ih_r->type != GGML_TYPE_F16 || w_hh_r->type != GGML_TYPE_F16) {
+        return false;
+    }
+    if (b_ih->type != GGML_TYPE_F32 && b_ih->type != GGML_TYPE_F16) {
+        return false;
+    }
+    if (b_hh->type != b_ih->type || b_ih_r->type != b_ih->type || b_hh_r->type != b_ih->type) {
+        return false;
+    }
+
+    // Basic shape checks.
+    const int H = (int) w_hh->ne[0];
+    const int G = 4 * H;
+    if (w_hh->ne[1] != G || w_hh_r->ne[0] != H || w_hh_r->ne[1] != G) {
+        return false;
+    }
+    if (b_ih->ne[0] != G || b_hh->ne[0] != G || b_ih_r->ne[0] != G || b_hh_r->ne[0] != G) {
+        return false;
+    }
+    if (op->ne[0] != x->ne[0] || op->ne[1] != 2 * H || op->ne[2] != x->ne[2]) {
+        return false;
+    }
+    // Names are stable in this repo.
+    if (::strncmp(w_ih->name, "lstm.weight_ih_l", 15) != 0) {
+        return false;
+    }
+    if (::strncmp(w_hh->name, "lstm.weight_hh_l", 15) != 0) {
+        return false;
+    }
+    if (::strstr(w_ih_r->name, "_reverse") == nullptr || ::strstr(w_hh_r->name, "_reverse") == nullptr) {
+        return false;
+    }
+    return true;
+}
+
+static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+    const ggml_tensor * x      = dst->src[0];
+    const ggml_tensor * w_ih   = dst->src[1];
+    const ggml_tensor * w_hh   = dst->src[2];
+    const ggml_tensor * b_ih   = dst->src[3];
+    const ggml_tensor * b_hh   = dst->src[4];
+    const ggml_tensor * w_ih_r = dst->src[5];
+    const ggml_tensor * w_hh_r = dst->src[6];
+    const ggml_tensor * b_ih_r = dst->src[7];
+    const ggml_tensor * b_hh_r = dst->src[8];
+
+    const int T  = (int) x->ne[0];
+    const int in = (int) x->ne[1];
+    const int B  = (int) x->ne[2];
+    const int H  = (int) w_hh->ne[0];
+    const int G  = 4 * H;
+
+    cudaStream_t stream = ctx.stream();
+    cublasHandle_t handle = ctx.cublas_handle();
+    CUBLAS_CHECK(cublasSetStream(handle, stream));
+
+    ggml_cuda_pool_alloc<float> ih(ctx.pool());
+    ggml_cuda_pool_alloc<float> ih_fwd(ctx.pool());
+    ggml_cuda_pool_alloc<float> ih_rev(ctx.pool());
+    if (B == 1) {
+        ih_fwd.alloc((size_t) G * (size_t) T);
+        ih_rev.alloc((size_t) G * (size_t) T);
+    } else {
+        ih.alloc((size_t) G * (size_t) T * (size_t) B);
+    }
+
+    const float alpha = 1.0f;
+    const float beta  = 0.0f;
+
+    const float * x_d = (const float *) x->data;
+    // cuBLAS does not reliably support (F16 x F32) GEMMEx across all builds.
+    // Cast X to F16 and use tensor-op GEMM (F16 x F16 -> F32).
+    ggml_cuda_pool_alloc<half> x_h(ctx.pool());
+    x_h.alloc((size_t) T * (size_t) in * (size_t) B);
+    {
+        const int n = (int) ((size_t) T * (size_t) in * (size_t) B);
+        const int bs = 256;
+        const int gs = (n + bs - 1) / bs;
+        k_f32_to_f16<<<gs, bs, 0, stream>>>(n, x_d, x_h.get());
+        CUDA_CHECK(cudaGetLastError());
+    }
+    const half  * wih_f_d = (const half *) w_ih->data;
+    const half  * wih_r_d = (const half *) w_ih_r->data;
+
+    const bool use_batched_gemm = (B > 1);
+    // Batched GEMM (one sequence per batch element):
+    // For each b: ih[b] = (w_ih^T) * (x[b]^T)  where x[b] is [T x in] in column-major (ld=T)
+    // => ih[b] is [G x T] in column-major (ld=G).
+    const long long int stride_b = (long long int) T * (long long int) in;
+    const long long int stride_c = (long long int) G * (long long int) T;
+    const long long int stride_a = 0;
+
+    float * out = (float *) dst->data;
+    const half * whh_f_d = (const half *) w_hh->data;
+    const half * whh_r_d = (const half *) w_hh_r->data;
+
+    const int ih_stride  = G * T;
+    const int dst_stride = (2 * H) * T;
+
+    const int id = ggml_cuda_get_device();
+    const bool can_coop = ggml_cuda_info().devices[id].supports_cooperative_launch;
+    const char * coop_env = getenv("DIARIZATION_SEG_LSTM_COOP");
+    const bool want_coop = (coop_env != nullptr) && (std::strcmp(coop_env, "0") != 0);
+    const bool use_coop = can_coop && want_coop && (B == 1);
+
+    // Keep the legacy single-block kernel as a fallback.
+    const int legacy_threads = 128;
+    const dim3 legacy_block(legacy_threads);
+    const dim3 legacy_grid(B);
+    const size_t legacy_shmem = (size_t) (2 * H) * sizeof(float);
+
+    // Cooperative kernel launch config: split H across blocks; sync across blocks each step.
+    constexpr int COOP_THREADS = 8;
+    const dim3 coop_block(COOP_THREADS, 1, 1);
+    const dim3 coop_grid((H + COOP_THREADS - 1) / COOP_THREADS, B, 1);
+
+    ggml_cuda_pool_alloc<float> h_state(ctx.pool());
+    ggml_cuda_pool_alloc<float> c_state(ctx.pool());
+    if (use_coop) {
+        h_state.alloc((size_t) B * (size_t) (2 * H));
+        c_state.alloc((size_t) B * (size_t) (2 * H));
+    }
+
+    if (b_ih->type == GGML_TYPE_F16) {
+        const half * b_ih_d = (const half *) b_ih->data;
+        const half * b_hh_d = (const half *) b_hh->data;
+        const half * b_ih_rd = (const half *) b_ih_r->data;
+        const half * b_hh_rd = (const half *) b_hh_r->data;
+
+        if (use_batched_gemm) {
+            CUBLAS_CHECK(cublasGemmStridedBatchedEx(
+                handle,
+                CUBLAS_OP_T, CUBLAS_OP_T,
+                G, T, in,
+                &alpha,
+                wih_f_d, CUDA_R_16F, in, stride_a,
+                x_h.get(), CUDA_R_16F, T, stride_b,
+                &beta,
+                ih.get(), CUDA_R_32F, G, stride_c,
+                B,
+                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        } else {
+            CUBLAS_CHECK(cublasGemmEx(
+                handle,
+                CUBLAS_OP_T, CUBLAS_OP_T,
+                G, T, in,
+                &alpha,
+                wih_f_d, CUDA_R_16F, in,
+                x_h.get(), CUDA_R_16F, T,
+                &beta,
+                ih_fwd.get(), CUDA_R_32F, G,
+                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        }
+
+        if (use_coop) {
+            const int dir_off = 0;
+            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
+            // NOTE: kernel_args is only used for cooperative launch.
+            // Keep it here to simplify toggling the cooperative kernel for benchmarking.
+            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
+                                     (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
+                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
+                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
+            CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
+            CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
+
+            void * kernel_args2[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
+                                      (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
+                                      (void *) &out, (void *) &dst_stride, (void *) &dir_off,
+                                      (void *) &h_state.ptr, (void *) &c_state.ptr };
+            CUDA_CHECK(cudaLaunchCooperativeKernel(
+                (void *) k_pyannote_seg_lstm_dir_coop<false, half, half, COOP_THREADS>,
+                coop_grid, coop_block, kernel_args2, 0, stream));
+        } else {
+            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
+            k_pyannote_seg_lstm_dir<false, half, half><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_f_d, b_ih_d, b_hh_d, out, dst_stride, 0);
+        }
+
+        if (use_batched_gemm) {
+            CUBLAS_CHECK(cublasGemmStridedBatchedEx(
+                handle,
+                CUBLAS_OP_T, CUBLAS_OP_T,
+                G, T, in,
+                &alpha,
+                wih_r_d, CUDA_R_16F, in, stride_a,
+                x_h.get(), CUDA_R_16F, T, stride_b,
+                &beta,
+                ih.get(), CUDA_R_32F, G, stride_c,
+                B,
+                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        } else {
+            CUBLAS_CHECK(cublasGemmEx(
+                handle,
+                CUBLAS_OP_T, CUBLAS_OP_T,
+                G, T, in,
+                &alpha,
+                wih_r_d, CUDA_R_16F, in,
+                x_h.get(), CUDA_R_16F, T,
+                &beta,
+                ih_rev.get(), CUDA_R_32F, G,
+                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        }
+
+        if (use_coop) {
+            const int dir_off = H;
+            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
+            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
+                                     (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
+                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
+                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
+            CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
+            CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
+
+            void * kernel_args2[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
+                                      (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
+                                      (void *) &out, (void *) &dst_stride, (void *) &dir_off,
+                                      (void *) &h_state.ptr, (void *) &c_state.ptr };
+            CUDA_CHECK(cudaLaunchCooperativeKernel(
+                (void *) k_pyannote_seg_lstm_dir_coop<true, half, half, COOP_THREADS>,
+                coop_grid, coop_block, kernel_args2, 0, stream));
+        } else {
+            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
+            k_pyannote_seg_lstm_dir<true,  half, half><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_r_d, b_ih_rd, b_hh_rd, out, dst_stride, H);
+        }
+    } else {
+        const float * b_ih_d = (const float *) b_ih->data;
+        const float * b_hh_d = (const float *) b_hh->data;
+        const float * b_ih_rd = (const float *) b_ih_r->data;
+        const float * b_hh_rd = (const float *) b_hh_r->data;
+
+        if (use_batched_gemm) {
+            CUBLAS_CHECK(cublasGemmStridedBatchedEx(
+                handle,
+                CUBLAS_OP_T, CUBLAS_OP_T,
+                G, T, in,
+                &alpha,
+                wih_f_d, CUDA_R_16F, in, stride_a,
+                x_h.get(), CUDA_R_16F, T, stride_b,
+                &beta,
+                ih.get(), CUDA_R_32F, G, stride_c,
+                B,
+                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        } else {
+            CUBLAS_CHECK(cublasGemmEx(
+                handle,
+                CUBLAS_OP_T, CUBLAS_OP_T,
+                G, T, in,
+                &alpha,
+                wih_f_d, CUDA_R_16F, in,
+                x_h.get(), CUDA_R_16F, T,
+                &beta,
+                ih_fwd.get(), CUDA_R_32F, G,
+                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        }
+
+        if (use_coop) {
+            const int dir_off = 0;
+            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
+            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
+                                     (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
+                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
+                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
+            CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
+            CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
+
+            void * kernel_args2[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
+                                      (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
+                                      (void *) &out, (void *) &dst_stride, (void *) &dir_off,
+                                      (void *) &h_state.ptr, (void *) &c_state.ptr };
+            CUDA_CHECK(cudaLaunchCooperativeKernel(
+                (void *) k_pyannote_seg_lstm_dir_coop<false, half, float, COOP_THREADS>,
+                coop_grid, coop_block, kernel_args2, 0, stream));
+        } else {
+            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
+            k_pyannote_seg_lstm_dir<false, half, float><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_f_d, b_ih_d, b_hh_d, out, dst_stride, 0);
+        }
+
+        if (use_batched_gemm) {
+            CUBLAS_CHECK(cublasGemmStridedBatchedEx(
+                handle,
+                CUBLAS_OP_T, CUBLAS_OP_T,
+                G, T, in,
+                &alpha,
+                wih_r_d, CUDA_R_16F, in, stride_a,
+                x_h.get(), CUDA_R_16F, T, stride_b,
+                &beta,
+                ih.get(), CUDA_R_32F, G, stride_c,
+                B,
+                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        } else {
+            CUBLAS_CHECK(cublasGemmEx(
+                handle,
+                CUBLAS_OP_T, CUBLAS_OP_T,
+                G, T, in,
+                &alpha,
+                wih_r_d, CUDA_R_16F, in,
+                x_h.get(), CUDA_R_16F, T,
+                &beta,
+                ih_rev.get(), CUDA_R_32F, G,
+                CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        }
+
+        if (use_coop) {
+            const int dir_off = H;
+            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
+            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
+                                     (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
+                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
+                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
+            CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
+            CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
+
+            void * kernel_args2[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
+                                      (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
+                                      (void *) &out, (void *) &dst_stride, (void *) &dir_off,
+                                      (void *) &h_state.ptr, (void *) &c_state.ptr };
+            CUDA_CHECK(cudaLaunchCooperativeKernel(
+                (void *) k_pyannote_seg_lstm_dir_coop<true, half, float, COOP_THREADS>,
+                coop_grid, coop_block, kernel_args2, 0, stream));
+        } else {
+            const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
+            k_pyannote_seg_lstm_dir<true,  half, float><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_r_d, b_ih_rd, b_hh_rd, out, dst_stride, H);
+        }
+    }
+    CUDA_CHECK(cudaGetLastError());
+}
 
 #include <algorithm>
 #include <array>
@@ -2681,6 +3280,9 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
         case GGML_OP_CONV_TRANSPOSE_1D:
             ggml_cuda_op_conv_transpose_1d(ctx,dst);
             break;
+        case GGML_OP_POOL_1D:
+            ggml_cuda_op_pool1d(ctx, dst);
+            break;
         case GGML_OP_POOL_2D:
             ggml_cuda_op_pool2d(ctx, dst);
             break;
@@ -2741,6 +3343,12 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
         case GGML_OP_FILL:
             ggml_cuda_op_fill(ctx, dst);
             break;
+        case GGML_OP_CUSTOM:
+            if (ggml_cuda_is_pyannote_seg_lstm_custom(dst)) {
+                ggml_cuda_pyannote_seg_lstm_custom(ctx, dst);
+                break;
+            }
+            return false;
         default:
             return false;
     }
@@ -4612,6 +5220,7 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
         case GGML_OP_CONV_2D:
         case GGML_OP_CONV_2D_DW:
         case GGML_OP_CONV_TRANSPOSE_2D:
+        case GGML_OP_POOL_1D:
         case GGML_OP_POOL_2D:
         case GGML_OP_ACC:
             return true;
@@ -4650,6 +5259,9 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
         case GGML_OP_DIAG:
         case GGML_OP_SOLVE_TRI:
             return true;
+
+        case GGML_OP_CUSTOM:
+            return ggml_cuda_is_pyannote_seg_lstm_custom(op);
 
         default:
             return false;

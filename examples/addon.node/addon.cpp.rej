@@ -1,0 +1,152 @@
+diff a/examples/addon.node/addon.cpp b/examples/addon.node/addon.cpp	(rejected hunks)
+@@ -133,6 +133,26 @@ WhisperContext::WhisperContext(const Napi::CallbackInfo& info)
+         else if (dtw == "large.v2")     cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V2;
+         else if (dtw == "large.v3")     cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V3;
+         else if (dtw == "large.v3.turbo") cparams.dtw_aheads_preset = WHISPER_AHEADS_LARGE_V3_TURBO;
++
++        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_NONE && dtw.rfind("top-", 0) == 0) {
++            std::string val = dtw.substr(4);
++            bool use_norm = false;
++            auto norm_pos = val.find("-norm");
++            if (norm_pos != std::string::npos) {
++                use_norm = true;
++                val = val.substr(0, norm_pos);
++            }
++            int n_top = std::stoi(val);
++            cparams.dtw_n_top = n_top;
++            cparams.dtw_norm_top_k = get_int32(options, "dtw_norm_top_k", 10);
++            cparams.dtw_aheads_preset = use_norm ? WHISPER_AHEADS_N_TOP_MOST_NORM : WHISPER_AHEADS_N_TOP_MOST;
++        }
++
++        if (cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST ||
++            cparams.dtw_aheads_preset == WHISPER_AHEADS_N_TOP_MOST_NORM) {
++            cparams.flash_attn = false;
++            cparams.dtw_mem_size = 1024*1024*512;
++        }
+     }
+ 
+     // Suppress logging if requested
+@@ -279,8 +299,23 @@ struct transcribe_params {
+     float       vad_samples_overlap         = 0.1f;
+ };
+ 
++struct token_result {
++    std::string text;
++    float probability;
++    int64_t t0;
++    int64_t t1;
++    int64_t t_dtw;
++};
++
++struct segment_result {
++    std::string start;
++    std::string end;
++    std::string text;
++    std::vector<token_result> tokens;
++};
++
+ struct transcribe_result {
+-    std::vector<std::vector<std::string>> segments;  // [start, end, text]
++    std::vector<segment_result> segments;
+     std::string language;
+     bool success = false;
+     std::string error;
+@@ -475,9 +510,30 @@ public:
+             const int64_t t0 = whisper_full_get_segment_t0(ctx, i);
+             const int64_t t1 = whisper_full_get_segment_t1(ctx, i);
+ 
+-            result_.segments[i].push_back(to_timestamp(t0, params_.comma_in_time));
+-            result_.segments[i].push_back(to_timestamp(t1, params_.comma_in_time));
+-            result_.segments[i].push_back(text);
++            result_.segments[i].start = to_timestamp(t0, params_.comma_in_time);
++            result_.segments[i].end   = to_timestamp(t1, params_.comma_in_time);
++            result_.segments[i].text  = text ? text : "";
++
++            // Extract token-level data (includes t_dtw when DTW is enabled)
++            if (params_.token_timestamps) {
++                const int n_tokens = whisper_full_n_tokens(ctx, i);
++                for (int j = 0; j < n_tokens; j++) {
++                    const char* token_text = whisper_full_get_token_text(ctx, i, j);
++                    float token_prob = whisper_full_get_token_p(ctx, i, j);
++                    whisper_token_data token_data = whisper_full_get_token_data(ctx, i, j);
++
++                    // Skip special tokens (non-text)
++                    if (token_data.id >= whisper_token_eot(ctx)) continue;
++
++                    result_.segments[i].tokens.push_back({
++                        token_text ? token_text : "",
++                        token_prob,
++                        token_data.t0,
++                        token_data.t1,
++                        token_data.t_dtw
++                    });
++                }
++            }
+         }
+ 
+         result_.success = true;
+@@ -493,18 +549,31 @@ public:
+ 
+         Napi::Object resultObj = Napi::Object::New(Env());
+ 
+-        // Add language if detected
+         if (!result_.language.empty()) {
+             resultObj.Set("language", Napi::String::New(Env(), result_.language));
+         }
+ 
+-        // Add segments
+         Napi::Array segments = Napi::Array::New(Env(), result_.segments.size());
+         for (size_t i = 0; i < result_.segments.size(); ++i) {
+-            Napi::Array segment = Napi::Array::New(Env(), 3);
+-            segment.Set((uint32_t)0, Napi::String::New(Env(), result_.segments[i][0]));  // start
+-            segment.Set((uint32_t)1, Napi::String::New(Env(), result_.segments[i][1]));  // end
+-            segment.Set((uint32_t)2, Napi::String::New(Env(), result_.segments[i][2]));  // text
++            Napi::Object segment = Napi::Object::New(Env());
++            segment.Set("start", Napi::String::New(Env(), result_.segments[i].start));
++            segment.Set("end",   Napi::String::New(Env(), result_.segments[i].end));
++            segment.Set("text",  Napi::String::New(Env(), result_.segments[i].text));
++
++            if (!result_.segments[i].tokens.empty()) {
++                Napi::Array tokensArray = Napi::Array::New(Env(), result_.segments[i].tokens.size());
++                for (size_t j = 0; j < result_.segments[i].tokens.size(); j++) {
++                    Napi::Object tokenObj = Napi::Object::New(Env());
++                    tokenObj.Set("text",        Napi::String::New(Env(), result_.segments[i].tokens[j].text));
++                    tokenObj.Set("probability",  Napi::Number::New(Env(), result_.segments[i].tokens[j].probability));
++                    tokenObj.Set("t0",          Napi::Number::New(Env(), result_.segments[i].tokens[j].t0));
++                    tokenObj.Set("t1",          Napi::Number::New(Env(), result_.segments[i].tokens[j].t1));
++                    tokenObj.Set("t_dtw",       Napi::Number::New(Env(), result_.segments[i].tokens[j].t_dtw));
++                    tokensArray.Set((uint32_t)j, tokenObj);
++                }
++                segment.Set("tokens", tokensArray);
++            }
++
+             segments.Set((uint32_t)i, segment);
+         }
+         resultObj.Set("segments", segments);
+@@ -537,7 +606,7 @@ public:
+             std::string segment_text = text ? text : "";
+             int segment_index = i;
+ 
+-            std::vector<std::tuple<std::string, float, int64_t, int64_t>> tokens;
++            std::vector<std::tuple<std::string, float, int64_t, int64_t, int64_t>> tokens;
+             if (params_.token_timestamps) {
+                 const int n_tokens = whisper_full_n_tokens(ctx, i);
+                 for (int j = 0; j < n_tokens; j++) {
+@@ -548,7 +617,8 @@ public:
+                         token_text ? token_text : "",
+                         token_prob,
+                         token_data.t0,
+-                        token_data.t1
++                        token_data.t1,
++                        token_data.t_dtw
+                     });
+                 }
+             }
+@@ -569,6 +639,7 @@ public:
+                         tokenObj.Set("probability", Napi::Number::New(env, std::get<1>(tokens[k])));
+                         tokenObj.Set("t0", Napi::Number::New(env, std::get<2>(tokens[k])));
+                         tokenObj.Set("t1", Napi::Number::New(env, std::get<3>(tokens[k])));
++                        tokenObj.Set("t_dtw", Napi::Number::New(env, std::get<4>(tokens[k])));
+                         tokensArray.Set((uint32_t)k, tokenObj);
+                     }
+                     segment.Set("tokens", tokensArray);

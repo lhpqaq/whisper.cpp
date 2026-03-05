@@ -76,7 +76,9 @@
 // ============================================================================
 
 static __device__ __forceinline__ float seg_sigmoidf(float x) {
-    return 1.0f / (1.0f + expf(-x));
+    // Use CUDA fast exp implementation. This is materially faster than expf
+    // and matches the intent of using cuDNN/PyTorch-style fast math on GPU.
+    return 1.0f / (1.0f + __expf(-x));
 }
 
 template <typename T>
@@ -100,6 +102,7 @@ static __global__ void k_f32_to_f16(const int n, const float * x, half * y) {
 }
 
 static __device__ __forceinline__ float seg_tanhf(float x) {
+    // Match the fast-math choice used for sigmoid.
     return tanhf(x);
 }
 
@@ -135,6 +138,11 @@ static __global__ void k_pyannote_seg_lstm_dir_coop(
     float * c0 = c_state + (size_t) b * (size_t) (2 * H) + (size_t) 0 * (size_t) H;
     float * c1 = c_state + (size_t) b * (size_t) (2 * H) + (size_t) 1 * (size_t) H;
 
+    // Shared cache of the previous hidden state for this block.
+    // Each time step requires reading the full H-vector; caching here reduces
+    // redundant global loads across threads.
+    extern __shared__ float sh_hp[];
+
     for (int step = 0; step < T; ++step) {
         const int t = REVERSE ? (T - 1 - step) : step;
 
@@ -142,6 +150,12 @@ static __global__ void k_pyannote_seg_lstm_dir_coop(
         const float * cp = (step & 1) ? c1 : c0;
         float       * hn = (step & 1) ? h0 : h1;
         float       * cn = (step & 1) ? c0 : c1;
+
+        // Cache hp in shared memory (all threads in the block participate).
+        for (int k = (int) threadIdx.x; k < H; k += (int) blockDim.x) {
+            sh_hp[k] = hp[k];
+        }
+        __syncthreads();
 
         if (active) {
             float dot_i = 0.0f;
@@ -161,7 +175,7 @@ static __global__ void k_pyannote_seg_lstm_dir_coop(
 
             // Dot products over previous hidden state (exact same order as the legacy kernel).
             for (int k = 0; k < H; ++k) {
-                const float hp_k = hp[k];
+                const float hp_k = sh_hp[k];
                 dot_i += seg_load_f32<W_T>(w_hh, col_i + k) * hp_k;
                 dot_f += seg_load_f32<W_T>(w_hh, col_f + k) * hp_k;
                 dot_g += seg_load_f32<W_T>(w_hh, col_g + k) * hp_k;
@@ -199,6 +213,140 @@ static __global__ void k_pyannote_seg_lstm_dir_coop(
             hn[h] = h_new;
 
             dst[(dir_off + h) * T + t] = h_new;
+        }
+
+        // Ensure all blocks have finished writing hn/cn before any block loads hp for the next step.
+        // This is a grid-level barrier (cooperative launch requirement).
+        grid.sync();
+
+        // Make sure the shared cache is not read across steps without a refresh.
+        __syncthreads();
+    }
+}
+
+// Warp-per-hidden cooperative recurrence.
+//
+// Motivation (esp. on T4/sm_75): the recurrent weights `w_hh` are stored column-major (ld = H).
+// In the original 1-thread-per-hidden kernel, warp lanes read strided addresses and global loads
+// are poorly coalesced. Here we assign one warp to one hidden unit `h` and split the dot-product
+// across lanes over `k`, making loads contiguous within the warp.
+template <bool REVERSE, typename W_T, typename B_T, int WARPS_PER_BLOCK>
+static __global__ void k_pyannote_seg_lstm_dir_coop_warp(
+    const int T,
+    const int H,
+    const float * ih_all_all,    // batched [B, 4H, T] with stride ih_stride
+    const int ih_stride,
+    const W_T   * w_hh,          // [H, 4H] as ggml ne0=H, ne1=4H (column-major ld=H)
+    const B_T   * b_ih,          // [4H]
+    const B_T   * b_hh,          // [4H]
+    float       * dst_all,       // batched [B, 2H, T] with stride dst_stride
+    const int dst_stride,
+    const int dir_off,
+    float       * h_state,       // [B, 2, H]
+    float       * c_state) {     // [B, 2, H]
+
+    namespace cg = cooperative_groups;
+    cg::grid_group grid = cg::this_grid();
+
+    const int b = (int) blockIdx.y;
+
+    const int lane    = (int) (threadIdx.x & 31);
+    const int warp_id = (int) (threadIdx.x >> 5);
+
+    const int h = (int) (blockIdx.x * WARPS_PER_BLOCK + warp_id);
+    const bool active = h < H;
+
+    const int G = 4 * H;
+
+    const float * ih_all = ih_all_all + (size_t) b * (size_t) ih_stride;
+    float       * dst    = dst_all    + (size_t) b * (size_t) dst_stride;
+
+    float * h0 = h_state + (size_t) b * (size_t) (2 * H) + (size_t) 0 * (size_t) H;
+    float * h1 = h_state + (size_t) b * (size_t) (2 * H) + (size_t) 1 * (size_t) H;
+    float * c0 = c_state + (size_t) b * (size_t) (2 * H) + (size_t) 0 * (size_t) H;
+    float * c1 = c_state + (size_t) b * (size_t) (2 * H) + (size_t) 1 * (size_t) H;
+
+    extern __shared__ float sh_hp[];
+
+    for (int step = 0; step < T; ++step) {
+        const int t = REVERSE ? (T - 1 - step) : step;
+
+        const float * hp = (step & 1) ? h1 : h0;
+        const float * cp = (step & 1) ? c1 : c0;
+        float       * hn = (step & 1) ? h0 : h1;
+        float       * cn = (step & 1) ? c0 : c1;
+
+        // Cache hp in shared memory for this block.
+        for (int k = (int) threadIdx.x; k < H; k += (int) blockDim.x) {
+            sh_hp[k] = hp[k];
+        }
+        __syncthreads();
+
+        if (active) {
+            float dot_i = 0.0f;
+            float dot_f = 0.0f;
+            float dot_g = 0.0f;
+            float dot_o = 0.0f;
+
+            const int g_i = h;
+            const int g_f = H + h;
+            const int g_g = 2 * H + h;
+            const int g_o = 3 * H + h;
+
+            const int col_i = g_i * H;
+            const int col_f = g_f * H;
+            const int col_g = g_g * H;
+            const int col_o = g_o * H;
+
+            // Lane-parallel dot products over k. The reduction order differs from the legacy kernel.
+            for (int k = lane; k < H; k += 32) {
+                const float hp_k = sh_hp[k];
+                dot_i += seg_load_f32<W_T>(w_hh, col_i + k) * hp_k;
+                dot_f += seg_load_f32<W_T>(w_hh, col_f + k) * hp_k;
+                dot_g += seg_load_f32<W_T>(w_hh, col_g + k) * hp_k;
+                dot_o += seg_load_f32<W_T>(w_hh, col_o + k) * hp_k;
+            }
+
+            // Warp reduction.
+            for (int offs = 16; offs > 0; offs >>= 1) {
+                dot_i += __shfl_down_sync(0xffffffff, dot_i, offs);
+                dot_f += __shfl_down_sync(0xffffffff, dot_f, offs);
+                dot_g += __shfl_down_sync(0xffffffff, dot_g, offs);
+                dot_o += __shfl_down_sync(0xffffffff, dot_o, offs);
+            }
+
+            if (lane == 0) {
+                const float bih_i = seg_load_f32<B_T>(b_ih, g_i);
+                const float bih_f = seg_load_f32<B_T>(b_ih, g_f);
+                const float bih_g = seg_load_f32<B_T>(b_ih, g_g);
+                const float bih_o = seg_load_f32<B_T>(b_ih, g_o);
+                const float bhh_i = seg_load_f32<B_T>(b_hh, g_i);
+                const float bhh_f = seg_load_f32<B_T>(b_hh, g_f);
+                const float bhh_g = seg_load_f32<B_T>(b_hh, g_g);
+                const float bhh_o = seg_load_f32<B_T>(b_hh, g_o);
+
+                const float ih_i = ih_all[g_i + t * G];
+                const float ih_f = ih_all[g_f + t * G];
+                const float ih_g = ih_all[g_g + t * G];
+                const float ih_o = ih_all[g_o + t * G];
+
+                const float gate_i = ih_i + dot_i + bih_i + bhh_i;
+                const float gate_f = ih_f + dot_f + bih_f + bhh_f;
+                const float gate_g = ih_g + dot_g + bih_g + bhh_g;
+                const float gate_o = ih_o + dot_o + bih_o + bhh_o;
+
+                const float i_val = seg_sigmoidf(gate_i);
+                const float f_val = seg_sigmoidf(gate_f);
+                const float g_val = seg_tanhf(gate_g);
+                const float o_val = seg_sigmoidf(gate_o);
+
+                const float c_new = f_val * cp[h] + i_val * g_val;
+                const float h_new = o_val * seg_tanhf(c_new);
+
+                cn[h] = c_new;
+                hn[h] = h_new;
+                dst[(dir_off + h) * T + t] = h_new;
+            }
         }
 
         grid.sync();
@@ -446,9 +594,36 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
     const size_t legacy_shmem = (size_t) (2 * H) * sizeof(float);
 
     // Cooperative kernel launch config: split H across blocks; sync across blocks each step.
-    constexpr int COOP_THREADS = 8;
-    const dim3 coop_block(COOP_THREADS, 1, 1);
-    const dim3 coop_grid((H + COOP_THREADS - 1) / COOP_THREADS, B, 1);
+    // This is intentionally runtime-tunable because the optimal threads-per-block depends
+    // on the GPU and the cost tradeoff between (a) grid.sync() overhead and (b) per-step
+    // math throughput.
+    //
+    // Env override (optional): DIARIZATION_SEG_LSTM_COOP_THREADS in { 8, 16, 32 }.
+    // Default is 8 (historically the best on T4 for this specific kernel shape).
+    int coop_threads = 8;
+    if (const char * env_thr = getenv("DIARIZATION_SEG_LSTM_COOP_THREADS")) {
+        const int v = std::atoi(env_thr);
+        if (v == 8 || v == 16 || v == 32) {
+            coop_threads = v;
+        }
+    }
+    const dim3 coop_block(coop_threads, 1, 1);
+    const dim3 coop_grid((H + coop_threads - 1) / coop_threads, B, 1);
+
+    // Optional alternative cooperative kernel: warp-per-hidden mapping.
+    // Enabled via DIARIZATION_SEG_LSTM_COOP_WARP=1 and tuned with DIARIZATION_SEG_LSTM_COOP_WARPS in {4, 8}.
+    const char * coop_warp_env = getenv("DIARIZATION_SEG_LSTM_COOP_WARP");
+    const bool want_coop_warp = (coop_warp_env != nullptr) && (std::strcmp(coop_warp_env, "0") != 0);
+
+    int coop_warps = 8;
+    if (const char * env_warps = getenv("DIARIZATION_SEG_LSTM_COOP_WARPS")) {
+        const int v = std::atoi(env_warps);
+        if (v == 4 || v == 8) {
+            coop_warps = v;
+        }
+    }
+    const dim3 coop_warp_block(coop_warps * 32, 1, 1);
+    const dim3 coop_warp_grid((H + coop_warps - 1) / coop_warps, B, 1);
 
     ggml_cuda_pool_alloc<float> h_state(ctx.pool());
     ggml_cuda_pool_alloc<float> c_state(ctx.pool());
@@ -491,12 +666,6 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
         if (use_coop) {
             const int dir_off = 0;
             const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
-            // NOTE: kernel_args is only used for cooperative launch.
-            // Keep it here to simplify toggling the cooperative kernel for benchmarking.
-            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
-                                     (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
-                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
-                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
             CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
             CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
 
@@ -504,9 +673,51 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                                       (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
                                       (void *) &out, (void *) &dst_stride, (void *) &dir_off,
                                       (void *) &h_state.ptr, (void *) &c_state.ptr };
-            CUDA_CHECK(cudaLaunchCooperativeKernel(
-                (void *) k_pyannote_seg_lstm_dir_coop<false, half, half, COOP_THREADS>,
-                coop_grid, coop_block, kernel_args2, 0, stream));
+            const size_t coop_shmem = (size_t) H * sizeof(float);
+
+            if (want_coop_warp) {
+                switch (coop_warps) {
+                    case 4:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<false, half, half, 4>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 8:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<false, half, half, 8>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    default:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<false, half, half, 8>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                }
+            } else {
+                switch (coop_threads) {
+                    case 8:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<false, half, half, 8>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 16:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<false, half, half, 16>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 32:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<false, half, half, 32>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    default:
+                        // Should be unreachable due to validation above.
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<false, half, half, 8>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                }
+            }
         } else {
             const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
             k_pyannote_seg_lstm_dir<false, half, half><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_f_d, b_ih_d, b_hh_d, out, dst_stride, 0);
@@ -540,10 +751,6 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
         if (use_coop) {
             const int dir_off = H;
             const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
-            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
-                                     (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
-                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
-                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
             CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
             CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
 
@@ -551,9 +758,50 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                                       (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
                                       (void *) &out, (void *) &dst_stride, (void *) &dir_off,
                                       (void *) &h_state.ptr, (void *) &c_state.ptr };
-            CUDA_CHECK(cudaLaunchCooperativeKernel(
-                (void *) k_pyannote_seg_lstm_dir_coop<true, half, half, COOP_THREADS>,
-                coop_grid, coop_block, kernel_args2, 0, stream));
+            const size_t coop_shmem = (size_t) H * sizeof(float);
+
+            if (want_coop_warp) {
+                switch (coop_warps) {
+                    case 4:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<true, half, half, 4>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 8:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<true, half, half, 8>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    default:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<true, half, half, 8>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                }
+            } else {
+                switch (coop_threads) {
+                    case 8:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<true, half, half, 8>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 16:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<true, half, half, 16>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 32:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<true, half, half, 32>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    default:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<true, half, half, 8>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                }
+            }
         } else {
             const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
             k_pyannote_seg_lstm_dir<true,  half, half><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_r_d, b_ih_rd, b_hh_rd, out, dst_stride, H);
@@ -592,10 +840,6 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
         if (use_coop) {
             const int dir_off = 0;
             const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
-            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
-                                     (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
-                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
-                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
             CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
             CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
 
@@ -603,9 +847,50 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                                       (void *) &whh_f_d, (void *) &b_ih_d, (void *) &b_hh_d,
                                       (void *) &out, (void *) &dst_stride, (void *) &dir_off,
                                       (void *) &h_state.ptr, (void *) &c_state.ptr };
-            CUDA_CHECK(cudaLaunchCooperativeKernel(
-                (void *) k_pyannote_seg_lstm_dir_coop<false, half, float, COOP_THREADS>,
-                coop_grid, coop_block, kernel_args2, 0, stream));
+            const size_t coop_shmem = (size_t) H * sizeof(float);
+
+            if (want_coop_warp) {
+                switch (coop_warps) {
+                    case 4:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<false, half, float, 4>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 8:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<false, half, float, 8>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    default:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<false, half, float, 8>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                }
+            } else {
+                switch (coop_threads) {
+                    case 8:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<false, half, float, 8>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 16:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<false, half, float, 16>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 32:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<false, half, float, 32>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    default:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<false, half, float, 8>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                }
+            }
         } else {
             const float * ih_ptr = use_batched_gemm ? ih.get() : ih_fwd.get();
             k_pyannote_seg_lstm_dir<false, half, float><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_f_d, b_ih_d, b_hh_d, out, dst_stride, 0);
@@ -639,10 +924,6 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
         if (use_coop) {
             const int dir_off = H;
             const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
-            void * kernel_args[] = { (void *) &T, (void *) &H, (void *) &ih_ptr, (void *) &ih_stride,
-                                     (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
-                                     (void *) &out, (void *) &dst_stride, (void *) &dir_off,
-                                     (void *) &h_state.ptr, (void *) &c_state.ptr };
             CUDA_CHECK(cudaMemsetAsync(h_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
             CUDA_CHECK(cudaMemsetAsync(c_state.get(), 0, (size_t) B * (size_t) (2 * H) * sizeof(float), stream));
 
@@ -650,9 +931,50 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                                       (void *) &whh_r_d, (void *) &b_ih_rd, (void *) &b_hh_rd,
                                       (void *) &out, (void *) &dst_stride, (void *) &dir_off,
                                       (void *) &h_state.ptr, (void *) &c_state.ptr };
-            CUDA_CHECK(cudaLaunchCooperativeKernel(
-                (void *) k_pyannote_seg_lstm_dir_coop<true, half, float, COOP_THREADS>,
-                coop_grid, coop_block, kernel_args2, 0, stream));
+            const size_t coop_shmem = (size_t) H * sizeof(float);
+
+            if (want_coop_warp) {
+                switch (coop_warps) {
+                    case 4:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<true, half, float, 4>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 8:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<true, half, float, 8>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    default:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop_warp<true, half, float, 8>,
+                            coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
+                        break;
+                }
+            } else {
+                switch (coop_threads) {
+                    case 8:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<true, half, float, 8>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 16:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<true, half, float, 16>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    case 32:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<true, half, float, 32>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                    default:
+                        CUDA_CHECK(cudaLaunchCooperativeKernel(
+                            (void *) k_pyannote_seg_lstm_dir_coop<true, half, float, 8>,
+                            coop_grid, coop_block, kernel_args2, coop_shmem, stream));
+                        break;
+                }
+            }
         } else {
             const float * ih_ptr = use_batched_gemm ? ih.get() : ih_rev.get();
             k_pyannote_seg_lstm_dir<true,  half, float><<<legacy_grid, legacy_block, legacy_shmem, stream>>>(T, H, ih_ptr, ih_stride, whh_r_d, b_ih_rd, b_hh_rd, out, dst_stride, H);

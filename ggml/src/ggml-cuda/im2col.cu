@@ -33,12 +33,239 @@ static  __global__ void im2col_kernel(
             dst[offset_dst] = 0.0f;
         } else {
             const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
-            dst[offset_dst] = x[offset_src + iih * IW + iiw];
+            dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
         }
     }
 
     GGML_UNUSED(IC);
     GGML_UNUSED(KH);
+}
+
+// Specialized im2col kernel for the common embedding-conv case:
+// - stride = 1
+// - dilation = 1
+// - symmetric padding p0=p1=1
+//
+// This removes some per-element arithmetic and branches in the hot loop.
+template <typename T>
+static __global__ void im2col_kernel_p1s1d1(
+        const float * x, T * dst,
+        int64_t IC, int64_t IW, int64_t IH, int64_t OH, int64_t OW, int64_t KW, int64_t KH,
+        int64_t IC_IH_IW, int64_t IH_IW, int64_t N_OH, int64_t KH_KW, int64_t IC_KH_KW) {
+    const int64_t i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i >= IC_KH_KW) {
+        return;
+    }
+
+    const int64_t iic = i / (KH_KW);
+    const int64_t rem = i - iic * KH_KW;
+    const int64_t ikh = rem / KW;
+    const int64_t ikw = rem - ikh * KW;
+
+    const int64_t iow = blockIdx.y;
+    for (int64_t iz = blockIdx.z; iz < N_OH; iz += MAX_GRIDDIM_Z) {
+        const int64_t in  = iz / OH;
+        const int64_t ioh = iz - in * OH;
+
+        // stride=1, dilation=1, padding=1
+        const int64_t iiw = iow + ikw - 1;
+        const int64_t iih = ioh + ikh - 1;
+
+        const int64_t offset_dst = ((in * OH + ioh) * OW + iow) * IC_KH_KW + iic * KH_KW + ikh * KW + ikw;
+
+        // Interior outputs dominate; skip bounds checks when the 3x3 footprint is fully inside.
+        // Interior condition for pad=1, k in [0..2]: out_x in [1..OW-2], out_y in [1..OH-2].
+        if (iow > 0 && iow + 1 < OW && ioh > 0 && ioh + 1 < OH) {
+            const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+            dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
+        } else {
+            if ((uint64_t) iih >= (uint64_t) IH || (uint64_t) iiw >= (uint64_t) IW) {
+                dst[offset_dst] = 0.0f;
+            } else {
+                const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+                dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
+            }
+        }
+    }
+
+    GGML_UNUSED(IC);
+    GGML_UNUSED(KH);
+}
+
+// Out-parallel im2col for pad=1, stride=1, dil=1.
+// One block per output position; threads cover IC*KH*KW in a loop.
+// This reduces the number of blocks by a factor of ceil(IC*KH*KW / 256).
+template <typename T>
+static __global__ void im2col_kernel_p1s1d1_outpar(
+        const float * x, T * dst,
+        int64_t IC, int64_t IW, int64_t IH, int64_t OH, int64_t OW,
+        int64_t KW, int64_t KH,
+        int64_t IC_IH_IW, int64_t IH_IW, int64_t KH_KW, int64_t IC_KH_KW) {
+    const int64_t out_idx = (int64_t) blockIdx.x;
+
+    const int64_t iow = out_idx % OW;
+    const int64_t iz  = out_idx / OW;
+    const int64_t in  = iz / OH;
+    const int64_t ioh = iz - in * OH;
+
+    for (int64_t i = (int64_t) threadIdx.x; i < IC_KH_KW; i += (int64_t) blockDim.x) {
+        const int64_t iic = i / KH_KW;
+        const int64_t rem = i - iic * KH_KW;
+        const int64_t ikh = rem / KW;
+        const int64_t ikw = rem - ikh * KW;
+
+        const int64_t iiw = iow + ikw - 1;
+        const int64_t iih = ioh + ikh - 1;
+
+        const int64_t offset_dst = out_idx * IC_KH_KW + i;
+
+        if ((uint64_t) iih >= (uint64_t) IH || (uint64_t) iiw >= (uint64_t) IW) {
+            dst[offset_dst] = 0.0f;
+        } else {
+            const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+            dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
+        }
+    }
+
+    GGML_UNUSED(KH);
+}
+
+
+
+// Common case: stride=2, dilation=1, padding=1 (e.g., ResNet downsampling 3x3 conv).
+template <typename T>
+static __global__ void im2col_kernel_p1s2d1(
+        const float * x, T * dst,
+        int64_t IC, int64_t IW, int64_t IH, int64_t OH, int64_t OW, int64_t KW, int64_t KH,
+        int64_t IC_IH_IW, int64_t IH_IW, int64_t N_OH, int64_t KH_KW, int64_t IC_KH_KW) {
+    const int64_t i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i >= IC_KH_KW) {
+        return;
+    }
+
+    const int64_t iic = i / (KH_KW);
+    const int64_t rem = i - iic * KH_KW;
+    const int64_t ikh = rem / KW;
+    const int64_t ikw = rem - ikh * KW;
+
+    const int64_t iow = blockIdx.y;
+    for (int64_t iz = blockIdx.z; iz < N_OH; iz += MAX_GRIDDIM_Z) {
+        const int64_t in  = iz / OH;
+        const int64_t ioh = iz - in * OH;
+
+        // stride=2, dilation=1, padding=1
+        const int64_t iiw = iow * 2 + ikw - 1;
+        const int64_t iih = ioh * 2 + ikh - 1;
+
+        const int64_t offset_dst = ((in * OH + ioh) * OW + iow) * IC_KH_KW + iic * KH_KW + ikh * KW + ikw;
+
+        if (iow > 0 && iow + 1 < OW && ioh > 0 && ioh + 1 < OH) {
+            const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+            dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
+        } else {
+            if ((uint64_t) iih >= (uint64_t) IH || (uint64_t) iiw >= (uint64_t) IW) {
+                dst[offset_dst] = 0.0f;
+            } else {
+                const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+                dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
+            }
+        }
+    }
+
+    GGML_UNUSED(IC);
+    GGML_UNUSED(KH);
+}
+
+template <typename T>
+static __global__ void im2col_kernel_p1s2d1_outpar(
+        const float * x, T * dst,
+        int64_t IC, int64_t IW, int64_t IH, int64_t OH, int64_t OW,
+        int64_t KW, int64_t KH,
+        int64_t IC_IH_IW, int64_t IH_IW, int64_t KH_KW, int64_t IC_KH_KW) {
+    const int64_t out_idx = (int64_t) blockIdx.x;
+
+    const int64_t iow = out_idx % OW;
+    const int64_t iz  = out_idx / OW;
+    const int64_t in  = iz / OH;
+    const int64_t ioh = iz - in * OH;
+
+    for (int64_t i = (int64_t) threadIdx.x; i < IC_KH_KW; i += (int64_t) blockDim.x) {
+        const int64_t iic = i / KH_KW;
+        const int64_t rem = i - iic * KH_KW;
+        const int64_t ikh = rem / KW;
+        const int64_t ikw = rem - ikh * KW;
+
+        const int64_t iiw = iow * 2 + ikw - 1;
+        const int64_t iih = ioh * 2 + ikh - 1;
+
+        const int64_t offset_dst = out_idx * IC_KH_KW + i;
+
+        if ((uint64_t) iih >= (uint64_t) IH || (uint64_t) iiw >= (uint64_t) IW) {
+            dst[offset_dst] = 0.0f;
+        } else {
+            const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+            dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
+        }
+    }
+
+    GGML_UNUSED(KH);
+}
+
+
+// Common case: 1x1 kernel, dilation=1, padding=0, stride=1.
+template <typename T>
+static __global__ void im2col_kernel_k1_p0s1d1(
+        const float * x, T * dst,
+        int64_t IC, int64_t IW, int64_t IH, int64_t OH, int64_t OW,
+        int64_t IC_IH_IW, int64_t IH_IW, int64_t N_OH) {
+    const int64_t i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i >= IC) {
+        return;
+    }
+
+    const int64_t iic = i;
+    const int64_t iow = blockIdx.y;
+    for (int64_t iz = blockIdx.z; iz < N_OH; iz += MAX_GRIDDIM_Z) {
+        const int64_t in  = iz / OH;
+        const int64_t ioh = iz - in * OH;
+
+        const int64_t iiw = iow;
+        const int64_t iih = ioh;
+
+        const int64_t offset_dst = ((in * OH + ioh) * OW + iow) * IC + iic;
+        const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+        dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
+    }
+
+    GGML_UNUSED(IH);
+}
+
+// Common case: 1x1 kernel, dilation=1, padding=0, stride=2.
+template <typename T>
+static __global__ void im2col_kernel_k1_p0s2d1(
+        const float * x, T * dst,
+        int64_t IC, int64_t IW, int64_t IH, int64_t OH, int64_t OW,
+        int64_t IC_IH_IW, int64_t IH_IW, int64_t N_OH) {
+    const int64_t i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i >= IC) {
+        return;
+    }
+
+    const int64_t iic = i;
+    const int64_t iow = blockIdx.y;
+    for (int64_t iz = blockIdx.z; iz < N_OH; iz += MAX_GRIDDIM_Z) {
+        const int64_t in  = iz / OH;
+        const int64_t ioh = iz - in * OH;
+
+        const int64_t iiw = iow * 2;
+        const int64_t iih = ioh * 2;
+
+        const int64_t offset_dst = ((in * OH + ioh) * OW + iow) * IC + iic;
+        const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+        dst[offset_dst] = __ldg(x + (offset_src + iih * IW + iiw));
+    }
+
+    GGML_UNUSED(IH);
 }
 
 // im2col: [N, IC, IH, IW] => [N, OH, OW, IC*KH*KW]
@@ -52,9 +279,49 @@ static void im2col_cuda(const float * x, T* dst,
     const int64_t N_OH = N * OH;
     const int64_t KH_KW = KW*KH;
     dim3 block_nums(num_blocks, OW, MIN(N_OH, MAX_GRIDDIM_Z));
-    im2col_kernel<<<block_nums, MIN(IC_KH_KW, CUDA_IM2COL_BLOCK_SIZE) , 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
-                                                                                     IC_IH_IW, IH_IW, N_OH, KH_KW, IC_KH_KW,
-                                                                                     s0, s1, p0, p1, d0, d1);
+    const int threads = MIN(IC_KH_KW, CUDA_IM2COL_BLOCK_SIZE);
+
+    // Fast-paths for common embedding conv2d cases.
+    if (KW == 3 && KH == 3 && s0 == 1 && s1 == 1 && d0 == 1 && d1 == 1 && p0 == 1 && p1 == 1) {
+        if (IC_KH_KW > CUDA_IM2COL_BLOCK_SIZE) {
+            const int64_t out_total = OW * N_OH;
+            const dim3 grid((unsigned int) out_total, 1, 1);
+            const dim3 block(CUDA_IM2COL_BLOCK_SIZE, 1, 1);
+            im2col_kernel_p1s1d1_outpar<<<grid, block, 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
+                                                                    IC_IH_IW, IH_IW, KH_KW, IC_KH_KW);
+        } else {
+            im2col_kernel_p1s1d1<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
+                                                                     IC_IH_IW, IH_IW, N_OH, KH_KW, IC_KH_KW);
+        }
+    } else if (KW == 3 && KH == 3 && s0 == 2 && s1 == 2 && d0 == 1 && d1 == 1 && p0 == 1 && p1 == 1) {
+        if (IC_KH_KW > CUDA_IM2COL_BLOCK_SIZE) {
+            const int64_t out_total = OW * N_OH;
+            const dim3 grid((unsigned int) out_total, 1, 1);
+            const dim3 block(CUDA_IM2COL_BLOCK_SIZE, 1, 1);
+            im2col_kernel_p1s2d1_outpar<<<grid, block, 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
+                                                                    IC_IH_IW, IH_IW, KH_KW, IC_KH_KW);
+        } else {
+            im2col_kernel_p1s2d1<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
+                                                                     IC_IH_IW, IH_IW, N_OH, KH_KW, IC_KH_KW);
+        }
+    } else if (KW == 1 && KH == 1 && d0 == 1 && d1 == 1 && p0 == 0 && p1 == 0) {
+        // For 1x1, IC_KH_KW == IC.
+        if (s0 == 1 && s1 == 1) {
+            im2col_kernel_k1_p0s1d1<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW,
+                                                                        IC_IH_IW, IH_IW, N_OH);
+        } else if (s0 == 2 && s1 == 2) {
+            im2col_kernel_k1_p0s2d1<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW,
+                                                                        IC_IH_IW, IH_IW, N_OH);
+        } else {
+            im2col_kernel<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
+                                                              IC_IH_IW, IH_IW, N_OH, KH_KW, IC_KH_KW,
+                                                              s0, s1, p0, p1, d0, d1);
+        }
+    } else {
+        im2col_kernel<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
+                                                          IC_IH_IW, IH_IW, N_OH, KH_KW, IC_KH_KW,
+                                                          s0, s1, p0, p1, d0, d1);
+    }
 }
 
 static void im2col_cuda_f16(const float * x, half * dst,

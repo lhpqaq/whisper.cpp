@@ -70,3 +70,5 @@ test.flac
 output
 
 openvino_cache/
+
+*.log

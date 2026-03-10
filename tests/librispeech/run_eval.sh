@@ -2,10 +2,11 @@
 
 # 模型列表
 # MODELS=("l3t-a9b1" "l3t-a1b9" "large-v3-turbo" "large-v3-turbo-q40" "large-v3-turbo-q80" "large-v3-turbo-q50" "large-v3-turbo-q2k")
-MODELS=("large-v3-turbo-q2k")
+# MODELS=("medium-q80" "medium-q40" "medium-q50" "medium-q2k" "medium-mixed-a0p2-b0p8" "medium-mixed-a0p8-b0p2" "medium" )
+MODELS=("medium-q80")
 
 # 结果存储目录
-RESULT_DIR="../../result/mix/l3t"
+RESULT_DIR="../../result/mix/medium"
 
 # 确保结果目录存在
 mkdir -p "$RESULT_DIR"

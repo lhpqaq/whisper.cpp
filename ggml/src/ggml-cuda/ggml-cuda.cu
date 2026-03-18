@@ -1150,6 +1150,9 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
     const char * coop_warp_nosh_env = getenv("DIARIZATION_SEG_LSTM_COOP_WARP_NOSH");
     const bool want_coop_warp_nosh = (coop_warp_nosh_env != nullptr) && (std::strcmp(coop_warp_nosh_env, "0") != 0);
 
+    const char * coop_warp_h2_env = getenv("DIARIZATION_SEG_LSTM_COOP_WARP_H2");
+    const bool want_coop_warp_h2 = !(coop_warp_h2_env != nullptr && std::strcmp(coop_warp_h2_env, "0") == 0);
+
     int coop_warps = 4;
     if (const char * env_warps = getenv("DIARIZATION_SEG_LSTM_COOP_WARPS")) {
         const int v = std::atoi(env_warps);
@@ -1214,7 +1217,7 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                                       (void *) &h_state.ptr, (void *) &c_state.ptr };
             const size_t coop_shmem = (size_t) H * sizeof(float);
 
-            if (want_coop_warp && want_coop_bidir) {
+            if (want_coop_warp && want_coop_bidir && want_coop_warp_h2) {
                 // Use a fused bidirectional kernel (both directions share the per-step grid.sync).
                 const float * ih_f_ptr = ih_ptr;
                 // Ensure reverse ih is computed before the fused kernel.
@@ -1295,27 +1298,32 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                 switch (coop_warps) {
                     case 2:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 2> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 2>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 2> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 2>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, half, 2>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 4:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 4>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 4>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, half, 4>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 8:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 8> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 8>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 8> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 8>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, half, 8>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 16:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 16> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 16>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 16> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 16>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, half, 16>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     default:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 4>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, half, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, half, 4>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, half, 4>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                 }
@@ -1390,27 +1398,32 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                 switch (coop_warps) {
                     case 2:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 2> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 2>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 2> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 2>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, half, 2>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 4:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 4>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 4>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, half, 4>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 8:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 8> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 8>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 8> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 8>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, half, 8>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 16:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 16> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 16>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 16> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 16>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, half, 16>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     default:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 4>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, half, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, half, 4>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, half, 4>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                 }
@@ -1485,7 +1498,7 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                                       (void *) &h_state.ptr, (void *) &c_state.ptr };
             const size_t coop_shmem = (size_t) H * sizeof(float);
 
-            if (want_coop_warp && want_coop_bidir) {
+            if (want_coop_warp && want_coop_bidir && want_coop_warp_h2) {
                 const float * ih_f_ptr = ih_ptr;
 
                 if (use_batched_gemm) {
@@ -1560,27 +1573,32 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                 switch (coop_warps) {
                     case 2:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 2> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 2>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 2> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 2>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, float, 2>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 4:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 4>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 4>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, float, 4>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 8:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 8> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 8>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 8> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 8>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, float, 8>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 16:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 16> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 16>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 16> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 16>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, float, 16>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     default:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 4>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<false, float, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<false, float, 4>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<false, half, float, 4>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                 }
@@ -1654,27 +1672,32 @@ static void ggml_cuda_pyannote_seg_lstm_custom(ggml_backend_cuda_context & ctx, 
                 switch (coop_warps) {
                     case 2:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 2> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 2>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 2> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 2>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, float, 2>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 4:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 4>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 4>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, float, 4>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 8:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 8> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 8>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 8> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 8>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, float, 8>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     case 16:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 16> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 16>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 16> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 16>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, float, 16>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                     default:
                         CUDA_CHECK(cudaLaunchCooperativeKernel(
-                            (void *) (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 4>),
+                            (void *) (want_coop_warp_h2 ? (want_coop_warp_nosh ? k_pyannote_seg_lstm_dir_coop_warp_h2_nosh<true, float, 4> : k_pyannote_seg_lstm_dir_coop_warp_h2<true, float, 4>)
+                                                         : k_pyannote_seg_lstm_dir_coop_warp<true, half, float, 4>),
                             coop_warp_grid, coop_warp_block, kernel_args2, coop_shmem, stream));
                         break;
                 }

@@ -1,5 +1,7 @@
 #include "im2col.cuh"
 
+#include <cstring>
+
 #define MAX_GRIDDIM_Z 65535
 
 template <typename T>
@@ -274,6 +276,11 @@ static void im2col_cuda(const float * x, T* dst,
     int64_t IW, int64_t IH, int64_t OW, int64_t OH, int64_t KW, int64_t KH, int64_t IC,
     int64_t N, int64_t IC_IH_IW, int64_t IH_IW,
     int s0,int s1,int p0,int p1,int d0,int d1, cudaStream_t stream) {
+    const char * env_special = getenv("GGML_CUDA_IM2COL_SPECIAL");
+    const bool use_special = !(env_special && strcmp(env_special, "0") == 0);
+    const char * env_outpar = getenv("GGML_CUDA_IM2COL_OUTPAR");
+    const bool use_outpar = !(env_outpar && strcmp(env_outpar, "0") == 0);
+
     const int64_t IC_KH_KW = IC * KH * KW;
     const int64_t num_blocks = (IC_KH_KW + CUDA_IM2COL_BLOCK_SIZE - 1) / CUDA_IM2COL_BLOCK_SIZE;
     const int64_t N_OH = N * OH;
@@ -282,8 +289,8 @@ static void im2col_cuda(const float * x, T* dst,
     const int threads = MIN(IC_KH_KW, CUDA_IM2COL_BLOCK_SIZE);
 
     // Fast-paths for common embedding conv2d cases.
-    if (KW == 3 && KH == 3 && s0 == 1 && s1 == 1 && d0 == 1 && d1 == 1 && p0 == 1 && p1 == 1) {
-        if (IC_KH_KW > CUDA_IM2COL_BLOCK_SIZE) {
+    if (use_special && KW == 3 && KH == 3 && s0 == 1 && s1 == 1 && d0 == 1 && d1 == 1 && p0 == 1 && p1 == 1) {
+        if (use_outpar && IC_KH_KW > CUDA_IM2COL_BLOCK_SIZE) {
             const int64_t out_total = OW * N_OH;
             const dim3 grid((unsigned int) out_total, 1, 1);
             const dim3 block(CUDA_IM2COL_BLOCK_SIZE, 1, 1);
@@ -293,8 +300,8 @@ static void im2col_cuda(const float * x, T* dst,
             im2col_kernel_p1s1d1<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
                                                                      IC_IH_IW, IH_IW, N_OH, KH_KW, IC_KH_KW);
         }
-    } else if (KW == 3 && KH == 3 && s0 == 2 && s1 == 2 && d0 == 1 && d1 == 1 && p0 == 1 && p1 == 1) {
-        if (IC_KH_KW > CUDA_IM2COL_BLOCK_SIZE) {
+    } else if (use_special && KW == 3 && KH == 3 && s0 == 2 && s1 == 2 && d0 == 1 && d1 == 1 && p0 == 1 && p1 == 1) {
+        if (use_outpar && IC_KH_KW > CUDA_IM2COL_BLOCK_SIZE) {
             const int64_t out_total = OW * N_OH;
             const dim3 grid((unsigned int) out_total, 1, 1);
             const dim3 block(CUDA_IM2COL_BLOCK_SIZE, 1, 1);
@@ -304,7 +311,7 @@ static void im2col_cuda(const float * x, T* dst,
             im2col_kernel_p1s2d1<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW, KW, KH,
                                                                      IC_IH_IW, IH_IW, N_OH, KH_KW, IC_KH_KW);
         }
-    } else if (KW == 1 && KH == 1 && d0 == 1 && d1 == 1 && p0 == 0 && p1 == 0) {
+    } else if (use_special && KW == 1 && KH == 1 && d0 == 1 && d1 == 1 && p0 == 0 && p1 == 0) {
         // For 1x1, IC_KH_KW == IC.
         if (s0 == 1 && s1 == 1) {
             im2col_kernel_k1_p0s1d1<<<block_nums, threads, 0, stream>>>(x, dst, IC, IW, IH, OH, OW,

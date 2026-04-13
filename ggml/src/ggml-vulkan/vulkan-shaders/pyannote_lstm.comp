@@ -1,0 +1,88 @@
+#version 450
+
+// Pyannote segmentation BiLSTM recurrence shader.
+// Processes one direction (forward or reverse) of one LSTM layer.
+//
+// Inputs:
+//   ih_all: [4H, T] — pre-computed input projection (W_ih * X), gate-major: ih_all[g * T + t]
+//   w_hh:   [H, 4H] — hidden-to-hidden weight matrix (F16, column-major ld=H)
+//   b_ih:   [4H] — input bias (F32)
+//   b_hh:   [4H] — hidden bias (F32)
+//
+// Output:
+//   dst: [H, T] — hidden states, laid out as dst[h * T + t]
+//
+// Push constants:
+//   T: number of timesteps
+//   H: hidden size (128)
+//   reverse: 0 for forward, 1 for reverse
+
+layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+
+layout (push_constant) uniform parameter {
+    int T;
+    int H;
+    int reverse;
+    int pad0;
+} p;
+
+layout (binding = 0) readonly  buffer IH_ALL { float ih_all[]; };   // [4H * T]
+layout (binding = 1) readonly  buffer W_HH   { float w_hh[];  };   // [H * 4H] F32
+layout (binding = 2) readonly  buffer B_IH   { float b_ih[];  };   // [4H]
+layout (binding = 3) readonly  buffer B_HH   { float b_hh[];  };   // [4H]
+layout (binding = 4) writeonly buffer DST    { float dst[];   };   // [H * T]
+
+shared float h_prev[128];
+shared float c_prev[128];
+
+void main() {
+    const int h = int(gl_LocalInvocationID.x);
+    const int H = p.H;
+    const int T = p.T;
+    const int G = 4 * H;
+
+    if (h >= H) return;
+
+    h_prev[h] = 0.0;
+    c_prev[h] = 0.0;
+    barrier();
+
+    for (int step = 0; step < T; ++step) {
+        int t = (p.reverse != 0) ? (T - 1 - step) : step;
+
+        // Compute dot products: w_hh[g, :] . h_prev for each gate g
+        // w_hh layout: column-major [H, 4H], w_hh[g * H + k] = weight for gate g, input k
+        float dot_i = 0.0;
+        float dot_f = 0.0;
+        float dot_g = 0.0;
+        float dot_o = 0.0;
+
+        for (int k = 0; k < H; ++k) {
+            float hp = h_prev[k];
+            dot_i += w_hh[(h)       * H + k] * hp;
+            dot_f += w_hh[(H + h)   * H + k] * hp;
+            dot_g += w_hh[(2*H + h) * H + k] * hp;
+            dot_o += w_hh[(3*H + h) * H + k] * hp;
+        }
+
+        float gate_i = ih_all[(h)       * T + t] + dot_i + b_ih[h]       + b_hh[h];
+        float gate_f = ih_all[(H + h)   * T + t] + dot_f + b_ih[H + h]   + b_hh[H + h];
+        float gate_g = ih_all[(2*H + h) * T + t] + dot_g + b_ih[2*H + h] + b_hh[2*H + h];
+        float gate_o = ih_all[(3*H + h) * T + t] + dot_o + b_ih[3*H + h] + b_hh[3*H + h];
+
+        float i_val = 1.0 / (1.0 + exp(-gate_i));
+        float f_val = 1.0 / (1.0 + exp(-gate_f));
+        float g_val = tanh(gate_g);
+        float o_val = 1.0 / (1.0 + exp(-gate_o));
+
+        float c_new = f_val * c_prev[h] + i_val * g_val;
+        float h_new = o_val * tanh(c_new);
+
+        c_prev[h] = c_new;
+        h_prev[h] = h_new;
+
+        dst[h * T + t] = h_new;
+
+        barrier();
+    }
+}

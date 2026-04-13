@@ -829,6 +829,9 @@ struct vk_device_struct {
     // [2] is for whether to take n_experts from spec constant (0) or push constant (1)
     vk_pipeline pipeline_topk_moe[num_topk_moe_pipelines][2];
 
+    // Pyannote segmentation BiLSTM recurrence
+    vk_pipeline pipeline_pyannote_lstm_f32;
+
     std::vector<vk_pipeline_ref> all_pipelines;
 
     std::vector<std::tuple<void*, size_t, vk_buffer>> pinned_memory;
@@ -1064,6 +1067,29 @@ struct vk_op_push_constants {
     float param2;
     float param3;
     float param4;
+};
+
+struct vk_op_pyannote_lstm_push_constants {
+    int32_t T;
+    int32_t H;
+    int32_t reverse;
+    int32_t pad0;
+};
+
+struct vk_pyannote_lstm_runtime_cache {
+    int T = 0;
+    int H = 0;
+    vk_buffer ih_all_fwd;
+    vk_buffer ih_all_rev;
+    vk_buffer w_hh_fwd[4];
+    vk_buffer w_hh_rev[4];
+    vk_buffer b_ih_fwd[4];
+    vk_buffer b_hh_fwd[4];
+    vk_buffer b_ih_rev[4];
+    vk_buffer b_hh_rev[4];
+    bool weights_uploaded[4] = { false, false, false, false };
+    vk_buffer dst_fwd;
+    vk_buffer dst_rev;
 };
 
 struct vk_op_count_experts_push_constants {
@@ -1880,6 +1906,8 @@ struct ggml_backend_vk_context {
     std::vector<int> query_node_idx;
     int32_t num_queries {};
     int32_t query_idx {};
+
+    vk_pyannote_lstm_runtime_cache pyannote_lstm_cache;
 };
 
 static void * const vk_ptr_base = (void *)(uintptr_t) 0x1000;  // NOLINT
@@ -4367,6 +4395,9 @@ static void ggml_vk_load_shaders(vk_device& device) {
     ggml_vk_create_pipeline(device, device->pipeline_count_equal_i32, "count_equal_i32", count_equal_i32_len, count_equal_i32_data, "main", 3, sizeof(vk_op_push_constants), {512, 1, 1}, { device->subgroup_size }, 1);
 
     ggml_vk_create_pipeline(device, device->pipeline_count_experts, "count_experts", count_experts_len, count_experts_data, "main", 2, sizeof(vk_op_count_experts_push_constants), {1, 1, 1}, {}, 1, true);
+
+    // Pyannote segmentation BiLSTM recurrence (5 bindings: ih_all, w_hh, b_ih, b_hh, dst)
+    ggml_vk_create_pipeline(device, device->pipeline_pyannote_lstm_f32, "pyannote_lstm_f32", pyannote_lstm_f32_len, pyannote_lstm_f32_data, "main", 5, sizeof(vk_op_pyannote_lstm_push_constants), {1, 1, 1}, {}, 1);
 
     for (auto &s : device->pipeline_solve_tri_f32) {
         const vk_solve_tri_pipeline_state &state = s.first;
@@ -10147,6 +10178,198 @@ static void ggml_vk_ssm_conv(ggml_backend_vk_context * ctx, vk_context& subctx, 
     });
 }
 
+static bool ggml_vk_is_pyannote_seg_lstm_custom(const ggml_tensor * op);
+
+static void ggml_vk_free_pyannote_lstm_cache(vk_pyannote_lstm_runtime_cache & cache) {
+    ggml_vk_destroy_buffer(cache.ih_all_fwd);
+    ggml_vk_destroy_buffer(cache.ih_all_rev);
+    for (int i = 0; i < 4; ++i) {
+        ggml_vk_destroy_buffer(cache.w_hh_fwd[i]);
+        ggml_vk_destroy_buffer(cache.w_hh_rev[i]);
+        ggml_vk_destroy_buffer(cache.b_ih_fwd[i]);
+        ggml_vk_destroy_buffer(cache.b_hh_fwd[i]);
+        ggml_vk_destroy_buffer(cache.b_ih_rev[i]);
+        ggml_vk_destroy_buffer(cache.b_hh_rev[i]);
+    }
+    ggml_vk_destroy_buffer(cache.dst_fwd);
+    ggml_vk_destroy_buffer(cache.dst_rev);
+    cache = {};
+}
+
+static bool ggml_vk_ensure_pyannote_lstm_cache(ggml_backend_vk_context * ctx, int T, int H) {
+    auto & cache = ctx->pyannote_lstm_cache;
+    if (cache.T == T && cache.H == H && cache.ih_all_fwd && cache.dst_rev) {
+        return true;
+    }
+
+    ggml_vk_free_pyannote_lstm_cache(cache);
+
+    const size_t gate_elems = (size_t) 4 * (size_t) H * (size_t) T;
+    const size_t bias_elems = (size_t) 4 * (size_t) H;
+    const size_t dst_elems = (size_t) H * (size_t) T;
+
+    cache.ih_all_fwd = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * gate_elems, { vk::MemoryPropertyFlagBits::eDeviceLocal });
+    cache.ih_all_rev = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * gate_elems, { vk::MemoryPropertyFlagBits::eDeviceLocal });
+    for (int i = 0; i < 4; ++i) {
+        const size_t whh_elems = (size_t) 4 * (size_t) H * (size_t) H;
+        cache.w_hh_fwd[i] = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * whh_elems,  { vk::MemoryPropertyFlagBits::eDeviceLocal });
+        cache.w_hh_rev[i] = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * whh_elems,  { vk::MemoryPropertyFlagBits::eDeviceLocal });
+        cache.b_ih_fwd[i] = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * bias_elems, { vk::MemoryPropertyFlagBits::eDeviceLocal });
+        cache.b_hh_fwd[i] = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * bias_elems, { vk::MemoryPropertyFlagBits::eDeviceLocal });
+        cache.b_ih_rev[i] = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * bias_elems, { vk::MemoryPropertyFlagBits::eDeviceLocal });
+        cache.b_hh_rev[i] = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * bias_elems, { vk::MemoryPropertyFlagBits::eDeviceLocal });
+    }
+    cache.dst_fwd    = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * dst_elems,  { vk::MemoryPropertyFlagBits::eDeviceLocal });
+    cache.dst_rev    = ggml_vk_create_buffer_check(ctx->device, sizeof(float) * dst_elems,  { vk::MemoryPropertyFlagBits::eDeviceLocal });
+
+    cache.T = T;
+    cache.H = H;
+
+    bool ok = cache.ih_all_fwd && cache.ih_all_rev && cache.dst_fwd && cache.dst_rev;
+    for (int i = 0; i < 4; ++i) {
+        ok = ok && cache.w_hh_fwd[i] && cache.w_hh_rev[i] && cache.b_ih_fwd[i] && cache.b_hh_fwd[i] && cache.b_ih_rev[i] && cache.b_hh_rev[i];
+    }
+    return ok;
+}
+
+extern "C" bool ggml_backend_vk_pyannote_lstm_recurrence(
+        ggml_backend_t backend,
+        int layer,
+        const float * ih_all_fwd,
+        const float * ih_all_rev,
+        const float * w_hh_fwd,
+        const float * w_hh_rev,
+        const float * b_ih_fwd,
+        const float * b_hh_fwd,
+        const float * b_ih_rev,
+        const float * b_hh_rev,
+        int T,
+        int H,
+        float * dst_fwd,
+        float * dst_rev) {
+    if (!backend || !ggml_backend_is_vk(backend)) {
+        return false;
+    }
+
+    auto * ctx = (ggml_backend_vk_context *) backend->context;
+    if (!ctx || !ctx->device || !ctx->device->pipeline_pyannote_lstm_f32) {
+        return false;
+    }
+
+    if (layer < 0 || layer >= 4 || T <= 0 || H <= 0 || !ih_all_fwd || !ih_all_rev || !w_hh_fwd || !w_hh_rev ||
+        !b_ih_fwd || !b_hh_fwd || !b_ih_rev || !b_hh_rev || !dst_fwd || !dst_rev) {
+        return false;
+    }
+
+    if (!ggml_vk_ensure_pyannote_lstm_cache(ctx, T, H)) {
+        return false;
+    }
+
+    auto & cache = ctx->pyannote_lstm_cache;
+    const size_t gate_bytes = sizeof(float) * (size_t) 4 * (size_t) H * (size_t) T;
+    const size_t whh_bytes  = sizeof(float) * (size_t) 4 * (size_t) H * (size_t) H;
+    const size_t bias_bytes = sizeof(float) * (size_t) 4 * (size_t) H;
+    const size_t dst_bytes  = sizeof(float) * (size_t) H * (size_t) T;
+
+    ggml_vk_buffer_write(cache.ih_all_fwd, 0, ih_all_fwd, gate_bytes);
+    ggml_vk_buffer_write(cache.ih_all_rev, 0, ih_all_rev, gate_bytes);
+    if (!cache.weights_uploaded[layer]) {
+        ggml_vk_buffer_write(cache.w_hh_fwd[layer], 0, w_hh_fwd, whh_bytes);
+        ggml_vk_buffer_write(cache.w_hh_rev[layer], 0, w_hh_rev, whh_bytes);
+        ggml_vk_buffer_write(cache.b_ih_fwd[layer], 0, b_ih_fwd, bias_bytes);
+        ggml_vk_buffer_write(cache.b_hh_fwd[layer], 0, b_hh_fwd, bias_bytes);
+        ggml_vk_buffer_write(cache.b_ih_rev[layer], 0, b_ih_rev, bias_bytes);
+        ggml_vk_buffer_write(cache.b_hh_rev[layer], 0, b_hh_rev, bias_bytes);
+        cache.weights_uploaded[layer] = true;
+    }
+
+    vk_pipeline pipeline = ctx->device->pipeline_pyannote_lstm_f32;
+    ggml_pipeline_request_descriptor_sets(ctx, pipeline, 2);
+    ggml_pipeline_allocate_descriptor_sets(ctx);
+
+    vk_context subctx = ggml_vk_create_context(ctx, ctx->compute_cmd_pool);
+    ggml_vk_ctx_begin(ctx->device, subctx);
+
+    const vk_op_pyannote_lstm_push_constants pc_fwd = { T, H, 0, 0 };
+    ggml_vk_dispatch_pipeline(ctx, subctx, pipeline,
+        { vk_subbuffer{ cache.ih_all_fwd, 0, gate_bytes },
+          vk_subbuffer{ cache.w_hh_fwd[layer],   0, whh_bytes  },
+          vk_subbuffer{ cache.b_ih_fwd[layer],   0, bias_bytes },
+          vk_subbuffer{ cache.b_hh_fwd[layer],   0, bias_bytes },
+          vk_subbuffer{ cache.dst_fwd,    0, dst_bytes  } },
+        pc_fwd, { 1, 1, 1 });
+
+    ggml_vk_sync_buffers(nullptr, subctx);
+
+    const vk_op_pyannote_lstm_push_constants pc_rev = { T, H, 1, 0 };
+    ggml_vk_dispatch_pipeline(ctx, subctx, pipeline,
+        { vk_subbuffer{ cache.ih_all_rev, 0, gate_bytes },
+          vk_subbuffer{ cache.w_hh_rev[layer],   0, whh_bytes  },
+          vk_subbuffer{ cache.b_ih_rev[layer],   0, bias_bytes },
+          vk_subbuffer{ cache.b_hh_rev[layer],   0, bias_bytes },
+          vk_subbuffer{ cache.dst_rev,    0, dst_bytes  } },
+        pc_rev, { 1, 1, 1 });
+
+    ggml_vk_ctx_end(subctx);
+    ggml_vk_submit(subctx, ctx->fence);
+    VK_CHECK(ctx->device->device.waitForFences({ ctx->fence }, true, UINT64_MAX), "ggml_backend_vk_pyannote_lstm_recurrence waitForFences");
+    ctx->device->device.resetFences({ ctx->fence });
+    ggml_vk_queue_command_pools_cleanup(ctx->device);
+
+    ggml_vk_buffer_read(cache.dst_fwd, 0, dst_fwd, dst_bytes);
+    ggml_vk_buffer_read(cache.dst_rev, 0, dst_rev, dst_bytes);
+
+    return true;
+}
+
+// Pyannote segmentation BiLSTM Vulkan dispatch
+// Mirrors CUDA's ggml_cuda_pyannote_seg_lstm_custom:
+// 1. Input projection: ih_all = W_ih * X (done via MUL_MAT on Vulkan)
+// 2. Recurrence: sequential gate updates (done via compute shader on Vulkan)
+static void ggml_vk_pyannote_seg_lstm(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst) {
+    const ggml_tensor * x      = dst->src[0];
+    const ggml_tensor * w_ih   = dst->src[1];
+    const ggml_tensor * w_hh   = dst->src[2];
+    const ggml_tensor * b_ih   = dst->src[3];
+    const ggml_tensor * b_hh   = dst->src[4];
+    const ggml_tensor * w_ih_r = dst->src[5];
+    const ggml_tensor * w_hh_r = dst->src[6];
+    const ggml_tensor * b_ih_r = dst->src[7];
+    const ggml_tensor * b_hh_r = dst->src[8];
+
+    const int T   = (int) x->ne[0];
+    const int in  = (int) x->ne[1];
+    const int H   = (int) w_hh->ne[0];
+    const int G   = 4 * H;
+
+    // We need scratch buffers for:
+    //   ih_all_fwd [G * T], ih_all_rev [G * T], w_hh_f32 [H * G], w_hh_r_f32 [H * G]
+    // Input projection: ih_all = W_ih^T * X  (X is [T, in], W_ih is [G, in] F16)
+    // W_ih stored as [ne0=G, ne1=in]. Reshape to [in, G] for mul_mat contraction.
+    //
+    // The recurrence shader expects:
+    //   ih_all[g * T + t] — gate-major layout
+    //   w_hh[g * H + k]  — same as GGUF column-major [H, G]
+    //   b_ih[g], b_hh[g] — F32 biases
+    //
+    // MUL_MAT(A, B) = A^T * B with A=[in, G], B=[in, T] → result [G, T]
+    // ggml output layout: data[t * G + g] — we need data[g * T + t]
+    // The shader reads ih_all[g * T + t], so we need to store in transposed layout.
+    //
+    // For now, use the existing input-projection Vulkan path from lstm.cpp
+    // and only dispatch the recurrence shader here.
+    // This function is called from ggml_vk_build_graph but the LSTM custom op
+    // also runs its own CPU callback. We'll handle this by having the build_graph
+    // recognize it and set up the GPU-side recurrence.
+    //
+    // TODO: Implement full GPU-side LSTM dispatch with input projection + recurrence.
+    // For now, fall back to CPU custom op execution (the GGML_OP_CUSTOM callback).
+    (void)ctx; (void)subctx; (void)dst;
+    (void)x; (void)w_ih; (void)w_hh; (void)b_ih; (void)b_hh;
+    (void)w_ih_r; (void)w_hh_r; (void)b_ih_r; (void)b_hh_r;
+    (void)T; (void)in; (void)H; (void)G;
+}
+
 static void ggml_vk_op_f32_opt_step_adamw(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst, const vk_op_push_constants&& pc) {
     const ggml_tensor * x = dst->src[0];
     const ggml_tensor * g = dst->src[1];
@@ -12815,6 +13038,14 @@ static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgr
         ggml_vk_opt_step_sgd(ctx, compute_ctx, src0, src1, src2, node);
 
         break;
+
+    case GGML_OP_CUSTOM:
+        if (ggml_vk_is_pyannote_seg_lstm_custom(node)) {
+            ggml_vk_pyannote_seg_lstm(ctx, compute_ctx, node);
+            break;
+        }
+        return false;
+
     default:
         return false;
     }
@@ -12942,6 +13173,7 @@ static void ggml_vk_cleanup(ggml_backend_vk_context * ctx) {
     ggml_vk_destroy_buffer(ctx->prealloc_split_k);
     ggml_vk_destroy_buffer(ctx->prealloc_add_rms_partials);
     ggml_vk_destroy_buffer(ctx->sync_staging);
+    ggml_vk_free_pyannote_lstm_cache(ctx->pyannote_lstm_cache);
 
     ctx->prealloc_y_last_pipeline_used = nullptr;
 
@@ -14571,6 +14803,43 @@ static ggml_backend_t ggml_backend_vk_device_init(ggml_backend_dev_t dev, const 
     return ggml_backend_vk_init(ctx->device);
 }
 
+// Pyannote segmentation BiLSTM custom op detection (mirrors CUDA version)
+static bool ggml_vk_is_pyannote_seg_lstm_custom(const ggml_tensor * op) {
+    if (!op || op->op != GGML_OP_CUSTOM) {
+        return false;
+    }
+    for (int i = 0; i < 9; ++i) {
+        if (!op->src[i]) {
+            return false;
+        }
+    }
+    const ggml_tensor * x     = op->src[0];
+    const ggml_tensor * w_ih  = op->src[1];
+    const ggml_tensor * w_hh  = op->src[2];
+    const ggml_tensor * w_ih_r = op->src[5];
+    const ggml_tensor * w_hh_r = op->src[6];
+
+    if (x->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
+        return false;
+    }
+    if (w_ih->type != GGML_TYPE_F16 || w_hh->type != GGML_TYPE_F16 ||
+        w_ih_r->type != GGML_TYPE_F16 || w_hh_r->type != GGML_TYPE_F16) {
+        return false;
+    }
+    const int H = (int) w_hh->ne[0];
+    const int G = 4 * H;
+    if (w_hh->ne[1] != G || w_hh_r->ne[0] != H || w_hh_r->ne[1] != G) {
+        return false;
+    }
+    if (op->ne[1] != 2 * H) {
+        return false;
+    }
+    if (::strncmp(w_ih->name, "lstm.weight_ih_l", 15) != 0) {
+        return false;
+    }
+    return true;
+}
+
 static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
     const vk_device& device = ggml_vk_get_device(ctx->device);
@@ -15087,6 +15356,11 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     ggml_is_contiguous(op->src[1]) &&
                     ggml_is_contiguous(op));
             }
+        // GGML_OP_CUSTOM: Pyannote LSTM pipeline and shader registered but
+        // recurrence dispatch not yet implemented. Keep disabled until
+        // ggml_vk_pyannote_seg_lstm is fully wired up.
+        // case GGML_OP_CUSTOM:
+        //     return ggml_vk_is_pyannote_seg_lstm_custom(op);
         default:
             return false;
     }
@@ -15196,47 +15470,6 @@ static ggml_backend_buffer_t ggml_backend_vk_device_buffer_from_host_ptr(ggml_ba
     ggml_backend_buffer_t ret = ggml_backend_buffer_init(ggml_backend_vk_device_get_buffer_type(dev), ggml_backend_vk_buffer_interface, bufctx, size);
 
     return ret;
-}
-
-static ggml_backend_event_t ggml_backend_vk_device_event_new(ggml_backend_dev_t dev) {
-    ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
-    auto device = ggml_vk_get_device(ctx->device);
-
-    vk_event *vkev = new vk_event;
-    if (!vkev) {
-        return nullptr;
-    }
-
-    // The event/fence is expected to initially be in the signaled state.
-    vkev->event = device->device.createEvent({});
-    vkev->fence = device->device.createFence({vk::FenceCreateFlagBits::eSignaled});
-    device->device.setEvent(vkev->event);
-
-    return new ggml_backend_event {
-        /* .device  = */ dev,
-        /* .context = */ vkev,
-    };
-}
-
-static void ggml_backend_vk_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
-    ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
-    auto device = ggml_vk_get_device(ctx->device);
-
-    vk_event *vkev = (vk_event *)event->context;
-
-    device->device.destroyFence(vkev->fence);
-    device->device.destroyEvent(vkev->event);
-    delete vkev;
-    delete event;
-}
-
-static void ggml_backend_vk_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
-    VK_LOG_DEBUG("ggml_backend_vk_device_event_synchronize(backend=" << dev << ", event=" << event << ")");
-    ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
-    auto device = ggml_vk_get_device(ctx->device);
-    vk_event *vkev = (vk_event *)event->context;
-
-    VK_CHECK(device->device.waitForFences({ vkev->fence }, true, UINT64_MAX), "event_synchronize");
 }
 
 static const struct ggml_backend_device_i ggml_backend_vk_device_i = {

@@ -951,7 +951,8 @@ void process_shaders() {
 
     string_to_spv("count_experts", "count_experts.comp", merge_maps(base_dict, {{"A_TYPE", "uint"}, {"D_TYPE", "uint"}}));
 
-    string_to_spv("count_experts", "count_experts.comp", merge_maps(base_dict, {{"A_TYPE", "uint"}, {"D_TYPE", "uint"}}));
+    // Pyannote segmentation BiLSTM recurrence shader
+    string_to_spv("pyannote_lstm_f32", "pyannote_lstm.comp", {});
 
     for (std::string dim_str : {"", "_3d"}) {
         for (bool bda : {false, true}) {

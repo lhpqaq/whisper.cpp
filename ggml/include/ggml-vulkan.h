@@ -24,6 +24,22 @@ GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_vk_host_buffer_type(voi
 
 GGML_BACKEND_API ggml_backend_reg_t ggml_backend_vk_reg(void);
 
+GGML_BACKEND_API bool ggml_backend_vk_pyannote_lstm_recurrence(
+        ggml_backend_t backend,
+        int layer,
+        const float * ih_all_fwd,
+        const float * ih_all_rev,
+        const float * w_hh_fwd,
+        const float * w_hh_rev,
+        const float * b_ih_fwd,
+        const float * b_hh_fwd,
+        const float * b_ih_rev,
+        const float * b_hh_rev,
+        int T,
+        int H,
+        float * dst_fwd,
+        float * dst_rev);
+
 #ifdef  __cplusplus
 }
 #endif

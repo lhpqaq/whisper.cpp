@@ -116,3 +116,7 @@ add_executable(${TEST_TARGET} bench_vec_mad.cpp)
 target_include_directories(${TEST_TARGET} PRIVATE ../include ../ggml/include ../ggml/src ../ggml/src/ggml-cpu) 
 target_link_libraries(${TEST_TARGET} PRIVATE ggml)
 
+set(TEST_TARGET aishell1-cer)
+add_executable(${TEST_TARGET} aishell1/aishell_cer.cpp)
+target_include_directories(${TEST_TARGET} PRIVATE ../include ../ggml/include ../examples)
+target_link_libraries(${TEST_TARGET} PRIVATE common)

@@ -72,3 +72,5 @@ output
 openvino_cache/
 
 *.log
+
+result/aishell1/cer/*
